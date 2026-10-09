@@ -1,0 +1,2102 @@
+{
+  "drinks": [
+    {
+      "id": "d1",
+      "name": "Negroni Classico",
+      "category": "classic",
+      "price": 125000,
+      "image": "img/drinks/negroni.jpg",
+      "description": "Tỷ lệ vàng 1:1:1 chuẩn quốc tế giữa London Dry Gin, rượu đắng Campari và Sweet Vermouth Carpano, điểm xuyết tinh dầu vỏ cam tươi.",
+      "ingredients": [
+        "London Dry Gin",
+        "Campari Bitter",
+        "Sweet Vermouth Carpano",
+        "Vỏ cam cháy",
+        "Đá vuông thủ công"
+      ],
+      "baseSpirit": "London Dry Gin & Campari",
+      "glassType": "Crystal Rocks",
+      "tasteNotes": [
+        "Đắng thanh",
+        "Thảo mộc",
+        "Cam cháy"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": true,
+      "stock": 25,
+      "abv": 24,
+      "createdAt": "2026-10-07T13:03:33.146Z"
+    },
+    {
+      "id": "d2",
+      "name": "Smoked Old Fashioned",
+      "category": "classic",
+      "price": 135000,
+      "image": "img/drinks/old-fashioned.jpg",
+      "description": "Bourbon thượng hạng ủ thùng gỗ sồi hun khói gỗ hồ đào, chút đắng thơm từ Angostura Bitters, cam cháy và khối đá điêu khắc.",
+      "ingredients": [
+        "Bourbon Whiskey",
+        "Angostura Bitters",
+        "Đường mía nâu",
+        "Vỏ cam nướng",
+        "Khói sồi Pecan"
+      ],
+      "baseSpirit": "Kentucky Bourbon Whiskey",
+      "glassType": "Crystal Rocks",
+      "tasteNotes": [
+        "Khói sồi",
+        "Cam cháy",
+        "Trầm ấm"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": true,
+      "stock": 20,
+      "abv": 30,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d3",
+      "name": "Dry Martini 007",
+      "category": "classic",
+      "price": 130000,
+      "image": "img/drinks/dry-martini.jpg",
+      "description": "Huyền thoại thanh lịch của thế giới cocktail: Dry Gin thượng hạng khuấy lạnh cùng Dry Vermouth Pháp, hoàn thiện với quả ô liu xanh muối biển.",
+      "ingredients": [
+        "Tanqueray London Dry Gin",
+        "Noilly Prat Dry Vermouth",
+        "Quả ô liu xanh muối",
+        "Vỏ chanh vàng xoắn"
+      ],
+      "baseSpirit": "Tanqueray Gin & Dry Vermouth",
+      "glassType": "Classic Martini Glass",
+      "tasteNotes": [
+        "Thảo mộc khô",
+        "Thanh khiết",
+        "Hậu vị sâu"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": true,
+      "stock": 18,
+      "abv": 28,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d4",
+      "name": "Bourbon Whiskey Sour",
+      "category": "sour-fizz",
+      "price": 120000,
+      "image": "img/drinks/whiskey-sour.jpg",
+      "description": "Sự cân bằng tinh tế giữa độ nồng ấm của Bourbon, vị chua giòn từ chanh vàng và lớp bọt lòng trắng trứng đánh mịn như nhung mượt.",
+      "ingredients": [
+        "Bourbon Whiskey",
+        "Nước cốt chanh vàng",
+        "Lòng trắng trứng bọt velvet",
+        "Siro đường mía",
+        "Angostura Bitters"
+      ],
+      "baseSpirit": "Kentucky Bourbon",
+      "glassType": "Old Fashioned Glass",
+      "tasteNotes": [
+        "Bọt mịn màng",
+        "Chua thanh dịu",
+        "Hương sồi nồng"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": true,
+      "stock": 22,
+      "abv": 18,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d5",
+      "name": "Classic Margarita",
+      "category": "sour-fizz",
+      "price": 115000,
+      "image": "img/drinks/margarita.jpg",
+      "description": "Tequila 100% Blue Agave kết hợp rượu mùi cam cao cấp Cointreau và nước cốt chanh tươi, viền muối hồng Himalaya thủ công.",
+      "ingredients": [
+        "Tequila Blanco 100% Agave",
+        "Cointreau Orange Liqueur",
+        "Nước cốt chanh tươi",
+        "Viền muối hồng Himalaya"
+      ],
+      "baseSpirit": "Tequila Blanco",
+      "glassType": "Vintage Coupe",
+      "tasteNotes": [
+        "Chua dịu",
+        "Mặn nhẹ",
+        "Hương cam tươi"
+      ],
+      "status": "available",
+      "rating": 4.8,
+      "featured": false,
+      "stock": 26,
+      "abv": 20,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d6",
+      "name": "Mojito Havana Rum",
+      "category": "sour-fizz",
+      "price": 105000,
+      "image": "img/drinks/mojito.jpg",
+      "description": "Rum trắng Cuba truyền thống hòa quyện cùng lá bạc hà tươi giã dập nhẹ, nước cốt chanh tươi, đường mía tự nhiên và soda suối khoáng.",
+      "ingredients": [
+        "Havana Club 3 Años White Rum",
+        "Chanh tươi",
+        "Lá bạc hà tươi",
+        "Đường mía tự nhiên",
+        "Soda sủi tăm",
+        "Đá tuyết"
+      ],
+      "baseSpirit": "Cuban White Rum",
+      "glassType": "Highball Pha Lê",
+      "tasteNotes": [
+        "Bạc hà thơm ngát",
+        "Chua thanh",
+        "Sảng khoái"
+      ],
+      "status": "available",
+      "rating": 4.8,
+      "featured": false,
+      "stock": 30,
+      "abv": 14,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d7",
+      "name": "Velvet Espresso Martini",
+      "category": "signature",
+      "price": 130000,
+      "image": "img/drinks/espresso-martini.jpg",
+      "description": "Espresso mới chiết xuất từ hạt Arabica đậm đà, Vodka mịn màng cùng rượu mùi cà phê Kahlúa với lớp bọt crema vàng óng và 3 hạt cà phê may mắn.",
+      "ingredients": [
+        "Vodka Absolut",
+        "Kahlúa Coffee Liqueur",
+        "Fresh Espresso Arabica",
+        "Siro Vanilla Madagascar",
+        "3 Hạt cà phê rang"
+      ],
+      "baseSpirit": "Vodka & Coffee Liqueur",
+      "glassType": "Coupe Pha Lê",
+      "tasteNotes": [
+        "Cà phê nồng ấm",
+        "Crema mịn",
+        "Hậu vị đắng ngọt"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": true,
+      "stock": 20,
+      "abv": 19,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d8",
+      "name": "Aperol Spritz Veneziano",
+      "category": "aperitivo",
+      "price": 120000,
+      "image": "img/drinks/aperol-spritz.jpg",
+      "description": "Thức uống khai vị biểu tượng nước Ý: Rượu thảo mộc Aperol rực rỡ, vang sủi Prosecco DOC sủi bọt lăn tăn và lát cam vàng ngập tràn nắng hè.",
+      "ingredients": [
+        "Aperol Aperitivo",
+        "Prosecco DOC",
+        "Soda suối khoáng",
+        "Lát cam vàng tươi",
+        "Đá khối pha lê"
+      ],
+      "baseSpirit": "Aperol & Prosecco DOC",
+      "glassType": "Stemmed Wine Glass",
+      "tasteNotes": [
+        "Cam thảo mộc",
+        "Sủi bọt thanh nhã",
+        "Chát nhẹ dịu dàng"
+      ],
+      "status": "available",
+      "rating": 4.8,
+      "featured": false,
+      "stock": 28,
+      "abv": 11,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d9",
+      "name": "Manhattan Reserve",
+      "category": "classic",
+      "price": 140000,
+      "image": "img/drinks/manhattan.jpg",
+      "description": "Nữ hoàng của các loại cocktail: Bulleit Rye Whiskey cay nồng ủ thùng gỗ sồi, Sweet Vermouth Ý cổ truyền và quả anh đào Maraschino đỏ thẫm.",
+      "ingredients": [
+        "Bulleit Rye Whiskey",
+        "Carpano Antica Sweet Vermouth",
+        "Angostura Bitters",
+        "Quả anh đào Maraschino"
+      ],
+      "baseSpirit": "Bulleit Rye Whiskey",
+      "glassType": "Coupe Pha Lê",
+      "tasteNotes": [
+        "Cay ấm gia vị",
+        "Quả sẫm màu",
+        "Đậm đà quý tộc"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": false,
+      "stock": 16,
+      "abv": 30,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d10",
+      "name": "The Macallan 12 Double Cask",
+      "category": "spirits",
+      "price": 195000,
+      "image": "img/drinks/macallan-12.jpg",
+      "description": "Dòng Single Malt Scotch trứ danh từ Speyside Scotland, ủ kết hợp thùng gỗ sồi Sherry Châu Âu và Châu Mỹ, phục vụ Neat hoặc On The Rocks.",
+      "ingredients": [
+        "Single Malt Scotch Whisky 12 Years Old",
+        "Khối đá tròn điêu khắc tay"
+      ],
+      "baseSpirit": "Single Malt Scotch Whisky",
+      "glassType": "Glencairn Glass",
+      "tasteNotes": [
+        "Mật ong sồi",
+        "Gừng ấm",
+        "Trái cây sấy khô"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": false,
+      "stock": 12,
+      "abv": 40,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d11",
+      "name": "Sazerac New Orleans",
+      "category": "classic",
+      "price": 135000,
+      "image": "img/drinks/sazerac.jpg",
+      "description": "Cocktail cổ xưa nhất nước Mỹ: Rye Whiskey ủ sồi kết hợp rượu đắng Peychaud's Bitters đỏ thắm, ly tráng một lớp mỏng hương hồi Absinthe huyền bí và vỏ chanh xoắn.",
+      "ingredients": [
+        "Rye Whiskey",
+        "Peychaud's Bitters",
+        "Hồi Absinthe thượng hạng",
+        "Đường mía nguyên chất",
+        "Vỏ chanh vàng xoắn"
+      ],
+      "baseSpirit": "Rye Whiskey & Absinthe",
+      "glassType": "Crystal Rocks",
+      "tasteNotes": [
+        "Thảo mộc hồi",
+        "Cay nồng sồi",
+        "Thanh lịch"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": true,
+      "stock": 20,
+      "abv": 32,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d12",
+      "name": "Daiquiri Hemingway",
+      "category": "classic",
+      "price": 120000,
+      "image": "img/drinks/daiquiri.jpg",
+      "description": "Phiên bản danh tiếng gắn liền với đại văn hào Hemingway: Rum trắng Cuba lắc lạnh cùng nước bưởi chùm hồng tươi, Maraschino Liqueur và chanh mọng nước.",
+      "ingredients": [
+        "Havana Club White Rum",
+        "Maraschino Liqueur",
+        "Nước bưởi chùm hồng tươi",
+        "Nước cốt chanh tươi",
+        "Lát chanh xanh"
+      ],
+      "baseSpirit": "Cuban White Rum",
+      "glassType": "Chilled Coupe",
+      "tasteNotes": [
+        "Chua sắc nét",
+        "Trái cây khô",
+        "Sảng khoái tinh tế"
+      ],
+      "status": "available",
+      "rating": 4.8,
+      "featured": false,
+      "stock": 25,
+      "abv": 22,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d13",
+      "name": "Boulevardier Parisien",
+      "category": "classic",
+      "price": 135000,
+      "image": "img/drinks/boulevardier.jpg",
+      "description": "Biến tấu quý tộc của Negroni ra đời tại Paris thập niên 1920: Bourbon Whiskey nồng ấm thay thế Gin, hòa cùng Campari đắng đậm và Sweet Vermouth Carpano.",
+      "ingredients": [
+        "Kentucky Bourbon",
+        "Campari Bitter",
+        "Carpano Sweet Vermouth",
+        "Vỏ cam cháy",
+        "Khối đá điêu khắc"
+      ],
+      "baseSpirit": "Bourbon Whiskey & Campari",
+      "glassType": "Crystal Rocks",
+      "tasteNotes": [
+        "Đắng ngọt trầm",
+        "Hương sồi nồng",
+        "Cam thảo mộc"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": true,
+      "stock": 22,
+      "abv": 26,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d14",
+      "name": "French 75 Champagne",
+      "category": "classic",
+      "price": 145000,
+      "image": "img/drinks/french-75.jpg",
+      "description": "Biểu tượng thanh tao của quầy bar Paris: London Dry Gin lắc cùng nước cốt chanh tươi, rót đầy bởi rượu Champagne Brut sủi tăm óng ánh và dải vỏ chanh xoắn.",
+      "ingredients": [
+        "Tanqueray London Dry Gin",
+        "Champagne Brut thượng hạng",
+        "Nước cốt chanh vàng tươi",
+        "Siro đường mía",
+        "Vỏ chanh xoắn dài"
+      ],
+      "baseSpirit": "London Dry Gin & Champagne",
+      "glassType": "Flute Pha Lê",
+      "tasteNotes": [
+        "Sủi tăm tươi sáng",
+        "Chua thanh tao",
+        "Hương hoa cỏ"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": false,
+      "stock": 18,
+      "abv": 16,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d15",
+      "name": "Hanky Panky Savoy 1903",
+      "category": "classic",
+      "price": 130000,
+      "image": "img/drinks/hanky-panky.jpg",
+      "description": "Kiệt tác được nữ huyền thoại Ada Coleman sáng chế tại khách sạn Savoy London: London Dry Gin, Sweet Vermouth và vài giọt rượu thảo mộc đắng bí truyền Fernet-Branca.",
+      "ingredients": [
+        "London Dry Gin",
+        "Sweet Vermouth Ý",
+        "Fernet-Branca Thảo Mộc",
+        "Vỏ cam tươi xoắn"
+      ],
+      "baseSpirit": "London Dry Gin",
+      "glassType": "Coupe Pha Lê",
+      "tasteNotes": [
+        "Thảo mộc đắng sâu",
+        "Hương hoa quả sấy",
+        "Dư vị kéo dài"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": false,
+      "stock": 20,
+      "abv": 24,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d16",
+      "name": "White Lady Coupe",
+      "category": "classic",
+      "price": 125000,
+      "image": "img/drinks/white-lady.jpg",
+      "description": "Công thức bất hủ trong cuốn Savoy Cocktail Book của Harry Craddock: Dry Gin hòa cùng Cointreau mượt mà, chanh tươi và bọt lòng trắng trứng trắng muốt.",
+      "ingredients": [
+        "Tanqueray Dry Gin",
+        "Cointreau Liqueur",
+        "Nước cốt chanh vàng",
+        "Lòng trắng trứng bọt mịn",
+        "Vỏ chanh"
+      ],
+      "baseSpirit": "Tanqueray Dry Gin",
+      "glassType": "Classic Coupe",
+      "tasteNotes": [
+        "Bọt tuyết mịn",
+        "Chua thanh dịu",
+        "Hương cam tinh tế"
+      ],
+      "status": "available",
+      "rating": 4.8,
+      "featured": false,
+      "stock": 24,
+      "abv": 21,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d17",
+      "name": "Flaming Cosmopolitan",
+      "category": "signature",
+      "price": 130000,
+      "image": "img/drinks/cosmopolitan.jpg",
+      "description": "Biến tấu đẳng cấp của Dale DeGroff tại Rainbow Room New York: Vodka ngâm vỏ chanh, Cointreau, nước ép nam việt quất và ngọn lửa tinh dầu cam bùng cháy ngoạn mục.",
+      "ingredients": [
+        "Citron Vodka",
+        "Cointreau Orange Liqueur",
+        "Nước ép nam việt quất Cranberry",
+        "Chanh tươi",
+        "Tinh dầu cam khò lửa"
+      ],
+      "baseSpirit": "Citron Vodka",
+      "glassType": "Martini Glass",
+      "tasteNotes": [
+        "Quả mọng tươi",
+        "Cam cháy nồng",
+        "Chua ngọt cân bằng"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": true,
+      "stock": 22,
+      "abv": 19,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d18",
+      "name": "Breakfast Martini",
+      "category": "signature",
+      "price": 140000,
+      "image": "img/drinks/breakfast-martini.jpg",
+      "description": "Sáng tạo lừng danh thế giới của bậc thầy Salvatore Calabrese: Gin thượng hạng lắc cùng mứt cam đắng Seville cao cấp của Anh, Cointreau và chanh tươi thanh nhã.",
+      "ingredients": [
+        "Plymouth Gin",
+        "Mứt cam đắng Seville Marmalade",
+        "Cointreau",
+        "Nước cốt chanh tươi",
+        "Vỏ cam vàng"
+      ],
+      "baseSpirit": "Plymouth Gin",
+      "glassType": "Martini Glass",
+      "tasteNotes": [
+        "Mứt cam thơm ngát",
+        "Vị chua thanh mát",
+        "Hậu vị ngọt êm"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": true,
+      "stock": 18,
+      "abv": 22,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d19",
+      "name": "Green Park Basil Velvet",
+      "category": "signature",
+      "price": 135000,
+      "image": "img/drinks/green-park.jpg",
+      "description": "Tác phẩm đoạt giải Bartender of the Year của Erik Lorincz: Gin thảo mộc, lá húng tây basil tươi giã mịn, giọt Celery Bitters và lớp bọt mượt mà sắc xanh ngọc.",
+      "ingredients": [
+        "Tanqueray Gin",
+        "Lá húng tây Sweet Basil tươi",
+        "Nước cốt chanh vàng",
+        "Celery Bitters",
+        "Lòng trắng trứng velvet"
+      ],
+      "baseSpirit": "Tanqueray Gin",
+      "glassType": "Coupe Pha Lê",
+      "tasteNotes": [
+        "Húng quế thơm thảo",
+        "Thanh mát",
+        "Bọt nhung mượt"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": false,
+      "stock": 20,
+      "abv": 18,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d20",
+      "name": "Serendipity Champagne Ritz",
+      "category": "signature",
+      "price": 155000,
+      "image": "img/drinks/serendipity.jpg",
+      "description": "Món cocktail biểu tượng tại Bar Hemingway thuộc khách sạn Ritz Paris của Colin Field: Rượu táo Calvados Pays d'Auge danh tiếng, Champagne, nước táo tươi và lá bạc hà.",
+      "ingredients": [
+        "Calvados Pays d'Auge",
+        "Champagne Brut",
+        "Nước ép táo tươi ép lạnh",
+        "Lá bạc hà tươi",
+        "Đá viên pha lê"
+      ],
+      "baseSpirit": "Calvados & Champagne",
+      "glassType": "Highball Pha Lê",
+      "tasteNotes": [
+        "Táo xanh giòn",
+        "Sủi tăm quý tộc",
+        "Bạc hà mát lành"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": true,
+      "stock": 16,
+      "abv": 15,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d21",
+      "name": "Blue Blazer 1862 Flaming",
+      "category": "signature",
+      "price": 160000,
+      "image": "img/drinks/blue-blazer.jpg",
+      "description": "Màn trình diễn ngoạn mục của ông tổ Jerry Thomas từ năm 1862: Cask Strength Whisky và nước sôi hòa quyện trong luồng lửa xanh biếc được rót qua lại giữa hai ca bạc sáng loáng.",
+      "ingredients": [
+        "Cask Strength Scotch Whisky",
+        "Nước sôi thảo mộc",
+        "Đường mía Demerara",
+        "Vỏ chanh vàng nướng"
+      ],
+      "baseSpirit": "Cask Strength Scotch Whisky",
+      "glassType": "Antique Silver / Heatproof Glass",
+      "tasteNotes": [
+        "Ấm nồng rực rỡ",
+        "Khói lửa sồi",
+        "Mật ong đậm sâu"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": true,
+      "stock": 15,
+      "abv": 35,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d22",
+      "name": "Diamond Ice Single Malt",
+      "category": "signature",
+      "price": 175000,
+      "image": "img/drinks/diamond-ice.jpg",
+      "description": "Nghệ thuật điêu khắc đá đỉnh cao phong cách Tokyo của Hidetsugu Ueno: Khối đá kim cương trong suốt thủ công tan cực chậm trong ly Single Malt ủ thùng sherry hảo hạng.",
+      "ingredients": [
+        "Single Malt Whisky tuyển chọn",
+        "Đá kim cương cắt tay trong suốt"
+      ],
+      "baseSpirit": "Single Malt Whisky",
+      "glassType": "Crystal Tumbler",
+      "tasteNotes": [
+        "Tinh khiết tuyệt đối",
+        "Hương sồi lan tỏa",
+        "Lạnh sâu không loãng"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": false,
+      "stock": 14,
+      "abv": 40,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d23",
+      "name": "The Macallan 18 Sherry Oak",
+      "category": "spirits",
+      "price": 285000,
+      "image": "img/drinks/macallan-18.jpg",
+      "description": "Đỉnh cao Single Malt Scotch từ vùng Speyside: 18 năm ủ trọn vẹn trong thùng gỗ sồi Oloroso Sherry từ Jerez Tây Ban Nha, màu hổ phách đậm đà đầy mê hoặc.",
+      "ingredients": [
+        "Single Malt Scotch 18 Năm Tuổi",
+        "Đá cầu pha lê thủ công"
+      ],
+      "baseSpirit": "The Macallan 18 Years",
+      "glassType": "Glencairn Glass",
+      "tasteNotes": [
+        "Gừng ngâm",
+        "Nho khô sấy",
+        "Gỗ sồi trưởng thành"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": true,
+      "stock": 10,
+      "abv": 43,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d24",
+      "name": "Lagavulin 16 Islay Peat",
+      "category": "spirits",
+      "price": 230000,
+      "image": "img/drinks/lagavulin-16.jpg",
+      "description": "Vua khói của đảo Islay Scotland: Mùi hương khói than bùn biển nồng nàn, rong biển mặn mòi kết hợp vị ngọt ngào sâu thẳm của trái cây chín và gỗ sồi già.",
+      "ingredients": [
+        "Single Malt Scotch Islay 16 Năm",
+        "Khối đá điêu khắc hoặc uống Neat"
+      ],
+      "baseSpirit": "Lagavulin Single Malt",
+      "glassType": "Glencairn Glass",
+      "tasteNotes": [
+        "Khói than bùn đậm",
+        "Gió biển mặn mòi",
+        "Hậu vị bất tận"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": false,
+      "stock": 12,
+      "abv": 43,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d25",
+      "name": "Hennessy X.O Cognac",
+      "category": "spirits",
+      "price": 260000,
+      "image": "img/drinks/hennessy-xo.jpg",
+      "description": "Biểu tượng Cognac Extra Old trứ danh vùng Cognac nước Pháp: Pha trộn từ hơn 100 loại eaux-de-vie lâu năm với hương thơm vani, tiêu đen cay nhẹ và socola đen quyến rũ.",
+      "ingredients": [
+        "Hennessy X.O Extra Old Cognac",
+        "Đá tròn pha lê"
+      ],
+      "baseSpirit": "Hennessy X.O Cognac",
+      "glassType": "Snifter Pha Lê",
+      "tasteNotes": [
+        "Vani gỗ sồi",
+        "Gia vị cay ấm",
+        "Socola đắng mềm mại"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": false,
+      "stock": 12,
+      "abv": 40,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d26",
+      "name": "Don Julio 1942 Añejo Tequila",
+      "category": "spirits",
+      "price": 270000,
+      "image": "img/drinks/don-julio-1942.jpg",
+      "description": "Kiệt tác Tequila Añejo thủ công sản xuất số lượng giới hạn: 100% Blue Weber Agave thu hoạch tại cao nguyên Jalisco, ủ ít nhất hai năm rưỡi trong thùng sồi trắng Mỹ.",
+      "ingredients": [
+        "100% Blue Weber Agave Tequila 1942",
+        "Đá khối hoặc uống Neat"
+      ],
+      "baseSpirit": "Don Julio 1942 Tequila",
+      "glassType": "Tequila Snifter",
+      "tasteNotes": [
+        "Caramel mượt mà",
+        "Agave nướng thơm lừng",
+        "Hương sồi vani"
+      ],
+      "status": "available",
+      "rating": 5,
+      "featured": true,
+      "stock": 10,
+      "abv": 38,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d27",
+      "name": "Monkey 47 Schwarzwald Dry Gin",
+      "category": "spirits",
+      "price": 195000,
+      "image": "img/drinks/monkey-47.jpg",
+      "description": "Dòng Gin thủ công nổi tiếng từ Rừng Đen nước Đức: Chưng cất cùng 47 loại thảo mộc quý hiếm, quả nam việt quất và nguồn nước suối rừng sâu nguyên sơ.",
+      "ingredients": [
+        "Monkey 47 Dry Gin",
+        "Tonic Fever-Tree cao cấp",
+        "Vỏ bưởi và quả việt quất"
+      ],
+      "baseSpirit": "Monkey 47 Schwarzwald Gin",
+      "glassType": "Copa Balloon Glass",
+      "tasteNotes": [
+        "47 Loại thảo mộc",
+        "Quả mọng rừng",
+        "Tiêu hoa thơm lừng"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": false,
+      "stock": 15,
+      "abv": 47,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d28",
+      "name": "Bulleit Bourbon Frontier 10Y",
+      "category": "spirits",
+      "price": 180000,
+      "image": "img/drinks/bulleit-bourbon.jpg",
+      "description": "Dòng Bourbon Kentucky mang đậm tinh thần miền viễn Tây nước Mỹ: Tỷ lệ lúa mạch đen Rye cao độc đáo, ủ 10 năm trong thùng gỗ sồi Mỹ đốt than bề mặt số 4.",
+      "ingredients": [
+        "Bulleit 10-Year Kentucky Bourbon",
+        "Khối đá vuông điêu khắc"
+      ],
+      "baseSpirit": "Bulleit Bourbon Whiskey",
+      "glassType": "Crystal Rocks",
+      "tasteNotes": [
+        "Gỗ sồi cháy",
+        "Vani phong phú",
+        "Hương khói ấm áp"
+      ],
+      "status": "available",
+      "rating": 4.8,
+      "featured": false,
+      "stock": 18,
+      "abv": 45,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d29",
+      "name": "Diplomático Reserva Exclusiva Rum",
+      "category": "spirits",
+      "price": 175000,
+      "image": "img/drinks/diplomatico-rum.jpg",
+      "description": "Dòng Dark Rum thượng hạng từ Venezuela: Chưng cất trong nồi đồng cổ truyền và ủ tới 12 năm trong thùng gỗ sồi, hương vị ngọt ngào như bản giao hưởng caramel và chuối chín.",
+      "ingredients": [
+        "Diplomático Reserva Exclusiva Rum",
+        "Vỏ cam cháy",
+        "Khối đá pha lê"
+      ],
+      "baseSpirit": "Diplomático Venezuelan Rum",
+      "glassType": "Old Fashioned Glass",
+      "tasteNotes": [
+        "Caramel bơ ngọt",
+        "Vỏ cam thơm",
+        "Socola mềm mại"
+      ],
+      "status": "available",
+      "rating": 4.9,
+      "featured": false,
+      "stock": 16,
+      "abv": 40,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    },
+    {
+      "id": "d30",
+      "name": "Campari Cask Bitter Milano",
+      "category": "aperitivo",
+      "price": 125000,
+      "image": "img/drinks/campari-bitter.jpg",
+      "description": "Rượu khai vị huyền thoại nước Ý phục vụ On The Rocks: Sắc đỏ ruby lộng lẫy từ công thức bí truyền năm 1860 của Gaspare Campari, đắng thanh thảo mộc và lát cam tươi sảng khoái.",
+      "ingredients": [
+        "Campari Bitter Milano",
+        "Soda suối khoáng sủi tăm",
+        "Lát cam vàng tươi",
+        "Đá viên pha lê"
+      ],
+      "baseSpirit": "Campari Bitter",
+      "glassType": "Crystal Tumbler",
+      "tasteNotes": [
+        "Đắng thanh thảo mộc",
+        "Vỏ cam rực rỡ",
+        "Sảng khoái khai vị"
+      ],
+      "status": "available",
+      "rating": 4.8,
+      "featured": false,
+      "stock": 25,
+      "abv": 25,
+      "createdAt": "2026-10-07T13:03:33.147Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": "o1",
+      "code": "DH0001",
+      "name": "Nguyễn Thị Mai",
+      "phone": "0901112233",
+      "email": "",
+      "serviceType": "dine-in",
+      "tableNumber": "Bàn 4",
+      "note": "Đá viên vuông thủ công",
+      "items": [
+        {
+          "drinkId": "d1",
+          "name": "Negroni Classico",
+          "price": 125000,
+          "image": "img/drinks/negroni.jpg",
+          "qty": 2
+        }
+      ],
+      "total": 250000,
+      "status": "completed",
+      "createdAt": "2026-10-01T13:30:00.000Z"
+    },
+    {
+      "id": "o2",
+      "code": "DH0002",
+      "name": "Trần Văn Hùng",
+      "phone": "0912223344",
+      "email": "hung.tran@gmail.com",
+      "serviceType": "takeaway",
+      "note": "Gói giữ lạnh ly Rocks",
+      "items": [
+        {
+          "drinkId": "d2",
+          "name": "Smoked Old Fashioned",
+          "price": 135000,
+          "image": "img/drinks/old-fashioned.jpg",
+          "qty": 2
+        }
+      ],
+      "total": 270000,
+      "status": "completed",
+      "createdAt": "2026-10-02T14:30:00.000Z"
+    },
+    {
+      "id": "o3",
+      "code": "DH0003",
+      "name": "Lê Thị Hoa",
+      "phone": "0923334455",
+      "email": "",
+      "serviceType": "booking",
+      "bookingTime": "2026-10-03T12:30:00.000Z",
+      "guestCount": 4,
+      "note": "Bàn lounge gần quầy pha chế",
+      "items": [
+        {
+          "drinkId": "d3",
+          "name": "Dry Martini 007",
+          "price": 130000,
+          "image": "img/drinks/dry-martini.jpg",
+          "qty": 2
+        },
+        {
+          "drinkId": "d8",
+          "name": "Aperol Spritz Veneziano",
+          "price": 120000,
+          "image": "img/drinks/aperol-spritz.jpg",
+          "qty": 2
+        }
+      ],
+      "total": 500000,
+      "status": "completed",
+      "createdAt": "2026-10-03T12:30:00.000Z"
+    },
+    {
+      "id": "o4",
+      "code": "DH0004",
+      "name": "Phạm Minh Đức",
+      "phone": "0934445566",
+      "email": "",
+      "serviceType": "dine-in",
+      "tableNumber": "Bàn 7",
+      "note": "Thêm chút vỏ chanh vàng",
+      "items": [
+        {
+          "drinkId": "d4",
+          "name": "Bourbon Whiskey Sour",
+          "price": 120000,
+          "image": "img/drinks/whiskey-sour.jpg",
+          "qty": 1
+        }
+      ],
+      "total": 120000,
+      "status": "cancelled",
+      "createdAt": "2026-10-04T15:30:00.000Z"
+    },
+    {
+      "id": "o5",
+      "code": "DH0005",
+      "name": "Vũ Thị Ngọc",
+      "phone": "0945556677",
+      "email": "ngoc.vu@gmail.com",
+      "serviceType": "takeaway",
+      "note": "Viền muối hồng cẩn thận",
+      "items": [
+        {
+          "drinkId": "d5",
+          "name": "Classic Margarita",
+          "price": 115000,
+          "image": "img/drinks/margarita.jpg",
+          "qty": 2
+        },
+        {
+          "drinkId": "d6",
+          "name": "Mojito Havana Rum",
+          "price": 105000,
+          "image": "img/drinks/mojito.jpg",
+          "qty": 1
+        }
+      ],
+      "total": 335000,
+      "status": "completed",
+      "createdAt": "2026-10-05T14:30:00.000Z"
+    },
+    {
+      "id": "o6",
+      "code": "DH0006",
+      "name": "Đặng Quốc Bảo",
+      "phone": "0956667788",
+      "email": "",
+      "serviceType": "booking",
+      "bookingTime": "2026-10-06T13:30:00.000Z",
+      "guestCount": 6,
+      "note": "Kỷ niệm sinh nhật",
+      "items": [
+        {
+          "drinkId": "d7",
+          "name": "Velvet Espresso Martini",
+          "price": 130000,
+          "image": "img/drinks/espresso-martini.jpg",
+          "qty": 3
+        },
+        {
+          "drinkId": "d1",
+          "name": "Negroni Classico",
+          "price": 125000,
+          "image": "img/drinks/negroni.jpg",
+          "qty": 3
+        }
+      ],
+      "total": 765000,
+      "status": "preparing",
+      "createdAt": "2026-10-06T13:30:00.000Z"
+    },
+    {
+      "id": "o7",
+      "code": "DH0007",
+      "name": "Hoàng Thị Yến",
+      "phone": "0967778899",
+      "email": "",
+      "serviceType": "dine-in",
+      "tableNumber": "Bàn 2",
+      "note": "Thêm lát cam tươi",
+      "items": [
+        {
+          "drinkId": "d8",
+          "name": "Aperol Spritz Veneziano",
+          "price": 120000,
+          "image": "img/drinks/aperol-spritz.jpg",
+          "qty": 2
+        }
+      ],
+      "total": 240000,
+      "status": "pending",
+      "createdAt": "2026-10-07T12:30:00.000Z"
+    },
+    {
+      "id": "o8",
+      "code": "DH0008",
+      "name": "Ngô Văn Tài",
+      "phone": "0978889900",
+      "email": "tai.ngo@gmail.com",
+      "serviceType": "takeaway",
+      "note": "Phục vụ ly Glencairn kèm đá",
+      "items": [
+        {
+          "drinkId": "d10",
+          "name": "The Macallan 12 Double Cask",
+          "price": 195000,
+          "image": "",
+          "qty": 1
+        }
+      ],
+      "total": 195000,
+      "status": "pending",
+      "createdAt": "2026-10-07T13:30:00.000Z"
+    }
+  ],
+  "staff": [
+    {
+      "id": "s1",
+      "staffCode": "NV001",
+      "name": "Trần Minh Khoa",
+      "username": "khoa.tran",
+      "password": "Khoa@123456",
+      "role": "manager",
+      "shift": "morning",
+      "phone": "0901234567",
+      "email": "khoa.tran@quanbar.vn",
+      "startDate": "2023-03-01",
+      "status": "active",
+      "createdAt": "2023-03-01T08:00:00.000Z"
+    },
+    {
+      "id": "s2",
+      "staffCode": "NV002",
+      "name": "Nguyễn Thị Lan",
+      "username": "lan.nguyen",
+      "password": "Lan@123456",
+      "role": "bartender",
+      "shift": "evening",
+      "phone": "0912345678",
+      "email": "lan.nguyen@quanbar.vn",
+      "startDate": "2023-06-15",
+      "status": "active",
+      "createdAt": "2023-06-15T14:00:00.000Z"
+    },
+    {
+      "id": "s3",
+      "staffCode": "NV003",
+      "name": "Lê Văn Đức",
+      "username": "duc.le",
+      "password": "Duc@123456",
+      "role": "bartender",
+      "shift": "afternoon",
+      "phone": "0923456789",
+      "email": "duc.le@quanbar.vn",
+      "startDate": "2024-01-10",
+      "status": "active",
+      "createdAt": "2024-01-10T11:00:00.000Z"
+    },
+    {
+      "id": "s4",
+      "staffCode": "NV004",
+      "name": "Phạm Thu Hà",
+      "username": "ha.pham",
+      "password": "Ha@123456",
+      "role": "waiter",
+      "shift": "evening",
+      "phone": "0934567890",
+      "email": "ha.pham@quanbar.vn",
+      "startDate": "2024-05-20",
+      "status": "active",
+      "createdAt": "2024-05-20T16:00:00.000Z"
+    },
+    {
+      "id": "s5",
+      "staffCode": "NV005",
+      "name": "Hoàng Anh Tuấn",
+      "username": "tuan.hoang",
+      "password": "Tuan@123456",
+      "role": "cashier",
+      "shift": "morning",
+      "phone": "0945678901",
+      "email": "tuan.hoang@quanbar.vn",
+      "startDate": "2022-11-02",
+      "status": "inactive",
+      "createdAt": "2022-11-02T09:00:00.000Z"
+    }
+  ],
+  "messages": [],
+  "spirits": [
+    {
+      "id": "sp-macallan-18",
+      "name": "The Macallan 18 Double Cask",
+      "fullName": "The Macallan 18 Years Old Double Cask Highland Single Malt Scotch Whisky",
+      "family": "whisky",
+      "familyLabel": "Highland Single Malt Scotch Whisky",
+      "image": "img/bottles/macallan-18.jpg",
+      "origin": "Speyside, Scotland",
+      "distillery": "The Macallan Estate (Easter Elchies House)",
+      "established": "1824",
+      "masterBlender": "Kirsteen Campbell (Master Whisky Maker)",
+      "abv": 43,
+      "proof": "86 Proof",
+      "age": "18 Years Old",
+      "bottleVol": "700ml",
+      "mashBill": "100% lúa mạch mạch nha Scotland (malted barley), nguồn nước ngầm tinh khiết từ sông Spey",
+      "caskType": "Thùng gỗ sồi châu Âu và Mỹ được tuyển chọn thủ công, ủ ướp rượu Oloroso Sherry tại Jerez, Tây Ban Nha",
+      "colorName": "Hổ Phách Mật Ong Trầm",
+      "liquidGradient": "linear-gradient(180deg, #f4b651 0%, #aa6418 60%, #4a2505 100%)",
+      "accentColor": "#c59843",
+      "badgeLabel": "Speyside Icon",
+      "priceRange": "Ultra-Premium • ~9.500.000đ / chai",
+      "glassType": "Glencairn Crystal Glass",
+      "servingRitual": "Thưởng thức nguyên chất (Neat) ở nhiệt độ phòng hầm (18°C), hoặc thêm 2-3 giọt nước suối khoáng lạnh để đánh thức các phân tử hương hoa quả khô và este phức hợp.",
+      "tagline": "Bản giao hưởng 18 năm giữa thùng sồi Oloroso Sherry Tây Ban Nha và gỗ sồi Mỹ ngọt ngào.",
+      "biography": "Tọa lạc trên điền trang rộng 485 mẫu Anh bên bờ dòng sông Spey thơ mộng, The Macallan được thành lập vào năm 1824 bởi Alexander Reid. Điểm cốt lõi tạo nên danh tiếng lẫy lừng của lò chưng cất là hệ thống nồi chưng cất bằng đồng 'Curiously Small Stills' thuộc hàng nhỏ nhất vùng Speyside – kích thước đặc biệt này tối đa hóa sự tiếp xúc với đồng để cô đọng chất rượu thô (new-make spirit) đậm đà, giàu hương trái cây và sánh quyện.\n\nPhiên bản 18 Years Old Double Cask là sự kết hợp bậc thầy giữa hai hành trình gỗ sồi: thùng sồi Mỹ êm dịu mang đến nốt hương vani và bơ caramel béo ngậy, hòa quyện mượt mà cùng thùng sồi châu Âu ủ Sherry từ thánh địa Jerez de la Frontera, nơi trao tặng hương vị trái cây khô, nhục đậu khấu và gỗ sồi cổ điển. Từng giọt rượu được tĩnh lặng trưởng thành suốt 18 năm dưới sự giám sát khắt khe của Đội ngũ Bậc thầy Chế tác Whisky.",
+      "tastingNotes": {
+        "nose": "Vỏ cam khô, gừng ngào đường, nho khô sultana mọng ngọt, kẹo bơ cứng toffee và gỗ sồi Mỹ nướng thoảng hương vani ấm áp.",
+        "palate": "Tròn trịa, mượt như nhung; vị ngọt đậm đà của mật mía cân bằng hoàn hảo cùng gừng cay ấm, đinh hương, nhục đậu khấu và gỗ sồi cổ thụ tinh tế.",
+        "finish": "Cực kỳ sâu lắng và ấm áp; lưu luyến nốt tinh dầu vỏ cam cay cay, gia vị gỗ sồi nướng và chút đắng thanh nhẹ của cacao đen."
+      },
+      "sensoryScores": {
+        "smoke": 15,
+        "sweetness": 75,
+        "oakSpice": 90,
+        "botanical": 35,
+        "richness": 95
+      },
+      "sommelierQuote": "The Macallan 18 Double Cask là một kiệt tác mẫu mực về nghệ thuật quản lý thùng gỗ sồi – nơi di sản Sherry Tây Ban Nha nâng tầm nghệ thuật chưng cất Scotland thành đỉnh cao hội họa.",
+      "craftedCocktails": [
+        {
+          "name": "The Macallan on the Rocks",
+          "category": "Signature Neat / Rocks",
+          "desc": "Rót chậm qua khối đá tròn điêu khắc tay, làm dịu nồng độ cồn trong khi đánh thức những nốt caramel ngọt ngào và hương gỗ sồi mượt mà.",
+          "recipe": "60ml The Macallan 18, đá tròn pha lê gọt tay, vỏ cam cháy.",
+          "menuDrinkId": "d10",
+          "inMenu": true
+        },
+        {
+          "name": "Rob Roy Single Malt",
+          "category": "Classic Scotch Cocktail",
+          "desc": "Biến tấu quý tộc vùng Highland của dòng Manhattan: single malt đậm đà nâng tầm bởi sweet vermouth Antica Formula và bitters thảo mộc.",
+          "recipe": "50ml The Macallan, 25ml Sweet Vermouth Carpano, 2 dashes Angostura, quả anh đào Maraschino ngâm rượu.",
+          "menuDrinkId": null,
+          "inMenu": false
+        },
+        {
+          "name": "Smoked Old Fashioned",
+          "category": "Craft Cocktail",
+          "desc": "Scotch ủ sồi hun khói gỗ hồ đào thơm ngát, đường mía thô demerara và tinh dầu vỏ cam cháy ấm áp.",
+          "recipe": "50ml Aged Whisky, Angostura Bitters, đường Demerara, khói gỗ Pecan tự nhiên.",
+          "menuDrinkId": "d2",
+          "inMenu": true
+        }
+      ]
+    },
+    {
+      "id": "sp-hennessy-xo",
+      "name": "Hennessy X.O Cognac",
+      "fullName": "Hennessy X.O The Original Extra Old Cognac",
+      "family": "cognac",
+      "familyLabel": "Extra Old Prestige Cognac",
+      "image": "img/bottles/hennessy-xo.jpg",
+      "origin": "Cognac, Charente, France",
+      "distillery": "Maison Hennessy (Le Paradis Cellars)",
+      "established": "1870",
+      "masterBlender": "Renaud Fillioux de Gironde (Thế hệ thứ 8)",
+      "abv": 40,
+      "proof": "80 Proof",
+      "age": "Phối trộn từ hơn 100 dòng eaux-de-vie (ủ lên tới 30 năm)",
+      "bottleVol": "700ml",
+      "mashBill": "100% nho Ugni Blanc từ các vùng đất tuyển chọn (crus) lừng danh: Grande & Petite Champagne, Borderies, và Fins Bois",
+      "caskType": "Ủ trong các thùng gỗ sồi Pháp Limousin và Tronçais xẻ thủ công",
+      "colorName": "Hổ Phách Cognac Sâu Thẳm",
+      "liquidGradient": "linear-gradient(180deg, #d87e2f 0%, #89370f 60%, #3a1304 100%)",
+      "accentColor": "#d87e2f",
+      "badgeLabel": "Original X.O 1870",
+      "priceRange": "Prestige • ~5.800.000đ / chai",
+      "glassType": "Tulip Cognac Glass / Snifter",
+      "servingRitual": "Thưởng thức nguyên chất (Neat) ở nhiệt độ phòng để cảm nhận trọn vẹn 7 chương cảm giác giác quan, hoặc uống 'On Three Rocks' (với 3 viên đá vuông) theo phong cách truyền thống của ngài Maurice Hennessy.",
+      "tagline": "Biểu tượng kinh điển vượt thời gian định hình nên tiêu chuẩn Extra Old của toàn thế giới.",
+      "biography": "Vào năm 1870, Maurice Hennessy – thế hệ thứ tư của gia tộc Hennessy – đã sáng tạo nên một mẻ rượu phối trộn riêng biệt đầy phức hợp dành riêng cho gia đình và giới quý tộc thân hữu. Được chứa trong bình pha lê lấy cảm hứng từ hình dáng chùm nho hoang dã uốn lượn, dòng rượu huyền thoại này đã khai sinh ra phân hạng 'X.O' (Extra Old) – phân hạng sau đó đã được luật pháp nước Pháp chính thức chuẩn hóa.\n\nĐược tạo thành từ hơn 100 dòng eaux-de-vie chưng cất 2 lần qua nồi chưng cất đồng Charentais truyền thống, những giọt rượu lâu đời nhất ngủ yên trong hầm ngầm tôn nghiêm 'Le Paradis'. Trải qua hàng chục năm tiếp xúc vi mô với thớ gỗ sồi Limousin chặt chẽ, chất rượu đạt được cấu trúc tannin hoàn mỹ cùng 7 chương hành trình giác quan độc nhất vô nhị.",
+      "tastingNotes": {
+        "nose": "Mận khô, sung chín, mứt vỏ cam, hạt phỉ nướng thơm bùi, cùng nốt hương da thuộc cổ điển quý phái và sô-cô-la đen.",
+        "palate": "Mãnh liệt và đa tầng hương sắc; tiêu đen ấm nồng, sô-cô-la đắng, vỏ quế thơm và trái cây hạch ngâm ủ đậm đà.",
+        "finish": "Vô tận và cao quý; sự thăng hoa kéo dài của gỗ tuyết tùng, làn khói sồi êm dịu và tầng hương rancio cổ kính hàng thập kỷ."
+      },
+      "sensoryScores": {
+        "smoke": 10,
+        "sweetness": 70,
+        "oakSpice": 88,
+        "botanical": 50,
+        "richness": 98
+      },
+      "sommelierQuote": "Hennessy X.O không chỉ là một thức rượu; đó là một bản kiến trúc xúc cảm gồm 7 chương hồi riêng biệt – từ nốt khởi đầu trái cây ngọt ngào đến vẻ uy nghi của gỗ sồi cổ xưa.",
+      "craftedCocktails": [
+        {
+          "name": "Royal Sidecar",
+          "category": "Classic French Cocktail",
+          "desc": "Đỉnh cao thanh lịch của nghệ thuật pha chế Paris: cognac ủ lâu năm hòa quyện rượu mùi cam Cointreau và nước cốt chanh vàng tươi vắt tay.",
+          "recipe": "50ml Hennessy Cognac, 20ml Cointreau, 20ml nước cốt chanh vàng tươi, viền đường mịn quanh miệng ly.",
+          "menuDrinkId": null,
+          "inMenu": false
+        },
+        {
+          "name": "French Connection",
+          "category": "After-Dinner Digestif",
+          "desc": "Bản hòa tấu mượt mà chỉ với 2 nguyên liệu kinh điển, nơi cognac nồng ấm ôm trọn vị ngọt hạnh nhân của amaretto Disaronno trên khối đá viên.",
+          "recipe": "35ml Hennessy Cognac, 35ml Amaretto Disaronno, khuấy lạnh trên đá tảng.",
+          "menuDrinkId": null,
+          "inMenu": false
+        },
+        {
+          "name": "Heritage Sazerac",
+          "category": "New Orleans Legend",
+          "desc": "Công thức cocktail lâu đời nhất nước Mỹ: French cognac dầm cùng đường, Peychaud's bitters và ly coupe tráng một lớp absinthe huyền bí.",
+          "recipe": "50ml Cognac, 1 viên đường, 3 dashes Peychaud's Bitters, tráng ly bằng Absinthe, vỏ chanh xoắn.",
+          "menuDrinkId": null,
+          "inMenu": false
+        }
+      ]
+    },
+    {
+      "id": "sp-don-julio-1942",
+      "name": "Don Julio 1942 Añejo",
+      "fullName": "Don Julio 1942 Añejo Tequila 100% De Agave",
+      "family": "tequila",
+      "familyLabel": "Artisanal Añejo Tequila",
+      "image": "img/bottles/don-julio-1942.jpg",
+      "origin": "Los Altos de Jalisco, Mexico",
+      "distillery": "La Primavera Distillery (El Salitral)",
+      "established": "1942",
+      "masterBlender": "Enrique de Colsa",
+      "abv": 38,
+      "proof": "76 - 80 Proof",
+      "age": "Ủ tối thiểu 2,5 năm trong thùng gỗ sồi",
+      "bottleVol": "750ml",
+      "mashBill": "100% thùa xanh Blue Weber Agave thu hoạch thủ công từ vùng đất đỏ núi lửa Los Altos",
+      "caskType": "Ủ trong thùng gỗ sồi trắng Mỹ đã đốt nướng (charred) từng ủ Bourbon",
+      "colorName": "Vàng Hổ Phách Ánh Kim",
+      "liquidGradient": "linear-gradient(180deg, #f7ce6f 0%, #c48a1d 60%, #684206 100%)",
+      "accentColor": "#e5a73e",
+      "badgeLabel": "100% Blue Weber Agave",
+      "priceRange": "Prestige • ~6.500.000đ / chai",
+      "glassType": "Riedel Tequila Glass / Tulip",
+      "servingRitual": "Thưởng thức nguyên chất (Neat) trong ly tulip hoặc ly sâm panh thon dài ở nhiệt độ phòng. Tuyệt đối không dùng kèm muối hay chanh, để mật ngọt của cây thùa chín biểu đạt trọn vẹn nhất.",
+      "tagline": "Biểu tượng dáng lá thùa thon dài tái định nghĩa Tequila thành chuẩn mực xa xỉ đỉnh cao.",
+      "biography": "Được đặt tên để tôn vinh cột mốc năm 1942 – thời điểm chàng trai 17 tuổi Don Julio González tràn đầy hoài bão bắt đầu hành trình chưng cất rượu thùa tại Atotonilco El Alto. Đi ngược lại tập quán canh tác thông thường, Don Julio trồng các bụi Blue Weber agave với khoảng cách rất rộng, tạo điều kiện cho từng cây hấp thu trọn vẹn khoáng chất từ đất sét đỏ núi lửa Jalisco suốt từ 7 đến 10 năm ròng.\n\nNhững củ thùa (piñas) thu hoạch thủ công được nướng chậm trong lò gạch truyền thống suốt 72 giờ liên tục để chiết xuất dòng mật ngọt sánh mịn. Sau khi chưng cất từng mẻ nhỏ bằng nồi đồng, chất rượu được ủ hơn 2,5 năm trong thùng sồi trắng Mỹ. Kiểu dáng chai thuôn dài biểu tượng được thiết kế tựa như chiếc lá thùa kiêu hãnh vươn mình lên bầu trời Mexico.",
+      "tastingNotes": {
+        "nose": "Caramel nướng đậm đà, sô-cô-la trắng, vỏ vani ấm, mật thùa nướng ngọt ngào và gỗ sồi thơm.",
+        "palate": "Cực kỳ êm mượt và sánh mịn; mật thùa ấm áp hòa quyện cùng hạt phỉ, bánh mì nướng quế và trái cây nhiệt đới sấy khô thoang thoảng.",
+        "finish": "Dài lâu, sang trọng và êm như nhung với dư vị ngọt dịu của cây thùa chín và gia vị gỗ sồi Mỹ tinh tế."
+      },
+      "sensoryScores": {
+        "smoke": 20,
+        "sweetness": 80,
+        "oakSpice": 72,
+        "botanical": 65,
+        "richness": 85
+      },
+      "sommelierQuote": "Don Julio 1942 đã biến đổi hoàn toàn vị thế của Tequila từ một shot rượu quán bar ồn ào thành một dòng rượu thượng hạng chiêm nghiệm trong ly pha lê quý phái.",
+      "craftedCocktails": [
+        {
+          "name": "Classic Margarita",
+          "category": "World-Famous Icon",
+          "desc": "Tequila 100% Agave hòa quyện rượu mùi cam cao cấp Cointreau, nước cốt chanh tươi vắt và viền muối hồng Himalaya.",
+          "recipe": "50ml Tequila Blanco/Añejo, 25ml Cointreau, 20ml nước cốt chanh tươi, viền muối hồng Himalaya.",
+          "menuDrinkId": "d5",
+          "inMenu": true
+        },
+        {
+          "name": "Tommy's Luxury Margarita",
+          "category": "San Francisco Craft Classic",
+          "desc": "Tôn vinh vị nguyên bản của cây thùa: lược bỏ rượu mùi cam để làm nổi bật 1942 Añejo, mật thùa hữu cơ và nước cốt chanh Mexico tươi.",
+          "recipe": "50ml Don Julio 1942, 25ml nước cốt chanh tươi, 15ml mật thùa Agave hữu cơ.",
+          "menuDrinkId": null,
+          "inMenu": false
+        },
+        {
+          "name": "Tequila Añejo Old Fashioned",
+          "category": "Agave Twist",
+          "desc": "Thay thế bourbon bằng Añejo tequila đậm đà, mang đến nốt caramel mật thùa, cocoa bitters và tinh dầu vỏ cam cháy.",
+          "recipe": "50ml Don Julio 1942, 1 barspoon mật thùa Agave, 2 dashes Angostura & Aztec Chocolate Bitters, vỏ cam xoắn đốt tinh dầu.",
+          "menuDrinkId": null,
+          "inMenu": false
+        }
+      ]
+    },
+    {
+      "id": "sp-monkey-47",
+      "name": "Monkey 47 Schwarzwald Gin",
+      "fullName": "Monkey 47 Schwarzwald Dry Gin Handcrafted",
+      "family": "gin",
+      "familyLabel": "Schwarzwald Handcrafted Dry Gin",
+      "image": "img/bottles/monkey-47.jpg",
+      "origin": "Black Forest (Schwarzwald), Germany",
+      "distillery": "Black Forest Distillers (Stählemühle)",
+      "established": "2008 (Di sản công thức 1945)",
+      "masterBlender": "Christoph Keller",
+      "abv": 47,
+      "proof": "94 Proof",
+      "age": "Nghỉ 3 tháng trong các bình gốm đất nung truyền thống",
+      "bottleVol": "500ml",
+      "mashBill": "Rượu nền ngũ cốc tinh khiết kết hợp cùng đúng 47 loại thảo mộc thu hái thủ công từ Rừng Đen (Black Forest)",
+      "caskType": "Ủ lắng trong bình gốm không tráng men để kết nối các tinh dầu thảo mộc mà không bị ám mùi gỗ sồi",
+      "colorName": "Ánh Thảo Mộc Trong Suốt",
+      "liquidGradient": "linear-gradient(180deg, #e4f5ea 0%, #a4d8b5 60%, #437d57 100%)",
+      "accentColor": "#4cb779",
+      "badgeLabel": "47 Forest Botanicals",
+      "priceRange": "Ultra-Premium • ~1.850.000đ / chai",
+      "glassType": "Crystal Martini Coupe / Copa Glass",
+      "servingRitual": "Thưởng thức trong ly Dry Martini ướp lạnh tới -15°C, hoặc kết hợp cùng Mediterranean tonic hảo hạng, vỏ bưởi đào và lá xô thơm (sage).",
+      "tagline": "Giao lộ huyền thoại giữa di sản Gin Anh Quốc, gia vị Ấn Độ và thảo mộc Rừng Đen nước Đức.",
+      "biography": "Năm 1945, Trung tá Không quân Hoàng gia Anh Montgomery Collins đến Berlin thời hậu chiến và nhận đỡ đầu một chú khỉ tên Max tại Vườn thú Berlin. Sau đó, ông chuyển về sinh sống tại vùng Rừng Đen thơ mộng và mở một quán trọ mang tên 'The Wild Monkey', nơi ông sáng chế công thức gin bí truyền kết hợp kỹ thuật Dry Gin của Anh với thảo mộc rừng bản địa và gia vị phương Đông.\n\nĐược tái sinh vào năm 2008, Monkey 47 quy tụ tới 47 nguyên liệu thảo mộc quý hiếm: quả lingonberry Rừng Đen, đọt thông non, hoa kim ngân, lá mâm xôi, rễ đương quy, tiêu cubeb và hoa keo, chưng cất cùng nguồn nước nguồn siêu mềm của Rừng Đen. Nằm trong chai thủy tinh nâu dáng dược thư cổ điển, đây là dòng gin tôn sùng của các chuyên gia pha chế toàn cầu.",
+      "tastingNotes": {
+        "nose": "Hương bách xù tươi sắc nét bùng nổ, lá thông nghiền, hoa oải hương, lá chanh kaffir và thảo mộc rừng xanh ngát.",
+        "palate": "Cực kỳ tinh tế và đa tầng; vị tiêu nứt và bạch đậu khấu cay nhẹ cân bằng bởi quả chua lingonberry, hoa cơm cháy thanh khiết và cam chanh tươi tắn.",
+        "finish": "Khô ráo, thanh sạch và bền bỉ với dư vị thông rừng thảo mộc vang vọng dài lâu nơi vòm họng."
+      },
+      "sensoryScores": {
+        "smoke": 0,
+        "sweetness": 30,
+        "oakSpice": 60,
+        "botanical": 98,
+        "richness": 75
+      },
+      "sommelierQuote": "47 loại thảo mộc không hề lấn át nhau, mà cùng hòa tấu như một dàn nhạc thính phòng dưới sự chỉ huy tài tình của bậc thầy chưng cất.",
+      "craftedCocktails": [
+        {
+          "name": "Dry Martini 007",
+          "category": "King of Cocktails",
+          "desc": "Đỉnh cao phong thái quý ông: Monkey 47 gin siêu lạnh khuấy đều cùng Dry Vermouth Pháp, điểm xuyết quả ô liu xanh Castelvetrano.",
+          "recipe": "60ml Monkey 47 Gin, 10ml Noilly Prat Dry Vermouth, khuấy lạnh sâu, ô liu Castelvetrano.",
+          "menuDrinkId": "d3",
+          "inMenu": true
+        },
+        {
+          "name": "Negroni Classico",
+          "category": "Aperitivo Masterpiece",
+          "desc": "Tỷ lệ cân bằng tuyệt đối: 47 tầng thảo mộc của Monkey 47 đứng vững vàng trước vị đắng Campari và vị đậm của Vermouth Ý.",
+          "recipe": "30ml Monkey 47 Gin, 30ml Campari, 30ml Sweet Vermouth Carpano, lát cam tươi đốt tinh dầu.",
+          "menuDrinkId": "d1",
+          "inMenu": true
+        },
+        {
+          "name": "Schwarzwald Gin & Tonic",
+          "category": "Ultimate Botanical Highball",
+          "desc": "Phục vụ trên khối đá trong suốt cùng Fever-Tree tonic, vỏ bưởi hồng tươi và một nhánh xô thơm miền núi.",
+          "recipe": "50ml Monkey 47 Gin, 150ml Fever-Tree Mediterranean Tonic, vỏ bưởi hồng, lá xô thơm tươi.",
+          "menuDrinkId": null,
+          "inMenu": false
+        }
+      ]
+    },
+    {
+      "id": "sp-lagavulin-16",
+      "name": "Lagavulin 16 Year Old",
+      "fullName": "Lagavulin 16 Years Old Islay Single Malt Scotch Whisky",
+      "family": "whisky",
+      "familyLabel": "Islay Single Malt Scotch Whisky",
+      "image": "img/bottles/lagavulin-16.jpg",
+      "origin": "Islay, Hebrides, Scotland",
+      "distillery": "Lagavulin Distillery (Dunyvaig Bay)",
+      "established": "1816",
+      "masterBlender": "Dr. Jim Beveridge (Master of Malt)",
+      "abv": 43,
+      "proof": "86 Proof",
+      "age": "16 Years Old",
+      "bottleVol": "700ml",
+      "mashBill": "100% lúa mạch Scotland hun khói than bùn biển nồng đậm (chỉ số 35-40 ppm phenol)",
+      "caskType": "Ủ trọn vẹn 16 năm trong thùng gỗ sồi Mỹ từng ủ Bourbon và thùng hogshead đã qua xử lý",
+      "colorName": "Hổ Phách Khói Bùn Sẫm",
+      "liquidGradient": "linear-gradient(180deg, #e59a38 0%, #9c5512 60%, #462002 100%)",
+      "accentColor": "#e5a73e",
+      "badgeLabel": "Peat King of Islay",
+      "priceRange": "Premium • ~3.200.000đ / chai",
+      "glassType": "Glencairn Crystal Glass",
+      "servingRitual": "Nhâm nhi chậm rãi khi màn đêm buông xuống trong ly Glencairn. Thưởng thức nguyên chất (Neat) hoặc nhỏ thêm vài giọt nước suối mát để mở bung làn hương khói biển và rong rêu đại dương.",
+      "tagline": "Tiếng gầm hoang dã của sóng gió Đại Tây Dương và ngọn lửa than bùn Scotland ngàn năm.",
+      "biography": "Đứng sừng sững bên vịnh Dunyvaig trên bờ biển lộng gió phía nam đảo Islay từ năm 1816, Lagavulin được tôn xưng là 'Vua của vùng Islay'. Nơi đây sở hữu chu trình lên men dài nhất hòn đảo (hơn 55 giờ) và tốc độ chưng cất chậm nhất Scotland, giúp hơi khói than bùn đậm đặc và i-ốt biển mặn mòi hòa quyện mượt mà vào vị ngọt ngào sâu thẳm của mạch nha.\n\nTrong khi nhiều nhà chưng cất trên đảo đóng chai ở mốc 10 hoặc 12 năm, Lagavulin kiên nhẫn đợi đủ 16 năm trong những kho đá ẩm ướt hứng trọn hơi muối biển của sóng Đại Tây Dương. Thời gian đã thuần hóa ngọn lửa than bùn hung hãn thành một chất rượu đa tầng quyến rũ giữa khói biển, vani ngọt và trái cây khô.",
+      "tastingNotes": {
+        "nose": "Khói than bùn biển đặc quánh, rong biển mặn mòi, i-ốt, vị ngọt mạch nha đậm đà, trà hun khói Lapsang Souchong và chuối caramel nướng.",
+        "palate": "Đồ sộ và mênh mang; khói than bùn khô bao trùm vòm họng, nối tiếp bởi muối biển, trái cây sấy khô ngọt ngào, tiêu đen và hạt cà phê espresso.",
+        "finish": "Hùng vĩ và ngân dài suốt nhiều phút; khói than bùn đại dương ấm áp, mạch nha nướng ngọt và dư âm gỗ sồi cay nồng vương vấn."
+      },
+      "sensoryScores": {
+        "smoke": 96,
+        "sweetness": 45,
+        "oakSpice": 80,
+        "botanical": 25,
+        "richness": 95
+      },
+      "sommelierQuote": "Lagavulin 16 không dành cho những người e dè; đó là một bản anh hùng ca về những con sóng gầm gào vỗ bờ, đầm lầy muối và hơi ấm của đống lửa than bùn sưởi ấm mùa đông tuyết trắng.",
+      "craftedCocktails": [
+        {
+          "name": "Smoky Penicillin",
+          "category": "Modern Scotch Classic",
+          "desc": "Nền tảng Blended Scotch lắc cùng gừng tươi và mật ong, rót nổi một lớp Lagavulin 16 khói than bùn huyền ảo lên bề mặt.",
+          "recipe": "50ml Blended Scotch, 20ml nước cốt chanh, 20ml siro mật ong gừng, float 10ml Lagavulin 16.",
+          "menuDrinkId": null,
+          "inMenu": false
+        },
+        {
+          "name": "Smoked Old Fashioned",
+          "category": "Peated Twist",
+          "desc": "Whisky ủ sồi được vuốt ve bởi khói thùng gỗ hồ đào, bitters và vỏ cam cháy nướng.",
+          "recipe": "50ml Peated Whisky, Angostura Bitters, đường Demerara, khói gỗ Pecan tự nhiên.",
+          "menuDrinkId": "d2",
+          "inMenu": true
+        },
+        {
+          "name": "Godfather Peated",
+          "category": "Two-Ingredient Classic",
+          "desc": "Sự đối lập ấn tượng giữa khói than bùn dữ dội của Islay và vị ngọt hạnh nhân mượt mà của Amaretto Disaronno.",
+          "recipe": "45ml Lagavulin 16, 20ml Amaretto Disaronno, khuấy lạnh trên đá tảng.",
+          "menuDrinkId": null,
+          "inMenu": false
+        }
+      ]
+    },
+    {
+      "id": "sp-diplomatico",
+      "name": "Diplomático Reserva Exclusiva",
+      "fullName": "Diplomático Reserva Exclusiva Venezuelan Aged Sipping Rum",
+      "family": "rum",
+      "familyLabel": "Aged Venezuelan Sipping Rum",
+      "image": "img/bottles/diplomatico-rum.jpg",
+      "origin": "La Miel, Andes Foothills, Venezuela",
+      "distillery": "Destilerías Unidas S.A. (DUSA)",
+      "established": "1959",
+      "masterBlender": "Tito Cordero & Nelson Hernandez",
+      "abv": 40,
+      "proof": "80 Proof",
+      "age": "Ủ lên tới 12 năm",
+      "bottleVol": "700ml",
+      "mashBill": "Chưng cất từ mật mía tươi nguyên chất (virgin sugar cane honey) và nguồn nước khoáng tinh khiết từ dãy Andes",
+      "caskType": "Ủ 12 năm trong thùng gỗ sồi trắng Mỹ từng ủ Bourbon và Malt Whisky",
+      "colorName": "Gỗ Gụ Đồng Đậm",
+      "liquidGradient": "linear-gradient(180deg, #d8832a 0%, #853e0d 60%, #3e1602 100%)",
+      "accentColor": "#d8832a",
+      "badgeLabel": "Andean Honey Rum",
+      "priceRange": "Premium • ~1.650.000đ / chai",
+      "glassType": "Heavy-Base Rocks Glass / Snifter",
+      "servingRitual": "Phục vụ trong ly rocks đế dày trên một khối đá tròn cắt tay, đi kèm một lát cam tươi và một thanh sô-cô-la đen 70% nguyên chất.",
+      "tagline": "Mật mía trinh nữ sánh quyện được ủ mượt mà dưới đỉnh núi Andes hùng vĩ.",
+      "biography": "Được sản xuất tại thị trấn La Miel dưới chân dãy núi Andes Venezuela kỳ vĩ, nơi nguồn nước khoáng trên núi cùng sự chênh lệch nhiệt độ ngày đêm nhiệt đới thúc đẩy quá trình tương tác giữa rượu và gỗ sồi. Người đàn ông lịch lãm trên nhãn chai là Don Juancho Nieto Meléndez – một quý tộc thế kỷ 19 mang niềm say mê sưu tầm những dòng rượu truyền thống trứ danh.\n\nKhác với các dòng rum công nghiệp thông thường nấu từ rỉ đường rẻ tiền, Diplomático Reserva Exclusiva được chưng cất chủ yếu từ mật mía nguyên chất trong các nồi chưng cất đồng cổ. Được ủ kiên nhẫn tới 12 năm trong thùng sồi trắng Mỹ, rượu mang tới cấu trúc sánh mịn phi thường và độ phức hợp ngọt ngào mê đắm.",
+      "tastingNotes": {
+        "nose": "Mứt vỏ cam, đường nâu thô, bánh pudding toffee, siro phong, gừng ngọt và gỗ sồi vani nướng.",
+        "palate": "Mượt như lụa và ngọt ngào như món tráng miệng; sô-cô-la sữa, kẹo mềm fudge, chuối chín, quả óc chó nướng cùng đinh hương và quế ấm áp.",
+        "finish": "Đậm đà, quyến rũ ngọt ngào và lưu luyến với các nốt cam thảo ngọt và caramel đen."
+      },
+      "sensoryScores": {
+        "smoke": 5,
+        "sweetness": 88,
+        "oakSpice": 68,
+        "botanical": 35,
+        "richness": 90
+      },
+      "sommelierQuote": "Diplomático Reserva Exclusiva đã vĩnh viễn xóa bỏ định kiến rằng rum chỉ dùng để pha cocktail bãi biển – đây là một cực phẩm nhâm nhi thượng hạng đích thực.",
+      "craftedCocktails": [
+        {
+          "name": "Mojito Havana Rum",
+          "category": "Classic Highball",
+          "desc": "Rum ủ lâu năm dầm cùng lá bạc hà tươi, chanh xanh thanh mát, đường mía thô và soda sủi bọt trên đá bào mát lạnh.",
+          "recipe": "50ml Aged Rum, bạc hà tươi, nước cốt chanh, đường mía thô, soda khoáng có gas.",
+          "menuDrinkId": "d6",
+          "inMenu": true
+        },
+        {
+          "name": "Rum Old Fashioned",
+          "category": "Aged Spirit Twist",
+          "desc": "Biến tấu mượt mà thay thế bourbon bằng dark rum 12 năm, điểm xuyết chocolate bitters và tinh dầu cam cháy thơm nồng.",
+          "recipe": "60ml Diplomático Rum, 1 barspoon siro mía thô, 2 dashes Chocolate Bitters, vỏ cam xoắn.",
+          "menuDrinkId": null,
+          "inMenu": false
+        },
+        {
+          "name": "El Presidente",
+          "category": "Cuban Golden Age",
+          "desc": "Thức uống quý tộc thời hoàng kim thập niên 1920 tại Havana: dark rum, dry vermouth, orange curaçao và siro lựu grenadine thủ công.",
+          "recipe": "45ml Aged Rum, 20ml Dry Vermouth, 10ml Orange Curaçao, 5ml siro Grenadine thủ công.",
+          "menuDrinkId": null,
+          "inMenu": false
+        }
+      ]
+    },
+    {
+      "id": "sp-campari-bitter",
+      "name": "Campari Bitter Milano",
+      "fullName": "Campari Bitter L'Aperitivo Milano Original Recipe",
+      "family": "bitter",
+      "familyLabel": "Italian Red Bitter Aperitivo",
+      "image": "img/bottles/campari.jpg",
+      "origin": "Milano, Lombardia, Italy",
+      "distillery": "Davide Campari-Milano (Sesto San Giovanni)",
+      "established": "1860",
+      "masterBlender": "Gaspare Campari (Công thức tuyệt mật được bảo tồn)",
+      "abv": 25,
+      "proof": "50 Proof",
+      "age": "Ngâm ủ thủ công tinh hoa",
+      "bottleVol": "750ml / 1000ml",
+      "mashBill": "Công thức ngâm ủ tuyệt mật của thảo mộc đắng, thực vật thơm, vỏ trái cây và vỏ cây trong cồn và nước tinh khiết",
+      "caskType": "Các bồn ngâm thép không gỉ và gỗ sồi trung tính bảo toàn tối đa tinh dầu thảo mộc tinh tế",
+      "colorName": "Đỏ Hồng Ngọc Biểu Tượng",
+      "liquidGradient": "linear-gradient(180deg, #e62129 0%, #b31016 60%, #680509 100%)",
+      "accentColor": "#e62129",
+      "badgeLabel": "Italian Aperitivo Soul",
+      "priceRange": "Bar Standard • ~550.000đ / chai",
+      "glassType": "Crystal Rocks Glass / Highball",
+      "servingRitual": "Rót qua những viên đá lớn kèm một lát cam tươi mọng nước (Campari on the Rocks), hoặc dùng làm linh hồn cho Negroni hay Spritz.",
+      "tagline": "Tiên dược thảo mộc đắng bất tử định hình nên những giờ khắc cocktail huy hoàng nhất của nhân loại.",
+      "biography": "Vào năm 1860, tại quán Café Campari lịch sử đối diện nhà thờ chính tòa Duomo lộng lẫy của Milan, Gaspare Campari đã phát minh ra một loại rượu đắng màu đỏ hồng ngọc mà công thức chính xác của nó vẫn là một trong những bí mật thương mại được bảo vệ nghiêm ngặt nhất thế giới suốt hơn 160 năm qua. Đến nay, chỉ một số rất ít người được tuyên thệ bảo mật tại công ty mới biết toàn bộ danh mục các loại rễ cây và thảo mộc.\n\nVới sắc đỏ rực rỡ khó quên cùng vị đắng thảo mộc thanh thoát, Campari đã khai sinh ra văn hóa 'Aperitivo' (rượu khai vị) biểu tượng của nước Ý. Đây là nhịp đập không thể thay thế của những ly cocktail nổi tiếng nhất lịch sử như Negroni, Americano và Boulevardier.",
+      "tastingNotes": {
+        "nose": "Vỏ cam đắng chinotto, thảo dược gia truyền, cánh hoa khô mùa thu, nhựa lá thông và rễ cây long đởm gentian.",
+        "palate": "Vị đắng phức hợp, sống động bùng nổ; ngập tràn vị cam đắng, quả mọng đỏ chua thanh, đinh hương ấm nồng và ngải cứu thơm ngát.",
+        "finish": "Hậu vị chát nhẹ sảng khoái và kéo dài; làm sạch vòm họng và đánh thức vị giác với vẻ thanh lịch thảo mộc tuyệt vời."
+      },
+      "sensoryScores": {
+        "smoke": 5,
+        "sweetness": 35,
+        "oakSpice": 50,
+        "botanical": 95,
+        "richness": 70
+      },
+      "sommelierQuote": "Vị đắng của Campari là một lời mời gọi lòng dũng cảm: lạ lẫm ở lần chạm môi đầu tiên, nhưng một khi đã thấu hiểu, nó sẽ trở thành người bạn tri kỷ suốt cuộc đời.",
+      "craftedCocktails": [
+        {
+          "name": "Negroni Classico",
+          "category": "The Ultimate Classic",
+          "desc": "Tỷ lệ vàng 1:1:1 bất hủ giữa London Dry Gin, rượu đắng Campari và sweet vermouth, trang trí tinh tế với vỏ cam tươi.",
+          "recipe": "30ml London Dry Gin, 30ml Campari, 30ml Sweet Vermouth Carpano, vỏ cam tươi đốt tinh dầu.",
+          "menuDrinkId": "d1",
+          "inMenu": true
+        },
+        {
+          "name": "Aperol & Campari Spritz",
+          "category": "Italian Aperitivo",
+          "desc": "Sự sảng khoái tràn ngập ánh nắng nước Ý: rượu đắng khai vị, vang sủi Prosecco DOC ướp lạnh và nước khoáng có gas sủi bọt.",
+          "recipe": "60ml Prosecco DOC, 40ml Campari / Aperol, 20ml nước Soda, lát cam tươi.",
+          "menuDrinkId": "d8",
+          "inMenu": true
+        },
+        {
+          "name": "Boulevardier",
+          "category": "Parisian Masterpiece",
+          "desc": "Người anh em họ whisky trầm mặc của Negroni: bourbon đậm đà thay thế gin, bổ sung thêm tầng hương gỗ sồi và vani vào cấu trúc thảo mộc đắng.",
+          "recipe": "45ml Bourbon Whiskey, 30ml Campari, 30ml Sweet Vermouth, vỏ cam xoắn.",
+          "menuDrinkId": null,
+          "inMenu": false
+        }
+      ]
+    },
+    {
+      "id": "sp-bulleit-10",
+      "name": "Bulleit 10-Year Bourbon",
+      "fullName": "Bulleit 10 Year Old Kentucky Straight Bourbon Whiskey",
+      "family": "whisky",
+      "familyLabel": "High-Rye Kentucky Straight Bourbon",
+      "image": "img/bottles/bulleit-bourbon.jpg",
+      "origin": "Louisville, Kentucky, USA",
+      "distillery": "Bulleit Distilling Co. (Shelbyville)",
+      "established": "1987 (Di sản 1830 của Augustus Bulleit)",
+      "masterBlender": "Tom Bulleit & Ewan Morgan",
+      "abv": 45.6,
+      "proof": "91.2 Proof",
+      "age": "10 Years Old",
+      "bottleVol": "750ml",
+      "mashBill": "68% Ngô, 28% Lúa mạch đen (Rye), 4% Lúa mạch mạch nha (Malted Barley)",
+      "caskType": "Thùng gỗ sồi trắng Mỹ mới đốt nướng kỹ lưỡng (Char #4 Alligator Char - vân da cá sấu)",
+      "colorName": "Hổ Phách Mật Nướng",
+      "liquidGradient": "linear-gradient(180deg, #f2a73b 0%, #b86214 60%, #5a2703 100%)",
+      "accentColor": "#c59843",
+      "badgeLabel": "Kentucky High-Rye",
+      "priceRange": "Premium • ~1.950.000đ / chai",
+      "glassType": "Heavy-Base Crystal Rocks Glass",
+      "servingRitual": "Thưởng thức trọn vẹn nhất trên khối đá tròn điêu khắc để làm dịu độ cồn 91.2 Proof và mở bung hương gỗ sồi cháy, caramel cùng gia vị mùa đông ấm nồng.",
+      "tagline": "Cá tính High-Rye miền biên viễn táo bạo được tôi luyện qua trọn vẹn một thập kỷ trong gỗ sồi Kentucky nướng cháy.",
+      "biography": "Lấy cảm hứng từ công thức huyền thoại được tạo ra vào những năm 1830 bởi cụ cố Augustus Bulleit, Tom Bulleit đã hồi sinh di sản gia tộc với hàm lượng lúa mạch đen (rye) cao khác thường (28%) – vượt trội hơn hẳn so với các dòng bourbon ngô ngọt thông thường. Điều này mang lại cho Bulleit cá tính đậm vị tiêu cay, khô ráo và khí chất biên viễn phóng khoáng.\n\nPhiên bản 10 năm tuổi là tinh hoa được tuyển chọn từ những thùng rượu nằm sâu nhất trong kho ủ, nơi trải qua mười mùa hè Kentucky bỏng rát và mùa đông băng giá ép chất rượu thẩm thấu sâu vào những kẽ nứt than gỗ da cá sấu (char #4). Một thập kỷ kiên nhẫn đã thuần hóa tính bốc đồng của lúa mạch đen thành sự chín muồi nhung mượt sâu lắng.",
+      "tastingNotes": {
+        "nose": "Gỗ sồi nướng cháy, kẹo bơ butterscotch đậm đà, mơ khô, nhục đậu khấu, vani bourbon ấm áp và da thuộc cổ.",
+        "palate": "Dày dặn, cay nồng vị tiêu và ấm áp; bánh mì lúa mạch đen nướng, vỏ cam khô, sô-cô-la đắng ngọt và mật ong hoa dại.",
+        "finish": "Cực kỳ êm mượt và bền bỉ với tiếng vang sâu lắng của sồi nướng cháy, tiêu nứt và gia vị bánh nướng mùa đông."
+      },
+      "sensoryScores": {
+        "smoke": 30,
+        "sweetness": 65,
+        "oakSpice": 92,
+        "botanical": 35,
+        "richness": 88
+      },
+      "sommelierQuote": "Tỷ lệ lúa mạch đen cao mang lại cho Bulleit sự dũng mãnh của một chàng cao bồi biên viễn, nhưng mười năm trong gỗ sồi nướng lại trao tặng cho nó vẻ lịch lãm chuẩn mực của một quý tộc Anh quốc.",
+      "craftedCocktails": [
+        {
+          "name": "Bourbon Whiskey Sour",
+          "category": "Classic Sour Cocktail",
+          "desc": "Bourbon Kentucky đậm đà làm dịu êm bởi nước cốt chanh tươi và lớp bọt lòng trắng trứng mịn màng cùng thảo mộc bitters.",
+          "recipe": "50ml Bulleit Bourbon, 25ml nước cốt chanh tươi, 15ml siro đường, 1 bọt lòng trắng trứng, Angostura Bitters.",
+          "menuDrinkId": "d4",
+          "inMenu": true
+        },
+        {
+          "name": "Smoked Old Fashioned",
+          "category": "Gentleman's Choice",
+          "desc": "Bourbon thượng hạng khuấy cùng đường mía demerara thô, bitters và hun khói sồi gỗ hồ đào cùng vỏ cam nướng.",
+          "recipe": "50ml Bulleit Bourbon, 2 dashes Angostura Bitters, đường nâu thô, vỏ cam cháy, khói gỗ hồ đào Pecan.",
+          "menuDrinkId": "d2",
+          "inMenu": true
+        },
+        {
+          "name": "Manhattan Reserve",
+          "category": "Queen of Cocktails",
+          "desc": "Nữ hoàng của các loại cocktail: bourbon mạnh mẽ kết hợp hài hòa cùng sweet vermouth Ý và quả anh đào ngâm Maraschino.",
+          "recipe": "50ml Bulleit Bourbon, 25ml Carpano Antica Sweet Vermouth, 2 dashes Bitters, quả anh đào Maraschino.",
+          "menuDrinkId": "d9",
+          "inMenu": true
+        }
+      ]
+    }
+  ],
+  "bartenders": [
+    {
+      "id": "bt-salvatore-calabrese",
+      "name": "Salvatore Calabrese",
+      "nickname": "The Maestro",
+      "category": "renaissance",
+      "categoryLabel": "Huyền Thoại Phục Hưng Hiện Đại",
+      "origin": "Maiori, Bờ biển Amalfi, Ý (sinh năm 1955)",
+      "currentBase": "London, Vương quốc Anh",
+      "yearsActive": "1966 – nay",
+      "venues": [
+        "Quầy bar Khách sạn Dukes (London, thập niên 1980 – 1994)",
+        "The Library Bar, Khách sạn The Lanesborough (London, từ 1994)",
+        "Salvatore at FIFTY / Salvatore at Playboy (London)",
+        "The Donovan Bar, Brown's Hotel (London, từ 2018)",
+        "Velvet, Corinthia London (2022)"
+      ],
+      "image": "img/bartenders/salvatore-calabrese.jpg",
+      "imageType": "portrait",
+      "accolades": [
+        "Giải thưởng Thành tựu Trọn đời Helen David tại Tales of the Cocktail (2013)",
+        "Cựu Chủ tịch Hiệp hội Bartender Vương quốc Anh (UKBG)",
+        "Kỷ lục Guinness Thế giới: Ly cocktail đắt nhất – Salvatore's Legacy, £5,500 (2012)",
+        "Tác giả cuốn sách kinh điển 'Classic Cocktails'"
+      ],
+      "philosophy": "Nổi tiếng với nghệ thuật hiếu khách đỉnh cao: những ly Dry Martini chuẩn xác tại Dukes và triết lý 'Lịch Sử Dạng Lỏng (Liquid History)'—phục vụ những dòng rượu cognac và spirits cổ hiếm từ nhiều thế kỷ trước cho thực khách.",
+      "signatureDrinks": [
+        {
+          "name": "Breakfast Martini",
+          "year": "Thập niên 1990",
+          "desc": "Sáng tạo tại The Library Bar thuộc The Lanesborough; câu chuyện bắt nguồn từ việc vợ ông hối thúc ông ăn sáng với bánh mì nướng phết mứt cam trước khi đi làm.",
+          "recipe": "50ml London Dry Gin, 15ml Cointreau, 15ml Nước cốt chanh tươi, 1 Barspoon Mứt cam đắng.",
+          "glass": "Chilled Cocktail Glass",
+          "onMenu": true
+        },
+        {
+          "name": "Salvatore's Legacy",
+          "year": "2012",
+          "desc": "Xác lập Kỷ lục Guinness thế giới cho ly cocktail đắt nhất (£5,500/ly), pha chế từ Cognac Clos de Griffier Vieux năm 1788, Rượu mùi Kummel 1770, Dubb Orange Curaçao 1860 và Angostura Bitters đầu thế kỷ 20.",
+          "recipe": "40ml Cognac Clos de Griffier 1788, 20ml Kummel 1770, 20ml Dubb Orange Curaçao 1860, 2 dashes Angostura Bitters cổ.",
+          "glass": "Antique Crystal Glass",
+          "onMenu": false
+        },
+        {
+          "name": "Spicy Fifty",
+          "year": "Thập niên 2000",
+          "desc": "Món cocktail hiện đại kinh điển thời kỳ Salvatore at FIFTY, hòa quyện hương vani, hoa cơm cháy, mật ong cùng vị cay nồng bất ngờ từ ớt tươi.",
+          "recipe": "50ml Vanilla Vodka, 15ml Elderflower Cordial, 15ml Nước cốt chanh tươi, 10ml Siro mật ong, 2 lát ớt đỏ.",
+          "glass": "Chilled Martini Glass",
+          "onMenu": true
+        }
+      ],
+      "biography": "Mùa hè năm 1966, khi mới 11 tuổi, Salvatore Calabrese đã bắt đầu phụ việc sau quầy bar khách sạn tại quê nhà Maiori ven bờ biển Amalfi. Đến năm 21 tuổi, ông đã trở thành trưởng bộ phận phục vụ trẻ nhất trên dải bờ biển nước Ý.\n\nNăm 1980, ông chuyển đến London và gia nhập Dukes Hotel, nơi ông trở nên nổi tiếng với phong cách phục vụ Dry Martini siêu lạnh không dùng đá và khởi xướng khái niệm \"Liquid History\" – phục vụ những dòng vintage cognac cực hiếm. Năm 1994, ông chuyển sang The Library Bar tại The Lanesborough, sáng tạo nên ly Breakfast Martini trứ danh và trở thành nhân vật tiên phong trong phong trào phục hưng cocktail thập niên 1990. Cuốn sách đầu tay của ông, 'Classic Cocktails', đã bán được hơn một triệu bản trên toàn cầu."
+    },
+    {
+      "id": "bt-ada-coleman",
+      "name": "Ada Coleman",
+      "nickname": "Coley",
+      "category": "classic",
+      "categoryLabel": "Tiên Phong Kỷ Nguyên Vàng",
+      "origin": "Anh Quốc (1875 – 1966)",
+      "currentBase": "The Savoy, London (Di sản lịch sử)",
+      "yearsActive": "1899 – 1925 (Trưởng Bar American Bar 1903 – 1925)",
+      "venues": [
+        "Khách sạn Claridge's (London)",
+        "The American Bar tại Khách sạn The Savoy (London)"
+      ],
+      "image": "img/bartenders/ada-coleman.jpg",
+      "imageType": "portrait",
+      "accolades": [
+        "Trưởng quầy bar The American Bar tại The Savoy hơn 20 năm – một trong ba phụ nữ duy nhất từng nắm giữ vị trí danh giá này",
+        "Người sáng tạo ra Hanky Panky, công thức sau này được in trong cuốn 'The Savoy Cocktail Book' (1930)",
+        "Từng phục vụ các nhân vật lịch sử như đại văn hào Mark Twain, Thân vương xứ Wales và danh kịch Sir Charles Hawtrey"
+      ],
+      "philosophy": "Được nhớ đến như một trong những bartender nổi tiếng đầu tiên của lịch sử: một người chủ quầy nồng hậu, hóm hỉnh, biến The American Bar thành điểm hẹn của giới quý tộc, kịch nghệ và văn nhân thế giới.",
+      "signatureDrinks": [
+        {
+          "name": "Hanky Panky",
+          "year": "Đầu thập niên 1900",
+          "desc": "Sáng tạo riêng cho nam diễn viên Sir Charles Hawtrey khi ông yêu cầu một ly nước 'có chút uy lực đánh thức vị giác'. Sau khi nhấp ngụm đầu tiên, ông đã thốt lên: 'Lạy Chúa! Đây chính là hanky-panky đích thực!'",
+          "recipe": "45ml London Dry Gin, 45ml Sweet Vermouth, 2 dashes Fernet-Branca, Vỏ cam xoắn.",
+          "glass": "Coupe Glass",
+          "onMenu": true
+        }
+      ],
+      "biography": "Ada \"Coley\" Coleman bắt đầu làm việc tại chuỗi khách sạn của gia đình D'Oyly Carte sau khi cha qua đời năm cô 24 tuổi – ban đầu ở quầy hoa, sau đó bước sau quầy bar tại Claridge's. Năm 1903, cô tiếp quản vị trí Trưởng quầy bar (Head Bartender) tại The American Bar của khách sạn The Savoy lừng danh, kế nhiệm Frank Wells.\n\nTrong hơn hai thập kỷ tại The Savoy, cô đã pha chế cho Mark Twain, Thân vương xứ Wales và Sir Charles Hawtrey. Cuối năm 1925, The Savoy đóng cửa The American Bar để cải tạo và công bố lễ nghỉ hưu của Coleman; học trò của cô là Harry Craddock sau đó đã tiếp quản vị trí này."
+    },
+    {
+      "id": "bt-dale-degroff",
+      "name": "Dale DeGroff",
+      "nickname": "King Cocktail",
+      "category": "renaissance",
+      "categoryLabel": "Người Cha Của Phong Trào Craft Cocktail",
+      "origin": "Rhode Island, Hoa Kỳ",
+      "currentBase": "Thành phố New York, Hoa Kỳ",
+      "yearsActive": "Thập niên 1980 – nay",
+      "venues": [
+        "Nhà hàng Aurora (New York – của Joe Baum)",
+        "The Rainbow Room, Trung tâm Rockefeller (New York, 1987 – 1999)",
+        "Bảo tàng Cocktail Hoa Kỳ (Chủ tịch sáng lập)"
+      ],
+      "image": "img/bartenders/dale-degroff.jpg",
+      "imageType": "portrait",
+      "accolades": [
+        "Người đầu tiên nhận Giải thưởng Cống hiến Trọn đời Helen David tại Tales of the Cocktail (2008)",
+        "Hai giải thưởng danh giá từ James Beard Foundation (Chuyên gia Rượu vang & Rượu mạnh)",
+        "Tác giả hai cuốn sách gối đầu giường: 'The Craft of the Cocktail' và 'The Essential Cocktail'",
+        "Đồng sáng lập chương trình đào tạo uy tín Beverage Alcohol Resource (BAR)"
+      ],
+      "philosophy": "Tiên phong đấu tranh đưa nước ép hoa quả tươi và công thức cổ điển thời kỳ Tiền Cấm Vận (Pre-Prohibition) trở lại quầy bar giữa thời kỳ ngành công nghiệp tràn ngập bột pha nhân tạo; ông yêu cầu mỗi bartender phải tư duy như một 'đầu bếp quầy bar (bar chef)'.",
+      "signatureDrinks": [
+        {
+          "name": "Cosmopolitan (Rainbow Room spec)",
+          "year": "1996",
+          "desc": "Dù không phải người phát minh ra Cosmopolitan, DeGroff là người đưa nó lên đỉnh cao danh vọng toàn cầu: sau khi Madonna thưởng thức món này tại The Rainbow Room năm 1996, công thức với kỹ thuật đốt tinh dầu vỏ cam của ông đã lan truyền khắp thế giới.",
+          "recipe": "45ml Citrus Vodka, 20ml Cointreau, 10ml Nước cốt chanh tươi, 30ml Nước ép nam việt quất (Cranberry), Vỏ cam đốt lửa.",
+          "glass": "Martini Glass",
+          "onMenu": true
+        }
+      ],
+      "biography": "Dale DeGroff gặp gỡ nhà đầu tư ẩm thực huyền thoại Joe Baum vào cuối thập niên 1960. Baum sau đó giao cho ông xây dựng thực đơn đồ uống tại Aurora – nơi trở thành bệ phóng thử nghiệm triết lý cocktail sử dụng 100% nguyên liệu tươi sống nguyên bản.\n\nKhi The Rainbow Room tại Trung tâm Rockefeller mở cửa lại vào năm 1987, DeGroff quản lý quầy bar tại đây cho đến năm 1999. Ông đào tạo đội ngũ bartender chuẩn mực như những đầu bếp chuyên nghiệp – đưa họ vào bếp tìm hiểu cách dùng dao gọt, kỹ thuật nêm nếm và hồi sinh các công thức kinh điển. Di sản của ông tại The Rainbow Room được toàn giới công nhận là khởi điểm của phong trào Craft Cocktail hiện đại."
+    },
+    {
+      "id": "bt-harry-craddock",
+      "name": "Harry Craddock",
+      "nickname": "The Dean of Cocktail Shakers",
+      "category": "classic",
+      "categoryLabel": "Bậc Thầy Kỷ Nguyên Vàng",
+      "origin": "Stroud, Gloucestershire, Anh Quốc (sau nhập quốc tịch Mỹ)",
+      "currentBase": "London / New York (Di sản lịch sử)",
+      "yearsActive": "1897 – thập niên 1940",
+      "venues": [
+        "Khách sạn Hollenden (Cleveland)",
+        "Khách sạn Knickerbocker & Hoffman House (New York)",
+        "The American Bar tại The Savoy (London, 1920 – 1939)",
+        "The Dorchester (London, từ 1939)"
+      ],
+      "image": "img/bartenders/harry-craddock.jpg",
+      "imageType": "portrait",
+      "accolades": [
+        "Tác giả cuốn kinh thư bất hủ 'The Savoy Cocktail Book' (1930)",
+        "Đồng sáng lập Hiệp hội Bartender Vương quốc Anh (UKBG)",
+        "Trưởng quầy bar đầu tiên của khách sạn The Dorchester (1939)"
+      ],
+      "philosophy": "Nổi tiếng với câu châm ngôn kinh điển: \"Cách tốt nhất để uống một ly cocktail là uống thật nhanh, khi nó vẫn còn đang mỉm cười với bạn.\"",
+      "signatureDrinks": [
+        {
+          "name": "White Lady",
+          "year": "1930",
+          "desc": "Được Craddock hoàn thiện và phổ biến tại The Savoy, ghi chép trong 'The Savoy Cocktail Book'. Năm 1927, ông thậm chí còn niêm phong một bình lắc chứa ly White Lady bên trong bức tường của The American Bar.",
+          "recipe": "40ml Dry Gin, 20ml Cointreau, 20ml Nước cốt chanh tươi (Tỷ lệ vàng Savoy 1930: 2:1:1).",
+          "glass": "Coupe Glass",
+          "onMenu": true
+        },
+        {
+          "name": "Corpse Reviver No. 2",
+          "year": "1930",
+          "desc": "Xuất hiện trong 'The Savoy Cocktail Book' kèm lời cảnh báo nổi tiếng: 'Nếu uống liền bốn ly liên tiếp, nó sẽ khiến xác chết sống lại thêm một lần nữa.'",
+          "recipe": "20ml Dry Gin, 20ml Cointreau, 20ml Lillet Blanc, 20ml Nước cốt chanh tươi, 1 dash Absinthe.",
+          "glass": "Nick & Nora Glass",
+          "onMenu": true
+        }
+      ],
+      "biography": "Sinh ra tại Gloucestershire (Anh), Harry Craddock di cư sang Mỹ năm 1897, làm việc tại những khách sạn hoa lệ nhất Cleveland và New York trước khi nhập quốc tịch Mỹ.\n\nKhi Đạo luật Cấm Rượu (Prohibition) được ban hành tại Mỹ, ông quay về Anh và gia nhập The American Bar tại The Savoy năm 1920, kế nhiệm chức Trưởng quầy sau khi Ada Coleman nghỉ hưu. Năm 1930, ông xuất bản 'The Savoy Cocktail Book' – cuốn sách vẫn là tài liệu tham khảo được trích dẫn nhiều nhất lịch sử mixology. Năm 1939, ông chuyển sang The Dorchester, nơi ông chôn giấu các bình rượu chứa White Lady, Manhattan và Martini vào tường gạch – những kỷ vật được tìm thấy nhiều thập kỷ sau đó."
+    },
+    {
+      "id": "bt-hidetsugu-ueno",
+      "name": "Hidetsugu Ueno",
+      "nickname": "The Ice Diamond Master",
+      "category": "japanese",
+      "categoryLabel": "Đại Sư Kỹ Nghệ Tinh Hoa Nhật Bản",
+      "origin": "Nhật Bản (sinh năm 1967)",
+      "currentBase": "Ginza, Tokyo, Nhật Bản",
+      "yearsActive": "1992 – nay",
+      "venues": [
+        "Star Bar Ginza (Tokyo, cùng sư phụ Hisashi Kishi)",
+        "Bar High Five (Ginza, Tokyo – khai trương ngày 4/7/2008)"
+      ],
+      "image": "img/bartenders/hidetsugu-ueno.jpg",
+      "imageType": "portrait",
+      "accolades": [
+        "Bar High Five: Giải thưởng Heering 'Legend of the List' từ The World's 50 Best Bars",
+        "Bar High Five: Quán bar xuất sắc nhất Nhật Bản (Best Bar in Japan) tại Asia's 50 Best Bars 2019",
+        "Được tôn vinh như đại sứ toàn cầu của nghệ thuật pha chế quầy bar Nhật Bản"
+      ],
+      "philosophy": "Bar High Five hoàn toàn không có thực đơn: mỗi ly cocktail đều được sáng tạo độc bản ngay tại chỗ sau cuộc trò chuyện lắng nghe khẩu vị, tâm trạng và cảm xúc của từng vị khách.",
+      "signatureDrinks": [
+        {
+          "name": "White Lady",
+          "year": "Thời kỳ High Five",
+          "desc": "Được truyền thông quốc tế ca ngợi như tấm danh thiếp của Ueno – phiên bản classic chuẩn mực được lắc bằng kỹ thuật Hard Shake điêu luyện kết hợp Gin, Cointreau và chanh tươi.",
+          "recipe": "45ml Dry Gin, 25ml Cointreau, 20ml Nước cốt chanh tươi, lắc lạnh Hard Shake.",
+          "glass": "Chilled Coupe",
+          "onMenu": true
+        },
+        {
+          "name": "Ice Diamond on the Rocks",
+          "year": "Thời kỳ Star Bar",
+          "desc": "Khối đá được đẽo gọt thủ công hình kim cương nhiều mặt sắc sảo để thưởng thức whisky on the rocks, sáng tạo cùng Hisashi Kishi – kỹ thuật đỉnh cao tạo nên thương hiệu của Ueno.",
+          "recipe": "Whisky thượng hạng rót ngập một viên đá kim cương pha lê điêu khắc tay.",
+          "glass": "Rocks Glass",
+          "onMenu": false
+        }
+      ],
+      "biography": "Hidetsugu Ueno bắt đầu sự nghiệp vào năm 1992 và nhanh chóng vang danh khi làm bartender khai trương tại Star Bar Ginza cùng sư phụ Hisashi Kishi. Tại đây, hai người đã sáng tạo ra nghệ thuật đẽo đá \"Ice Diamond\" tinh xảo, kỹ thuật mà sau này Ueno đã truyền bá ra toàn thế giới.\n\nNăm 2008, ông mở quán bar riêng Bar High Five tại Ginza. Quán không in menu mà phục vụ theo trải nghiệm cá nhân hóa tuyệt đối. High Five liên tục nằm trong danh sách The World's 50 Best Bars suốt một thập kỷ và nhận giải thưởng huyền thoại 'Legend of the List'."
+    },
+    {
+      "id": "bt-colin-field",
+      "name": "Colin Peter Field",
+      "nickname": "Huyền Thoại Bar Hemingway Tại Ritz Paris",
+      "category": "european",
+      "categoryLabel": "Bậc Thầy Khách Sạn Cổ Điển Châu Âu",
+      "origin": "Rugby, Anh Quốc (sinh năm 1961)",
+      "currentBase": "Paris, Pháp",
+      "yearsActive": "1982 – nay",
+      "venues": [
+        "Bar Hemingway, Khách sạn Ritz Paris (Trưởng quầy bar từ 1994 trong gần 30 năm)"
+      ],
+      "image": "img/bartenders/colin-field.jpg",
+      "imageType": "portrait",
+      "accolades": [
+        "Được tạp chí Forbes vinh danh là Bartender xuất sắc nhất thế giới (1997, 2001, 2004)",
+        "Bartender đầu tiên trong lịch sử được ghi danh vào cuốn 'Who's Who' danh giá của nước Pháp (2011)",
+        "Tác giả cuốn 'The Cocktails of the Ritz Paris' (2003)"
+      ],
+      "philosophy": "Nổi tiếng với nghệ thuật kể chuyện duyên dáng, kỹ thuật gắp trang trí bằng nhíp y khoa chuẩn mực và những sáng tạo tái định nghĩa ly Dry Martini truyền thống.",
+      "signatureDrinks": [
+        {
+          "name": "Serendipity",
+          "year": "Bar Hemingway",
+          "desc": "Một trong những tác phẩm được yêu thích nhất của Field tại Ritz Paris: Rượu táo Calvados vùng Normandy, nước ép táo tươi và lá bạc hà mát lạnh rót ngập vang Champagne Pháp.",
+          "recipe": "30ml Calvados, 30ml Nước ép táo tươi, Lá bạc hà tươi, rót đầy Champagne hảo hạng.",
+          "glass": "Highball Glass",
+          "onMenu": true
+        },
+        {
+          "name": "Picasso Martini",
+          "year": "Bar Hemingway",
+          "desc": "Một ly Martini chuyển biến kỳ diệu khi thưởng thức: Dry Vermouth được đông đặc thành một viên đá lạnh tinh khiết tan chảy chậm rãi vào dòng Dry Gin ướp lạnh sâu.",
+          "recipe": "60ml Dry Gin (ướp lạnh sâu), 1 Viên đá đông lạnh từ Dry Vermouth.",
+          "glass": "Martini Glass",
+          "onMenu": false
+        }
+      ],
+      "biography": "Colin Peter Field từng đoạt huy chương bạc tại giải Scott Cup cho bartender Pháp và Giải Vô địch Martini Thế giới năm 1982. Khi Bar Hemingway tại khách sạn Ritz Paris mở cửa trở lại năm 1994, ông đảm nhận vị trí Trưởng quầy bar và cống hiến tại đây gần 30 năm, đồng thời là cố vấn cấp cao về thức uống cho hãng hàng không Air France.\n\nForbes từng 3 lần tôn vinh ông là Bartender xuất sắc nhất hành tinh. Ông là tác giả của các tác phẩm được đón đọc rộng rãi: 'The Cocktails of the Ritz Paris' (2003) và 'The Ritz Paris: Mixing Drinks, A Simple Story' (2010)."
+    },
+    {
+      "id": "bt-erik-lorincz",
+      "name": "Erik Lorincz",
+      "nickname": "Trưởng Quầy Bar Đời Thứ 10 Của The Savoy",
+      "category": "european",
+      "categoryLabel": "Bậc Thầy Tiên Phong Đương Đại",
+      "origin": "Nitra, Slovakia",
+      "currentBase": "London, Vương quốc Anh",
+      "yearsActive": "1998 – nay",
+      "venues": [
+        "Purple Bar, Sanderson Hotel (London)",
+        "Connaught Bar (London, từ 2008)",
+        "The American Bar tại The Savoy (Trưởng quầy, 2010 – 2018)",
+        "Kwānt (Mayfair, London, mở năm 2019)"
+      ],
+      "image": "img/bartenders/erik-lorincz.jpg",
+      "imageType": "portrait",
+      "accolades": [
+        "Quán quân toàn cầu Diageo Reserve World Class Bartender of the Year (2010)",
+        "Đưa The American Bar tại The Savoy lên vị trí Quán Bar Xuất Sắc Nhất Thế Giới (World's Best Bar 2017)",
+        "Kwānt: Khai trương ấn tượng nhất (Best New Opening) tại The World's 50 Best Bars 2020",
+        "Bartender của năm do tạp chí Condé Nast Traveler US bình chọn"
+      ],
+      "philosophy": "Hòa quyện di sản cổ điển thế kỷ của The Savoy với độ chuẩn xác tuyệt đối của kỹ thuật lắc Hard Shake học hỏi từ bậc thầy Nhật Bản Kazuo Uyeda.",
+      "signatureDrinks": [
+        {
+          "name": "Green Park",
+          "year": "2011",
+          "desc": "Sáng tạo tại The American Bar của The Savoy: một ly gin sour xanh dịu, thơm nồng thảo mộc từ lá húng quế tươi, cần tây bitters và lớp bọt lòng trắng trứng sánh mượt.",
+          "recipe": "45ml Old Tom Gin, 30ml Nước cốt chanh tươi, 15ml Siro đường, 6 Lá húng quế tươi, 3 dashes Celery Bitters, Lòng trắng trứng.",
+          "glass": "Coupe Glass",
+          "onMenu": true
+        }
+      ],
+      "biography": "Erik Lorincz lớn lên tại Nitra, Slovakia. Ông đến London mà không nói được tiếng Anh, ban đầu học ngoại ngữ ban ngày và đi thu dọn ly cốc vào ban đêm. Tại nhà hàng Nozomi, ông may mắn được thụ giáo trực tiếp từ đại sư pha chế Nhật Bản Kazuo Uyeda.\n\nÔng gia nhập The Connaught năm 2008 và giành ngôi vị Quán quân World Class toàn cầu năm 2010. Tháng 10 năm đó, ông trở thành Trưởng quầy bar đời thứ 10 của The American Bar tại The Savoy, dẫn dắt quán đạt danh hiệu Quán Bar Xuất Sắc Nhất Thế Giới năm 2017. Năm 2019, ông khai trương quán bar riêng mang tên Kwānt tại Mayfair London."
+    },
+    {
+      "id": "bt-jerry-thomas",
+      "name": "Jerry Thomas",
+      "nickname": "The Professor",
+      "category": "classic",
+      "categoryLabel": "Người Khai Sinh Ngành Mixology Hoa Kỳ",
+      "origin": "Sackets Harbor, New York, Hoa Kỳ (1830 – 1885)",
+      "currentBase": "New York / San Francisco (Di sản lịch sử)",
+      "yearsActive": "khoảng 1849 – 1885",
+      "venues": [
+        "Quán rượu cờ bạc El Dorado (San Francisco)",
+        "Khách sạn Occidental (San Francisco)",
+        "Bốn quán saloon danh tiếng do chính ông sáng lập tại New York"
+      ],
+      "image": "img/bartenders/jerry-thomas.jpg",
+      "imageType": "portrait",
+      "accolades": [
+        "Tác giả cuốn 'Bar-Tender's Guide' (1862) – cuốn sách dạy pha chế đầu tiên trong lịch sử nhân loại",
+        "Người phát minh ra món cocktail rực lửa huyền thoại The Blue Blazer",
+        "Được lịch sử tôn kính với danh xưng 'Người cha của ngành Mixology Hoa Kỳ'"
+      ],
+      "philosophy": "Một nghệ sĩ trình diễn bậc thầy biến nghề bar thành một môn nghệ thuật sân khấu cuốn hút – tung hứng những chai rượu xoay tít và mang theo bộ dụng cụ pha chế đúc bằng bạc nguyên khối trong các chuyến lưu diễn Châu Âu.",
+      "signatureDrinks": [
+        {
+          "name": "The Blue Blazer",
+          "year": "Thập niên 1850",
+          "desc": "Thức uống bốc lửa làm nên huyền thoại của ông tại El Dorado ở San Francisco: Scotch whisky nồng độ cao và nước sôi được châm lửa bùng cháy, rót qua lại giữa hai ca bạc tạo thành một vòng cung lửa xanh sống động trong màn đêm.",
+          "recipe": "1 Ly vang Scotch Whisky, 1 Ly vang Nước sôi, 1 Muỗng đường mía, Vỏ chanh vàng (công thức gốc 1862).",
+          "glass": "Silver Mugs / Small Tumbler",
+          "onMenu": false
+        },
+        {
+          "name": "Japanese Cocktail",
+          "year": "1862",
+          "desc": "In trong cuốn sách năm 1862; gắn liền với phái đoàn ngoại giao đầu tiên của Nhật Bản đến thăm Hoa Kỳ năm 1860.",
+          "recipe": "60ml Brandy, 15ml Siro hạnh nhân Orgeat, 2 dashes Angostura Bitters, Vỏ chanh xoắn.",
+          "glass": "Cocktail Glass",
+          "onMenu": true
+        }
+      ],
+      "biography": "Jerry Thomas học nghề pha chế tại New Haven trước khi giong buồm tới California trong Cơn sốt vàng (Gold Rush). Trở lại New York năm 1851, ông mở quán saloon đầu tiên bên dưới Bảo tàng American Museum của P.T. Barnum. Tại Khách sạn Occidental ở San Francisco, ông được trả mức lương kỷ lục 100 USD/tuần – thời điểm đó cao hơn cả lương Phó Tổng thống Hoa Kỳ.\n\nCuốn sách xuất bản năm 1862 của ông 'Bar-Tender's Guide' (còn có tên 'How to Mix Drinks, or The Bon-Vivant's Companion') là cuốn sách dạy pha chế đầu tiên được in tại Mỹ, đặt nền móng ghi chép chính quy cho những công thức vốn trước đó chỉ được truyền miệng. Phiên bản năm 1876 của sách cũng là nơi đầu tiên ghi lại công thức Tom Collins."
+    }
+  ],
+  "collectors": [
+    {
+      "id": "col-richard-gooding",
+      "name": "Richard Gooding",
+      "title": "Nhà sưu tầm đứng sau 'The Perfect Collection'",
+      "category": "scotch",
+      "categoryLabel": "Huyền Thoại Single Malt",
+      "country": "Colorado, Hoa Kỳ",
+      "yearsCollecting": "Nhiều thập kỷ (bộ sưu tập được đấu giá năm 2020 sau khi ông qua đời)",
+      "vaultName": "Hầm rượu tư gia, Colorado",
+      "collectionScale": "Khoảng 3.900 chai (gần 1.900 lô đấu giá)",
+      "estimatedValue": "Khoảng 9,1 triệu USD tại buổi đấu giá (Whisky Auctioneer, 2020)",
+      "image": "img/collectors/richard-gooding.jpg",
+      "imageType": "portrait",
+      "specialty": "The Macallan, Bowmore và Springbank, cùng các nhà chưng cất Scotland đã đóng cửa ('lost distilleries'), Bourbon và Japanese Whisky",
+      "philosophy": "Vợ ông, bà Nancy, chia sẻ với báo giới về tâm niệm của chồng: \"Sứ mệnh của ông ấy là sưu tầm ít nhất một chai đại diện cho từng nhà chưng cất trên thế giới.\"",
+      "crownJewels": [
+        {
+          "bottle": "The Macallan 1926 60-Year-Old (Valerio Adami label)",
+          "detail": "Chỉ có 12 chai trên thế giới mang nhãn do họa sĩ Valerio Adami thiết kế. Đạt mức giá 825.000 bảng Anh (khoảng 1,07 triệu USD) vào tháng 2/2020 – chai rượu đầu tiên vượt mốc 1 triệu USD trong một phiên đấu giá trực tuyến.",
+          "highlight": "Kỷ Lục Đấu Giá Trực Tuyến"
+        },
+        {
+          "bottle": "The Macallan 1926 Fine & Rare 60-Year-Old",
+          "detail": "Một trong những chai rượu lừng danh và đắt giá nhất lịch sử Scotch whisky, kiệt tác nằm trong bộ sưu tập.",
+          "highlight": "Chén Thánh Của Scotch"
+        },
+        {
+          "bottle": "Dallas Dhu 1921 64-Year-Old Single Cask",
+          "detail": "Đến từ nhà chưng cất đã vĩnh viễn ngừng hoạt động từ năm 1983; được nhà đấu giá đánh giá là báu vật lịch sử cực hiếm chưa từng xuất hiện trên thị trường thứ cấp.",
+          "highlight": "Báu Vật Lost Distillery"
+        }
+      ],
+      "biography": "Richard Gooding, một doanh nhân quê ở Colorado, từng là chủ sở hữu kiêm giám đốc điều hành của Pepsi-Cola Bottling Company of Denver. Trong nhiều thập kỷ, ông đã cất công săn tìm whisky chủ yếu qua các phiên đấu giá danh tiếng và trực tiếp từ các nhà chưng cất trong các chuyến du hành tới Scotland và Ireland.\n\nSau khi ông qua đời, bộ sưu tập gồm khoảng 3.900 chai – bao gồm những bộ sưu tập The Macallan, Bowmore và Springbank quy mô nhất từng xuất hiện trên thị trường – đã được sàn Whisky Auctioneer đấu giá vào năm 2020 thành 2 đợt mang tên \"The Perfect Collection\". Buổi đấu giá đã thu về khoảng 9,1 triệu USD, được ghi nhận là bộ sưu tập whisky tư nhân có giá trị chuyển nhượng cao nhất từng được bán trên thị trường thứ cấp."
+    },
+    {
+      "id": "col-michel-jack-chasseuil",
+      "name": "Michel-Jack Chasseuil",
+      "title": "Chủ nhân hầm rượu được mệnh danh là 'Bảo tàng Louvre của thế giới rượu vang'",
+      "category": "wineCognac",
+      "categoryLabel": "Huyền Thoại Vang Cổ & Cognac",
+      "country": "La Chapelle-Bâton, Deux-Sèvres, Pháp",
+      "yearsCollecting": "Thập niên 1960 – nay",
+      "vaultName": "Hầm ngầm kiên cố tự xây dưới lòng tư gia",
+      "collectionScale": "Khoảng 40.000 – 50.000 chai",
+      "estimatedValue": "Báo chí ước tính 40 – 50 triệu Euro (chưa từng thẩm định chính thức toàn bộ)",
+      "image": "img/collectors/michel-jack-chasseuil.jpg",
+      "imageType": "portrait",
+      "specialty": "Grand Cru Bordeaux, trọn bộ vertical Pétrus nguyên vẹn, Port cổ và những chai vang hiếm từ thế kỷ 19",
+      "philosophy": "Luôn tâm niệm lời khuyên của người sếp cũ Marcel Dassault: 'Chỉ mua những gì mà một ngày nào đó người đời sẽ không thể tìm thấy nữa'.",
+      "crownJewels": [
+        {
+          "bottle": "Château d'Yquem 1811",
+          "detail": "Niên vụ 'Sao Chổi' (Comet Vintage) Sauternes lừng danh, thường được nhắc tới như một trong những chai vang trắng ngọt đắt nhất hành tinh.",
+          "highlight": "Niên Vụ Huyền Thoại"
+        },
+        {
+          "bottle": "Trọn bộ sưu tập Pétrus kể từ năm 1914",
+          "detail": "Sở hữu toàn bộ các niên vụ (vertical) của điền trang Pomerol huyền thoại từ năm 1914 đến nay không thiếu một năm.",
+          "highlight": "Vertical Trọn Vẹn"
+        },
+        {
+          "bottle": "1853 Lacryma Christi mang gia huy Sa hoàng Nicholas II",
+          "detail": "Chai vang lịch sử vô giá mang biểu tượng gia huy hoàng gia Đế quốc Nga.",
+          "highlight": "Xuất Xứ Hoàng Gia"
+        },
+        {
+          "bottle": "1735 Port",
+          "detail": "Thuộc nhóm những chai rượu lâu đời nhất còn nguyên vẹn trong lòng hầm rượu.",
+          "highlight": "Báu Vật Thế Kỷ 18"
+        }
+      ],
+      "biography": "Michel-Jack Chasseuil, con trai của một nhân viên bưu điện, từng làm việc tại tập đoàn hàng không Dassault Aviation với khởi điểm là thợ gò đồng rồi thăng tiến lên phòng thiết kế kỹ thuật. Từ những năm 1960, ông đã dành dụm từ đồng lương của mình để mua khoảng 600 chai đầu tiên, và quy mô bộ sưu tập đã tăng trưởng thần tốc trong suốt những thập kỷ sau đó.\n\nÔng tự tay đào và xây dựng một hầm rượu ngầm kiên cố bên dưới ngôi nhà của gia đình ở Deux-Sèvres; các ống thông gió được ngụy trang tài tình giữa vườn rau và chuồng gà. Bộ sưu tập đồ sộ 40.000 – 50.000 chai này được giới thưởng thức phong tặng là \"bảo tàng Louvre của thế giới rượu vang\", và Chasseuil bày tỏ tâm nguyện một ngày nào đó nơi đây sẽ trở thành viện bảo tàng di sản chứ không bao giờ bị xé lẻ đem bán."
+    },
+    {
+      "id": "col-valentino-zagatti",
+      "name": "Valentino Zagatti",
+      "title": "'Nhà sưu tầm khiếm thị vùng Lugo'",
+      "category": "scotch",
+      "categoryLabel": "Huyền Thoại Single Malt",
+      "country": "Lugo (Ravenna), Emilia-Romagna, Ý",
+      "yearsCollecting": "1960 – nay",
+      "vaultName": "Bộ sưu tập The Unseen Valentino Zagatti",
+      "collectionScale": "Khoảng 3.000 chai (khoảng 97% là Scotch whisky)",
+      "estimatedValue": "Không công khai",
+      "image": "img/collectors/valentino-zagatti.jpg",
+      "imageType": "portrait",
+      "specialty": "Mọi phiên bản có thể tìm thấy từ từng nhà chưng cất Scotch, bao gồm những mẻ đóng chai cực kỳ cổ xưa",
+      "philosophy": "Bị khiếm thị từ nhỏ, Zagatti thẩm định, nhận biết và ghi nhớ từng chai rượu chủ yếu qua đôi bàn tay và xúc giác kỳ diệu.",
+      "crownJewels": [
+        {
+          "bottle": "Scotch whisky từ năm 1843",
+          "detail": "Viên ngọc trung tâm của bộ sưu tập – một chai rượu từng được người cha trao tặng cho con gái làm của hồi môn ngày cưới.",
+          "highlight": "Chai Cổ Nhất"
+        },
+        {
+          "bottle": "Bộ sách 5 tập Zagatti Collection (2019)",
+          "detail": "Bộ bách khoa toàn thư đồ sộ ghi chép tường tận chi tiết từng chai rượu trong tổng số khoảng 3.000 chai của ông.",
+          "highlight": "Di Sản Xuất Bản"
+        }
+      ],
+      "biography": "Valentino Zagatti mất đi thị giác từ thuở nhỏ do vướng phải một quả mìn còn sót lại từ Thế chiến thứ hai. Vượt lên số phận, ông trở thành nghệ sĩ đàn accordion chuyên nghiệp, giảng dạy âm nhạc và từng giành chức vô địch accordion cổ điển toàn nước Ý vào năm 1956. Năm 1960, ông quyết định bỏ thuốc lá và chuyển trọn niềm đam mê sang việc sưu tầm whisky.\n\nTrải qua nhiều thập kỷ, những chai whisky quý giá đã lấp đầy ngôi nhà của ông ở Lugo từ sàn lên tới tận trần. Vào giữa những năm 2010, bộ sưu tập được chuyển giao cho Scotch Whisky International cùng nhóm khoảng 20 nhà đầu tư với điều kiện tiên quyết: toàn bộ bộ sưu tập phải được lưu giữ nguyên vẹn cùng nhau. Từ tháng 10/2018, kho tàng này được trưng bày tại Sassenheim, Hà Lan với tên gọi \"The Unseen Valentino Zagatti Collection\"."
+    },
+    {
+      "id": "col-sukhinder-singh",
+      "name": "Sukhinder Singh",
+      "title": "Đồng sáng lập The Whisky Exchange & Elixir Distillers",
+      "category": "historical",
+      "categoryLabel": "Nhà Giám Tuyển Tiên Phong",
+      "country": "London, Vương quốc Anh",
+      "yearsCollecting": "Thập niên 1980 – nay",
+      "vaultName": "Bộ sưu tập tư nhân, London",
+      "collectionScale": "Không công khai",
+      "estimatedValue": "Không công khai",
+      "image": "img/collectors/sukhinder-singh.jpg",
+      "imageType": "portrait",
+      "specialty": "Khởi đầu từ những chai rượu mini (miniatures), sau đó là single malt kích cỡ tiêu chuẩn – với mục tiêu mỗi nhà chưng cất một chai",
+      "philosophy": "Biến niềm đam mê tuổi thiếu niên thành một trong những đế chế thương mại và tuyển chọn whisky danh giá bậc nhất thế giới.",
+      "crownJewels": [
+        {
+          "bottle": "Bộ sưu tập khoảng 8.000 chai mini",
+          "detail": "Được mệnh danh là bộ sưu tập chai thu nhỏ lớn nhất thế giới; ông mua lại tại một buổi đấu giá với giá 1.000 bảng khi còn là một nhà sưu tầm trẻ tuổi.",
+          "highlight": "Bộ Sưu Tập Chai Mini"
+        },
+        {
+          "bottle": "Vintage Springbank nguyên bản",
+          "detail": "Chai single malt đầu tiên mà ông mở thưởng thức – ông chia sẻ rằng mỗi ngày thưởng thức nó lại mang tới một tầng hương vị kỳ diệu khác biệt.",
+          "highlight": "Single Malt Đầu Tiên"
+        }
+      ],
+      "biography": "Sukhinder Singh lớn lên trong ngành kinh doanh đồ uống: năm 1972, cha mẹ ông đã mở cửa hàng bán lẻ rượu (off-licence) đầu tiên của người gốc Ấn tại Vương quốc Anh. Ông bắt đầu sưu tầm chai rượu mini từ năm 15 tuổi và sau đó nâng tầm lên những chai dung tích chuẩn, khởi đầu với mục tiêu sở hữu ít nhất một chai từ mỗi nhà chưng cất.\n\nNăm 1999, ông cùng em trai Rajbir sáng lập The Whisky Exchange và nhà phân phối Speciality Drinks, rồi đến năm 2015 thành lập nhà đóng chai độc lập Elixir Distillers. Cả The Whisky Exchange và Speciality Drinks sau đó đã được Pernod Ricard mua lại vào năm 2021. Năm 2022, ông mua lại nhà chưng cất Tormore tại Speyside và hiện đang xây dựng nhà chưng cất Portintruan trên hòn đảo Islay huyền thoại."
+    },
+    {
+      "id": "col-edoardo-giaccone",
+      "name": "Edoardo Giaccone",
+      "title": "\"Baffo\" – Người tiên phong mang Single Malt đến nước Ý",
+      "category": "historical",
+      "categoryLabel": "Nhà Giám Tuyển Tiên Phong",
+      "country": "Salò, Hồ Garda, Ý",
+      "yearsCollecting": "1958 – khi ông qua đời",
+      "vaultName": "Quán bar Edward & Edward (nguyên gốc 'Garten'), Salò",
+      "collectionScale": "Hơn 5.500 mẻ đóng chai khác nhau",
+      "estimatedValue": "Giá trị lịch sử – Được ghi danh Kỷ lục Guinness",
+      "image": "img/collectors/edoardo-giaccone.jpg",
+      "imageType": "portrait",
+      "specialty": "Những mẻ đóng chai single malt chính hãng độc quyền dành riêng cho quán bar của ông từ cuối thập niên 1960",
+      "philosophy": "Được tôn vinh là nhà nhìn xa trông rộng đã đặt nền móng vững chắc cho phong trào nhà đóng chai độc lập (independent bottlers) lừng lẫy của nước Ý.",
+      "crownJewels": [
+        {
+          "bottle": "Các mẻ đóng chai chính hãng độc quyền Edward & Edward",
+          "detail": "Ông là người đầu tiên tại Ý thuyết phục được các nhà chưng cất sản xuất các mẻ đóng chai chính hãng độc quyền riêng cho quán – bao gồm Clynelish, Bowmore, Dalmore, Highland Park và cả Jack Daniel's.",
+          "highlight": "Đóng Chai Độc Quyền Đầu Tiên Tại Ý"
+        },
+        {
+          "bottle": "Bộ sưu tập whisky ghi danh Kỷ lục Guinness",
+          "detail": "Bộ sưu tập của ông tại quán Edward & Edward đã vinh dự được Tổ chức Kỷ lục Guinness thế giới ghi nhận là bộ sưu tập whisky lớn nhất thế giới thời bấy giờ.",
+          "highlight": "Kỷ Lục Thế Giới Guinness"
+        }
+      ],
+      "biography": "Edoardo Giaccone, người thường được gọi với biệt danh thân mật \"Baffo\" bởi bộ ria mép đặc trưng, đã mở quán bar đầu tiên của mình tại Salò ven bờ hồ Garda tuyệt đẹp vào năm 1958, ban đầu lấy tên là Garten và sau đổi thành Edward & Edward. Quán bar này lưu giữ tới hơn 1.500 loại whisky thượng hạng.\n\nTừ cuối thập niên 1960, ông tiên phong nhập khẩu các mẻ single malt chính hãng được tuyển chọn và đóng chai riêng, và ông thường được tôn vinh là nhà đóng chai độc lập đầu tiên của nước Ý. Bộ sưu tập đồ sộ của ông – ghi nhận hơn 5.500 mẫu chai khác biệt – đã được Tổ chức Kỷ lục Guinness thế giới công nhận là bộ sưu tập whisky lớn nhất hành tinh, và ông được hậu thế tri ân là người đã biến nước Ý thành chiếc nôi thưởng thức single malt Scotch sớm nhất tại châu Âu."
+    }
+  ]
+}

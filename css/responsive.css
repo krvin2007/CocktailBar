@@ -1,0 +1,286 @@
+/* =========================================================
+   RESPONSIVE.CSS - Điểm ngắt cho tablet & điện thoại
+   Tối ưu hiển thị responsive đa màn hình, bảo toàn độ mượt
+   và bố cục chuẩn mực của giao diện Speakeasy Lounge.
+   ========================================================= */
+
+/* =========================================================
+   TABLET (<= 1024px)
+   ========================================================= */
+@media (max-width: 1024px) {
+  .about-grid,
+  .detail-grid,
+  .order-layout,
+  .contact-layout,
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .menu-layout {
+    grid-template-columns: 240px 1fr;
+    gap: 24px;
+  }
+
+  .stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .category-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .admin-layout {
+    grid-template-columns: 220px 1fr;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+/* =========================================================
+   DI ĐỘNG & TABLET DỌC (<= 860px)
+   ========================================================= */
+@media (max-width: 860px) {
+  .header-mobile-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  .main-nav {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 12px 20px 24px;
+    background: rgba(11, 9, 7, 0.98);
+    border-bottom: 1px solid var(--border-soft);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7);
+  }
+
+  .main-nav.open {
+    max-height: 480px;
+  }
+
+  .main-nav ul {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .main-nav a {
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+  }
+
+  .nav-actions {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+    gap: 10px;
+  }
+
+  .btn-cart {
+    width: 100%;
+    height: 44px;
+    gap: 8px;
+  }
+
+  .cart-count-dot {
+    position: static;
+  }
+
+  .menu-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-panel {
+    position: static;
+  }
+
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  #admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 270px;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-lift);
+  }
+
+  #admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .admin-sidebar-toggle {
+    display: flex;
+  }
+
+  .admin-main {
+    padding: 24px 20px 60px;
+  }
+
+  .hero-stats {
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 16px 20px;
+  }
+
+  .hero-stat-sep {
+    display: none;
+  }
+
+  .about-photo-caption {
+    position: static;
+    margin-top: 14px;
+  }
+}
+
+/* =========================================================
+   DI ĐỘNG NHỎ (<= 640px)
+   ========================================================= */
+@media (max-width: 640px) {
+  .section {
+    padding: 48px 0;
+  }
+
+  .hero-cinematic {
+    min-height: 70vh;
+    padding: 70px 16px 50px;
+  }
+
+  .hero-title {
+    font-size: 2.3rem;
+  }
+
+  .hero-lead {
+    font-size: 0.95rem;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 16px;
+  }
+
+  .category-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .drink-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-item {
+    grid-template-columns: 52px 1fr;
+    grid-template-areas:
+      "thumb info"
+      "qty   remove";
+    gap: 12px;
+  }
+
+  .cart-item-thumb {
+    grid-area: thumb;
+    width: 52px;
+    height: 52px;
+  }
+
+  .cart-item-info {
+    grid-area: info;
+  }
+
+  .cart-item-qty {
+    grid-area: qty;
+    justify-self: start;
+  }
+
+  .cart-item-remove {
+    grid-area: remove;
+    justify-self: end;
+  }
+
+  .service-type-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 40px 20px 24px;
+  }
+
+  .footer-copy-wrap {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-toolbar .filters {
+    flex-direction: column;
+  }
+
+  .table-toolbar input,
+  .table-toolbar select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .detail-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detail-action-bar .qty-control {
+    justify-content: center;
+  }
+
+  .auth-card {
+    padding: 32px 20px;
+  }
+}

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huyền Thoại Master Bartenders &amp; Mixology Icons — Quán Bar Đêm</title>
+<meta name="description" content="Chiêm ngưỡng chân dung, triết lý phục vụ và công thức cocktail kinh điển của các Master Bartender lừng danh: Salvatore Calabrese, Ada Coleman, Dale DeGroff, Harry Craddock, Hidetsugu Ueno, Colin Field...">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/legends.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<main class="page-body">
+  <!-- ---------- Hero Master Bartenders ---------- -->
+  <section class="legends-hero">
+    <div class="container">
+      <div class="legends-hero-inner">
+        <span class="section-kicker">BẬC THẦY MIXOLOGY</span>
+        <h1>Huyền Thoại Quầy Bar &amp; <em>Mixology Icons</em></h1>
+        <p class="legends-hero-desc">
+          Hội ngộ những bộ óc sáng tạo tiên phong và bậc thầy đương đại—những người đã dùng lòng hiếu khách, kỹ nghệ pha chế đỉnh cao và công thức bất hủ để định hình văn hóa cocktail thế giới từ thế kỷ 19 đến các quán speakeasy ngày nay.
+        </p>
+
+        <div class="legends-stats-strip">
+          <div class="legends-stat-item">
+            <span class="legends-stat-num">8</span>
+            <span class="legends-stat-label">Bậc Thầy Huyền Thoại</span>
+          </div>
+          <div class="legends-stat-item">
+            <span class="legends-stat-num">160+</span>
+            <span class="legends-stat-label">Năm Di Sản Nghề Bar</span>
+          </div>
+          <div class="legends-stat-item">
+            <span class="legends-stat-num">20+</span>
+            <span class="legends-stat-label">Công Thức Bất Hủ</span>
+          </div>
+          <div class="legends-stat-item">
+            <span class="legends-stat-num">4</span>
+            <span class="legends-stat-label">Châu Lục Tầm Vóc</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Search & Filter Section ---------- -->
+  <section class="section" style="padding-top: 24px;">
+    <div class="container">
+      <div class="legends-filter-bar">
+        <div class="legends-search-row">
+          <div class="legends-search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="bartenders-search-input" placeholder="Tìm kiếm Master Bartender, quán bar, cocktail, thành phố...">
+          </div>
+          <div class="legends-count-badge" id="bartenders-count">
+            Đang tải dữ liệu Master Bartender...
+          </div>
+        </div>
+
+        <div class="legends-tabs" id="bartender-tabs"></div>
+      </div>
+
+      <!-- Bartenders Grid -->
+      <div class="legends-grid" id="bartenders-grid"></div>
+
+      <!-- Cross-Navigation Banner -->
+      <div class="cross-nav-strip">
+        <div class="cross-nav-info">
+          <h3>Khám Phá Nhà Sưu Tầm Rượu Lừng Danh &amp; Hầm Bí Mật</h3>
+          <p>
+            Hành trình khám phá các hầm rượu bọc thép lưu giữ Single Malt cổ hiếm, Cognac trước thời Cách mạng Pháp và những mẻ thùng đơn độc bản.
+          </p>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <a href="collectors.html" class="btn btn-primary btn-sm">
+            Xem Nhà Sưu Tầm 🏆
+          </a>
+          <a href="spirits.html" class="btn btn-outline btn-sm">
+            Khám Phá Hầm Rượu 🥃
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ---------- Modal Dossier Bartender ---------- -->
+<div class="legend-modal-overlay" id="bartender-modal" role="dialog" aria-modal="true" aria-labelledby="modal-name">
+  <div class="legend-modal-box">
+    <div class="legend-modal-head">
+      <div>
+        <h2 id="modal-name" style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--text-main); line-height: 1.2;"></h2>
+        <p id="modal-subtitle" style="font-size: 0.88rem; color: var(--amber); margin-top: 4px;"></p>
+      </div>
+      <button type="button" class="legend-modal-close" id="modal-close-btn" aria-label="Close modal">&times;</button>
+    </div>
+
+    <div class="legend-modal-body">
+      <p id="modal-quote" class="legend-quote" style="font-size: 1.05rem; margin-bottom: 0;"></p>
+
+      <div>
+        <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
+          Hành Trình Sự Nghiệp &amp; Tiểu Sử
+        </h3>
+        <div id="modal-bio"></div>
+      </div>
+
+      <div>
+        <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
+          Quán Bar &amp; Thánh Đường Gắn Liền Sự Nghiệp
+        </h3>
+        <ul id="modal-venues" style="list-style: none; padding: 0; margin: 0;"></ul>
+      </div>
+
+      <div>
+        <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
+          Công Thức Độc Bản &amp; Tác Phẩm Mixology
+        </h3>
+        <div id="modal-drinks"></div>
+      </div>
+
+      <div>
+        <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
+          Vinh Danh &amp; Giải Thưởng Trọn Đời
+        </h3>
+        <div id="modal-accolades" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+      </div>
+    </div>
+
+    <div class="legend-modal-foot">
+      <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('modal-close-btn').click();">
+        Đóng hồ sơ
+      </button>
+      <a href="order.html" class="btn btn-primary btn-sm">
+        Thưởng thức tại Quán Bar Đêm
+      </a>
+    </div>
+  </div>
+</div>
+
+<footer id="site-footer"></footer>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/bartenders.js"></script>
+</body>
+</html>

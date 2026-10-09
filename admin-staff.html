@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý nhân sự quầy Bar — Quán Bar Đêm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside id="admin-sidebar"></aside>
+
+  <div class="admin-main">
+    <button type="button" class="admin-sidebar-toggle" id="admin-sidebar-toggle" aria-label="Mở menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div id="admin-topbar"></div>
+
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="filters">
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="f-keyword" placeholder="Tìm theo tên nhân viên, SĐT...">
+          </div>
+          <select id="f-role"><option value="all">Tất cả vị trí</option></select>
+          <select id="f-status">
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Đang làm việc</option>
+            <option value="inactive">Đã nghỉ việc</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary" id="add-staff-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm nhân sự mới</span>
+        </button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mã &amp; Họ tên nhân sự</th>
+            <th>Tài khoản hệ thống</th>
+            <th>Vị trí chuyên môn</th>
+            <th>Ca làm việc</th>
+            <th>Số điện thoại</th>
+            <th>Ngày tiếp nhận</th>
+            <th>Tình trạng</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="staff-body"></tbody>
+      </table>
+
+      <div class="table-pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Modal thêm / sửa nhân viên ---------- -->
+<div class="modal-overlay" id="staff-modal" hidden>
+  <div class="modal-box" style="max-width: 680px;">
+    <div class="modal-head">
+      <h3 id="staff-modal-title">Tiếp nhận nhân sự</h3>
+      <button type="button" class="modal-close-x" id="staff-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <form id="staff-form" novalidate>
+      <input type="hidden" name="id">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Mã nhân sự hệ thống</label>
+          <input type="text" name="staffCode" id="staff-form-code" readonly style="background: rgba(255,255,255,0.03); cursor: not-allowed;">
+          <small class="text-xs text-muted" style="display:block; margin-top: 4px;">Mã tự sinh theo quy chuẩn NVxxx</small>
+        </div>
+
+        <div class="form-group">
+          <label>Họ và tên nhân viên <span class="req">*</span></label>
+          <input type="text" name="name" data-rule="required|min:3|max:60" placeholder="VD: Trần Quốc Tuấn">
+        </div>
+
+        <div class="form-group">
+          <label>Tên đăng nhập hệ thống <span class="req">*</span></label>
+          <input type="text" name="username" id="staff-form-username" data-rule="required|min:4|max:20|username" placeholder="VD: tuan.tran">
+          <small class="text-xs text-muted" style="display:block; margin-top: 4px;">4-20 ký tự (chữ, số, gạch dưới _)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Vị trí chuyên trách <span class="req">*</span></label>
+          <select name="role" data-rule="required" id="staff-form-role"></select>
+        </div>
+
+        <div class="form-group">
+          <label>Ca làm việc <span class="req">*</span></label>
+          <select name="shift" data-rule="required" id="staff-form-shift"></select>
+        </div>
+
+        <div class="form-group">
+          <label>Số điện thoại liên lạc <span class="req">*</span></label>
+          <input type="tel" name="phone" data-rule="required|phone" placeholder="VD: 0912 345 678">
+        </div>
+
+        <div class="form-group">
+          <label>Email liên hệ</label>
+          <input type="email" name="email" data-rule="email" placeholder="tuan.tran@domain.com">
+        </div>
+
+        <div class="form-group">
+          <label>Ngày bắt đầu công tác <span class="req">*</span></label>
+          <input type="date" name="startDate" data-rule="required|date">
+        </div>
+
+        <div class="form-group">
+          <label>Trạng thái công tác</label>
+          <select name="status">
+            <option value="active">Đang làm việc (Kích hoạt tài khoản)</option>
+            <option value="inactive">Đã tạm nghỉ / nghỉ việc (Khóa tài khoản)</option>
+          </select>
+        </div>
+
+        <div class="form-group full" id="staff-password-wrap">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label id="staff-password-label" style="margin-bottom: 0;">Mật khẩu xác thực <span class="req" id="staff-password-req">*</span></label>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-gen-password" style="font-size: 0.74rem; padding: 2px 8px;">
+              Tạo mật khẩu ngẫu nhiên
+            </button>
+          </div>
+          <div class="pw-input-wrap">
+            <input type="password" name="password" id="staff-form-password" data-rule="required|min:8|max:32" placeholder="Tối thiểu 8 ký tự (hoa, thường, số, ký tự đặc biệt)">
+            <button type="button" class="pw-toggle-btn" data-target="staff-form-password" aria-label="Hiện hoặc ẩn mật khẩu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <small class="text-xs text-muted" id="staff-password-hint" style="display:block; margin-top: 4px;">Để trống nếu giữ nguyên mật khẩu hiện tại khi chỉnh sửa.</small>
+        </div>
+      </div>
+
+      <div class="form-actions mt-3">
+        <button type="button" class="btn btn-ghost" id="staff-form-cancel">Huỷ bỏ</button>
+        <button type="submit" class="btn btn-primary" id="staff-form-submit">Lưu hồ sơ nhân sự</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/admin-staff.js"></script>
+</body>
+</html>

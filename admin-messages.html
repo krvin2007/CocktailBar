@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hộp thư liên hệ — Quán Bar Đêm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside id="admin-sidebar"></aside>
+
+  <div class="admin-main">
+    <button type="button" class="admin-sidebar-toggle" id="admin-sidebar-toggle" aria-label="Mở menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div id="admin-topbar"></div>
+
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="filters">
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="f-keyword" placeholder="Tìm theo tên, SĐT, email, nội dung...">
+          </div>
+          <select id="f-read">
+            <option value="all">Tất cả tin nhắn</option>
+            <option value="unread">Chưa xử lý</option>
+            <option value="read">Đã xử lý</option>
+          </select>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Người gửi</th>
+            <th>Chủ đề</th>
+            <th>Nội dung</th>
+            <th>Thời gian</th>
+            <th>Tình trạng</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="messages-body"></tbody>
+      </table>
+
+      <div class="table-pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Modal đọc tin nhắn ---------- -->
+<div class="modal-overlay" id="message-modal" hidden>
+  <div class="modal-box modal-wide">
+    <div class="modal-head">
+      <h3 id="message-modal-title">Chi tiết tin nhắn</h3>
+      <button type="button" class="modal-close-x" id="message-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <div id="message-modal-body" class="order-detail-content"></div>
+
+    <div class="form-actions mt-3">
+      <button type="button" class="btn btn-danger btn-sm" id="message-delete-btn">Xoá tin nhắn</button>
+      <button type="button" class="btn btn-primary btn-sm" id="message-toggle-btn">Đánh dấu đã xử lý</button>
+    </div>
+  </div>
+</div>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/admin-messages.js"></script>
+</body>
+</html>

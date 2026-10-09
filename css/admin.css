@@ -1,0 +1,672 @@
+/* =========================================================
+   ADMIN.CSS - Giao diện khu vực quản trị Quán Bar Đêm
+   Chuẩn thiết kế Executive POS & Backoffice: sắc sảo, tối giản,
+   hiệu quả thị giác cao, loại bỏ hoàn toàn các emoji thô sơ.
+   ========================================================= */
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  background: var(--bg-page);
+}
+
+/* =========================================================
+   SIDEBAR QUẢN TRỊ
+   ========================================================= */
+#admin-sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-soft);
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+}
+
+.admin-brand-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: rgba(197, 152, 67, 0.12);
+  border: 1px solid rgba(197, 152, 67, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber-soft);
+  flex-shrink: 0;
+}
+
+.admin-brand-name {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--cream);
+  line-height: 1.1;
+}
+
+.admin-brand-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.admin-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.admin-nav a:hover {
+  background: rgba(197, 152, 67, 0.08);
+  color: var(--cream);
+}
+
+.admin-nav a.active {
+  background: rgba(197, 152, 67, 0.16);
+  color: var(--amber-soft);
+  font-weight: 600;
+  border: 1px solid rgba(197, 152, 67, 0.25);
+}
+
+.admin-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.admin-sidebar-footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.admin-back-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 8px;
+  transition: color 0.18s ease;
+}
+
+.admin-back-link:hover {
+  color: var(--amber-soft);
+}
+
+/* =========================================================
+   NỘI DUNG CHÍNH (ADMIN MAIN)
+   ========================================================= */
+.admin-main {
+  padding: 32px 40px 64px;
+  overflow-x: hidden;
+}
+
+#admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.admin-page-title {
+  font-family: var(--font-heading);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--cream);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.admin-page-subtitle {
+  font-size: 0.84rem;
+  color: var(--text-dim);
+}
+
+.admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-inbox-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  background: rgba(229, 167, 62, 0.12);
+  color: var(--warning);
+  border: 1px solid rgba(229, 167, 62, 0.25);
+  border-radius: 999px;
+}
+
+.admin-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  color: var(--cream);
+}
+
+.admin-username {
+  font-weight: 600;
+}
+
+.admin-user-role-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  background: rgba(197, 152, 67, 0.18);
+  color: var(--amber-soft);
+  border: 1px solid rgba(197, 152, 67, 0.35);
+  border-radius: 999px;
+  margin-left: 2px;
+}
+
+.admin-sidebar-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  color: var(--cream);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+/* =========================================================
+   STAT CARDS (KPI DASHBOARD)
+   ========================================================= */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  padding: 22px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+
+.stat-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: rgba(197, 152, 67, 0.1);
+  border: 1px solid rgba(197, 152, 67, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber-soft);
+  flex-shrink: 0;
+}
+
+.stat-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-family: var(--font-heading);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--cream);
+  line-height: 1.15;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* =========================================================
+   DASHBOARD PANELS & BIỂU ĐỒ
+   ========================================================= */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+}
+
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 24px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.panel-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--amber-soft);
+}
+
+.panel-title-wrap h3 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.panel-badge {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  background: var(--bg-surface);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-soft);
+}
+
+.panel-link {
+  font-size: 0.82rem;
+  color: var(--amber);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.panel-link:hover {
+  color: var(--amber-soft);
+}
+
+/* Biểu đồ doanh thu dạng thanh thuần CSS */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 220px;
+  padding: 20px 10px 0;
+}
+
+.bar-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 8px;
+}
+
+.bar-chart-value {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--amber-soft);
+}
+
+.bar-chart-bar-wrap {
+  width: 100%;
+  max-width: 32px;
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px 4px 0 0;
+}
+
+.bar-chart-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--amber-soft), var(--amber-dark));
+  box-shadow: 0 0 12px rgba(197, 152, 67, 0.15);
+  transition: height 0.4s ease;
+}
+
+.bar-chart-label {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+/* Danh sách xếp hạng Top món */
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.18s ease;
+}
+
+.rank-item:hover {
+  border-color: var(--border-strong);
+}
+
+.rank-num {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  width: 24px;
+  text-align: center;
+}
+
+.rank-num.rank-first {
+  color: var(--amber-soft);
+}
+
+.rank-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.rank-sub {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.rank-count {
+  font-size: 0.88rem;
+  color: var(--amber-soft);
+}
+
+/* =========================================================
+   BẢNG DỮ LIỆU (DATA TABLE)
+   ========================================================= */
+.table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+
+.table-toolbar .filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.table-toolbar input,
+.table-toolbar select {
+  min-width: 170px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 14px 20px;
+  text-align: left;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-soft);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 15px 20px;
+  text-align: left;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-soft);
+  white-space: nowrap;
+}
+
+.data-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(197, 152, 67, 0.04);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+}
+
+.admin-table-icon-fallback {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(197, 152, 67, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--amber-soft);
+}
+
+.cell-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 24px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.table-pagination button {
+  width: 34px;
+  height: 34px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.table-pagination button:hover {
+  border-color: var(--amber);
+  color: var(--cream);
+}
+
+.table-pagination button.active {
+  background: var(--amber);
+  color: #120e0a;
+  border-color: var(--amber);
+  font-weight: 700;
+}
+
+/* =========================================================
+   ORDER MODAL & CHI TIẾT
+   ========================================================= */
+.order-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.order-detail-row strong {
+  color: var(--cream);
+}
+
+.order-detail-row.item-row {
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+}
+
+.order-detail-row.total-row {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
+}
+
+.note-box {
+  background: var(--bg-surface);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--amber-soft);
+  font-size: 0.85rem;
+}
+
+.order-modal-footer {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.order-status-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-status-control label {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.order-status-control select {
+  width: auto;
+}
+
+/* =========================================================
+   HỘP THƯ LIÊN HỆ + HUY HIỆU TIN CHƯA ĐỌC
+   ========================================================= */
+.admin-nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  color: var(--bg-page);
+  background: var(--warning);
+  border-radius: 999px;
+}
+
+.admin-nav-badge[hidden],
+.admin-inbox-badge[hidden] { display: none; }
+
+a.admin-inbox-badge { text-decoration: none; }
+a.admin-inbox-badge:hover { background: rgba(229, 167, 62, 0.2); }
+
+.data-table tr.row-unread td:first-child { border-left: 3px solid var(--warning); }
+.data-table tr.row-unread strong { color: var(--text-main); }
+
+.message-full-text {
+  margin-top: 16px;
+  padding: 16px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: var(--text-main);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}

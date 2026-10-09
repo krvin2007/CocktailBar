@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý thực đơn — Quán Bar Đêm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside id="admin-sidebar"></aside>
+
+  <div class="admin-main">
+    <button type="button" class="admin-sidebar-toggle" id="admin-sidebar-toggle" aria-label="Mở menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div id="admin-topbar"></div>
+
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="filters">
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="f-keyword" placeholder="Tìm theo tên món, rượu nền...">
+          </div>
+          <select id="f-category">
+            <option value="all">Tất cả danh mục</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary" id="add-drink-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm đồ uống mới</span>
+        </button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">Ảnh</th>
+            <th>Tên đồ uống</th>
+            <th>Danh mục</th>
+            <th>Giá bán</th>
+            <th>Trạng thái</th>
+            <th>Signature</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="drinks-body"></tbody>
+      </table>
+
+      <div class="table-pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Modal thêm / sửa đồ uống ---------- -->
+<div class="modal-overlay" id="drink-modal" hidden>
+  <div class="modal-box modal-wide">
+    <div class="modal-head">
+      <h3 id="drink-modal-title">Thêm đồ uống mới</h3>
+      <button type="button" class="modal-close-x" id="drink-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <form id="drink-form">
+      <input type="hidden" name="id">
+      <input type="hidden" name="stock" value="50">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Tên món đồ uống <span class="req">*</span></label>
+          <input type="text" name="name" data-rule="required|min:2|max:60" placeholder="VD: Smoked Old Fashioned">
+        </div>
+
+        <div class="form-group">
+          <label>Danh mục <span class="req">*</span></label>
+          <select name="category" data-rule="required" id="drink-form-category"></select>
+        </div>
+        <div class="form-group">
+          <label>Đường dẫn hình ảnh (Ảnh thật)</label>
+          <input type="text" name="image" placeholder="VD: img/drinks/mojito.jpg">
+        </div>
+
+        <div class="form-group">
+          <label>Giá bán (VNĐ) <span class="req">*</span></label>
+          <input type="number" name="price" data-rule="required|positive" min="0" step="1000" placeholder="85000">
+        </div>
+
+        <div class="form-group">
+          <label>Rượu nền (Base Spirit)</label>
+          <input type="text" name="baseSpirit" placeholder="VD: Bourbon Whiskey, Cuban Rum...">
+        </div>
+        <div class="form-group">
+          <label>Ly phục vụ (Glassware)</label>
+          <input type="text" name="glassType" placeholder="VD: Vintage Coupe, Crystal Rocks...">
+        </div>
+
+        <div class="form-group">
+          <label>Nồng độ cồn - ABV (%)</label>
+          <input type="number" name="abv" data-rule="number|minval:0|maxval:100" min="0" max="100" step="1" value="0" placeholder="0 nếu không cồn">
+        </div>
+        <div class="form-group">
+          <label>Đánh giá (0 – 5 sao)</label>
+          <input type="number" name="rating" data-rule="number|minval:0|maxval:5" min="0" max="5" step="0.1" value="4.8">
+        </div>
+
+        <div class="form-group">
+          <label>Trạng thái kinh doanh</label>
+          <select name="status">
+            <option value="available">Sẵn sàng phục vụ</option>
+            <option value="soldout">Tạm ngưng phục vụ</option>
+          </select>
+        </div>
+        <div class="form-group" style="justify-content: flex-end; align-self: center;">
+          <label class="filter-checkbox-custom">
+            <input type="checkbox" name="featured">
+            <span class="checkbox-box"></span>
+            <span class="checkbox-label">Đánh dấu món Signature (Nổi bật)</span>
+          </label>
+        </div>
+
+        <div class="form-group full">
+          <label>Thành phần phối trộn (cách nhau bằng dấu phẩy)</label>
+          <input type="text" name="ingredients" placeholder="VD: Bourbon Whiskey, Bitters, Cam cháy, Đường mía">
+        </div>
+
+        <div class="form-group full">
+          <label>Mô tả câu chuyện &amp; phong vị <span class="req">*</span></label>
+          <textarea name="description" data-rule="required|min:10|max:300" placeholder="Mô tả chiều sâu hương vị và phong cách của ly đồ uống..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions mt-3">
+        <button type="button" class="btn btn-ghost" id="drink-form-cancel">Huỷ bỏ</button>
+        <button type="submit" class="btn btn-primary" id="drink-form-submit">Lưu thông tin đồ uống</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/admin-menu.js"></script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đặt Bàn &amp; Gọi Món — Quán Bar Đêm</title>
+<meta name="description" content="Đặt bàn trước và lựa chọn thức uống thủ công tại Quán Bar Đêm. Xác nhận tức thì và phục vụ chu đáo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<main class="page-body">
+  <section class="section order-page-section">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-kicker">RESERVATIONS &amp; ORDERS</span>
+        <h2>Đặt Bàn &amp; Gọi Món</h2>
+        <p>Kiểm tra danh sách thức uống đã chọn và hoàn tất thông tin để giữ chỗ tốt nhất tối nay</p>
+      </div>
+
+      <div class="order-layout">
+        <!-- ---------- Giỏ Hàng Thức Uống ---------- -->
+        <div class="cart-section">
+          <div class="cart-header">
+            <h3>Danh sách món đã chọn</h3>
+            <a href="menu.html" class="cart-add-more">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Chọn thêm món</span>
+            </a>
+          </div>
+          <div class="cart-list" id="cart-list"></div>
+        </div>
+
+        <!-- ---------- Form Đặt Bàn & Thanh Toán ---------- -->
+        <div class="order-summary-box">
+          <div class="bill-header">
+            <span class="bill-title">Phiếu Đặt Chỗ</span>
+            <span class="bill-tag">Speakeasy Service</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Tổng số lượng ly</span>
+            <span id="sum-count" class="font-bold">0</span>
+          </div>
+          <div class="summary-row total">
+            <span>Tổng tạm tính</span>
+            <span id="sum-total" class="font-serif">0₫</span>
+          </div>
+
+          <form id="order-form" class="order-form-body">
+            <label class="form-group-title">Hình thức trải nghiệm</label>
+            <div class="service-type-tabs">
+              <label class="service-tab">
+                <input type="radio" name="serviceType" value="dine-in" checked>
+                <div class="tab-content">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 22h8m-4-7v7M4 4l8 8 8-8H4z"/></svg>
+                  <span>Tại Quầy / Bàn</span>
+                </div>
+              </label>
+              <label class="service-tab">
+                <input type="radio" name="serviceType" value="booking">
+                <div class="tab-content">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  <span>Đặt Bàn Trước</span>
+                </div>
+              </label>
+            </div>
+
+            <div class="form-grid mt-2">
+              <div class="form-group full">
+                <label>Họ và tên quý khách <span class="req">*</span></label>
+                <input type="text" name="name" data-rule="required|min:2|max:60" placeholder="VD: Nguyễn Văn Anh">
+              </div>
+              <div class="form-group">
+                <label>Số điện thoại liên hệ <span class="req">*</span></label>
+                <input type="tel" name="phone" data-rule="required|phone" placeholder="VD: 0912 345 678">
+              </div>
+              <div class="form-group">
+                <label>Email xác nhận</label>
+                <input type="email" name="email" data-rule="email" placeholder="email@domain.com">
+              </div>
+
+              <!-- Chỉ hiện khi chọn "Tại quán" -->
+              <div class="form-group full conditional-fields" data-for="dine-in">
+                <label>Vị trí ngồi mong muốn</label>
+                <input type="text" name="tableNumber" placeholder="VD: Quầy Bar trước Bartender, Bàn Sofa góc riêng...">
+              </div>
+
+              <!-- Chỉ hiện khi chọn "Đặt bàn trước" -->
+              <div class="form-group conditional-fields" data-for="booking">
+                <label>Thời gian đến <span class="req">*</span></label>
+                <input type="datetime-local" name="bookingTime" data-rule="" id="booking-time-input">
+                <span class="hint-text">Quán mở 18:00 – 02:00, vui lòng đặt trước tối thiểu 1 tiếng</span>
+              </div>
+              <div class="form-group conditional-fields" data-for="booking">
+                <label>Số lượng khách <span class="req">*</span></label>
+                <input type="number" name="guestCount" min="1" max="50" placeholder="VD: 2">
+              </div>
+
+              <div class="form-group full">
+                <label>Yêu cầu pha chế hoặc ghi chú đặc biệt</label>
+                <textarea name="note" placeholder="VD: Dị ứng quả mọng, thích vị khói đậm, tổ chức sinh nhật..."></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions mt-3">
+              <button type="submit" class="btn btn-primary btn-block btn-lg" id="submit-order-btn">
+                <span>Xác Nhận Giữ Chỗ &amp; Đặt Món</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ---------- Tra Cứu Đơn Đã Đặt ---------- -->
+      <div class="lookup-box" id="lookup-box">
+        <div class="lookup-head">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <h3>Tra cứu tình trạng bàn &amp; đơn gọi món</h3>
+        </div>
+        <p class="lookup-subtitle">Nhập mã đơn (VD: DH0001) <strong>và</strong> số điện thoại đã dùng khi đặt - cần cả hai để bảo vệ thông tin của quý khách</p>
+        <form class="lookup-form" id="lookup-form" novalidate>
+          <div class="form-group">
+            <input type="text" name="code" id="lookup-code" data-rule="required" placeholder="Mã đơn, VD: DH0001" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <input type="tel" name="phone" id="lookup-phone" data-rule="required|phone" placeholder="Số điện thoại đã đặt">
+          </div>
+          <button type="submit" class="btn btn-primary" id="lookup-btn">Kiểm tra ngay</button>
+        </form>
+        <div class="lookup-results" id="lookup-results" hidden></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer"></footer>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/order.js"></script>
+</body>
+</html>

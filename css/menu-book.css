@@ -1,0 +1,1664 @@
+/* =========================================================
+   MENU-BOOK.CSS - Giao diện Quyển Sách Menu Bìa Da Lật Trang 3D
+   - Đậm chất Speakeasy: Bìa da dập nhũ vàng, chỉ may thủ công,
+     giấy mỹ thuật cổ điển, gáy sách đổ bóng cong, góc lật trang 3D.
+   - Bố cục trung tâm không bị tràn mép, tự động xuống dòng mọi văn bản.
+   ========================================================= */
+
+/* Thanh chuyển chế độ (Sách 3D / Bộ lọc) */
+.menu-view-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 14px 24px;
+  background: rgba(18, 14, 11, 0.88);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.menu-view-title-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.menu-view-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(197, 152, 67, 0.15);
+  color: var(--amber);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(197, 152, 67, 0.35);
+  box-shadow: 0 0 15px rgba(197, 152, 67, 0.15);
+}
+
+.menu-view-text-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--amber-soft);
+  letter-spacing: 0.04em;
+  word-break: break-word;
+}
+
+.menu-view-text-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.menu-mode-pills {
+  display: inline-flex;
+  background: rgba(10, 8, 7, 0.85);
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-soft);
+}
+
+.menu-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.menu-mode-pill:hover {
+  color: var(--text-main);
+}
+
+.menu-mode-pill.active {
+  background: linear-gradient(135deg, rgba(197, 152, 67, 0.3) 0%, rgba(197, 152, 67, 0.15) 100%);
+  color: var(--amber-soft);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(197, 152, 67, 0.45);
+}
+
+/* =========================================================
+   BOOK VIEWPORT & 3D STAGE
+   ========================================================= */
+.book-viewport-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1420px;
+  margin: 0 auto 36px;
+  padding: 16px 14px 20px;
+  background: radial-gradient(ellipse at 50% 35%, rgba(42, 30, 22, 0.85) 0%, rgba(16, 12, 10, 0.98) 70%, #080605 100%);
+  border: 1px solid rgba(197, 152, 67, 0.28);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(197, 152, 67, 0.25);
+  overflow: hidden;
+}
+
+.book-ambient-glow {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(212, 163, 89, 0.14) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.book-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 750px;
+  perspective: 2800px;
+  position: relative;
+  padding: 8px 0;
+  z-index: 2;
+  width: 100%;
+}
+
+/* Khung sách chính */
+.book-container {
+  position: relative;
+  width: 1260px;
+  height: 720px;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* Tư thế mở/đóng sách */
+.book-container.book-closed-front {
+  transform: translateX(-25%);
+}
+
+.book-container.book-closed-back {
+  transform: translateX(25%);
+}
+
+.book-container.book-opened {
+  transform: translateX(0);
+}
+
+/* Gáy sách ở giữa */
+.book-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 18px;
+  margin-left: -9px;
+  background: linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(10,8,6,0.98) 45%, rgba(0,0,0,0.98) 55%, rgba(0,0,0,0.75) 100%);
+  z-index: 40;
+  pointer-events: none;
+  box-shadow: 0 0 18px rgba(0,0,0,0.95);
+  border-radius: 2px;
+}
+
+/* Ruy băng đánh dấu trang lụa đỏ */
+.book-bookmark-ribbon {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 745px;
+  background: linear-gradient(to right, #8a1d1d 0%, #b32d2d 50%, #681212 100%);
+  border-radius: 0 0 4px 4px;
+  box-shadow: 2px 5px 14px rgba(0,0,0,0.65);
+  z-index: 38;
+  pointer-events: none;
+}
+
+.book-bookmark-ribbon::after {
+  content: "";
+  position: absolute;
+  bottom: -11px;
+  left: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 11px solid #b32d2d;
+}
+
+/* Tờ sách (Sheet) */
+.book-sheet {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.645, 0.045, 0.355, 1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.book-sheet.flipped {
+  transform: rotateY(-180deg);
+}
+
+/* Hai mặt của tờ giấy */
+.sheet-side {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 2px 8px 8px 2px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+}
+
+.sheet-side.sheet-front {
+  transform: rotateY(0deg);
+}
+
+.sheet-side.sheet-back {
+  transform: rotateY(180deg);
+  border-radius: 8px 2px 2px 8px;
+}
+
+/* =========================================================
+   BÌA DA CAO CẤP (LEATHER COVERS)
+   ========================================================= */
+.sheet-cover {
+  background: radial-gradient(circle at 35% 30%, #34261d 0%, #1c1510 55%, #0f0b08 100%);
+  border: 1px solid rgba(197, 152, 67, 0.35);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-cover-front {
+  box-shadow: inset -12px 0 35px rgba(0,0,0,0.85), 0 22px 50px rgba(0,0,0,0.75);
+}
+
+.sheet-cover-back {
+  box-shadow: inset 12px 0 35px rgba(0,0,0,0.85), 0 22px 50px rgba(0,0,0,0.75);
+}
+
+.cover-leather-texture {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.035) 1px, transparent 0);
+  background-size: 6px 6px;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.cover-stitch-border {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  border: 2px dashed rgba(212, 163, 89, 0.45);
+  border-radius: 8px;
+  padding: 36px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.55);
+}
+
+.cover-ornament-top {
+  color: var(--amber);
+  font-size: 1rem;
+  letter-spacing: 0.35em;
+}
+
+.cover-emblem-ring {
+  width: 95px;
+  height: 95px;
+  border-radius: 50%;
+  border: 2px solid var(--amber);
+  background: radial-gradient(circle, rgba(197, 152, 67, 0.2) 0%, rgba(0,0,0,0.5) 80%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+  box-shadow: 0 0 28px rgba(197, 152, 67, 0.3), inset 0 0 16px rgba(0,0,0,0.65);
+}
+
+.cover-titles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.cover-kicker {
+  font-size: 0.78rem;
+  letter-spacing: 0.28em;
+  color: var(--amber);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.cover-main-title {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 0 24px rgba(212, 163, 89, 0.35);
+  margin: 0;
+  word-break: break-word;
+}
+
+.cover-sub-title {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-style: italic;
+  color: var(--amber-soft);
+  letter-spacing: 0.05em;
+  word-break: break-word;
+}
+
+.cover-divider-flourish {
+  color: var(--amber);
+  font-size: 1.2rem;
+  margin: 4px 0;
+}
+
+.cover-caption {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  max-width: 380px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.cover-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-cover-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 34px;
+  background: linear-gradient(135deg, #d4a359 0%, #a87930 100%);
+  color: #0b0907;
+  border: 1px solid rgba(255, 235, 180, 0.6);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(212, 163, 89, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.btn-cover-open:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(212, 163, 89, 0.65);
+}
+
+.cover-hint {
+  font-size: 0.78rem;
+  color: rgba(212, 163, 89, 0.75);
+  letter-spacing: 0.06em;
+}
+
+/* =========================================================
+   TRANG SÁCH BÊN TRONG (PAGES)
+   ========================================================= */
+.sheet-page {
+  padding: 14px;
+  background: #15110e;
+}
+
+.page-left {
+  background: linear-gradient(to right, #17120e 0%, #191411 90%, rgba(0,0,0,0.6) 100%);
+}
+
+.page-right {
+  background: linear-gradient(to right, rgba(0,0,0,0.6) 0%, #191411 10%, #17120e 100%);
+}
+
+.page-inner {
+  height: 100%;
+  border: 1px solid rgba(197, 152, 67, 0.22);
+  border-radius: 4px;
+  padding: 22px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.45);
+  position: relative;
+  overflow: visible;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(197, 152, 67, 0.22);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.page-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: var(--amber);
+  font-weight: 700;
+  text-transform: uppercase;
+  word-break: break-word;
+}
+
+.page-folio {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.page-ornament {
+  text-align: center;
+  color: var(--amber);
+  font-size: 0.8rem;
+  letter-spacing: 0.45em;
+  margin-bottom: 6px;
+}
+
+.page-title {
+  font-family: var(--font-serif);
+  font-size: 1.55rem;
+  color: #fff;
+  margin: 0 0 8px;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.page-quote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--amber-soft);
+  font-size: 0.96rem;
+  line-height: 1.55;
+  border-left: 2px solid var(--amber);
+  padding-left: 14px;
+  margin: 12px 0 16px;
+  word-break: break-word;
+}
+
+.page-text-content {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  word-break: break-word;
+}
+
+.page-signature-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(197, 152, 67, 0.22);
+}
+
+.page-wax-seal {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #8a2424 0%, #461111 80%);
+  border: 1px solid rgba(197, 152, 67, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffd89b;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.55);
+}
+
+.page-signature-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sig-name {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--amber-soft);
+}
+
+.sig-bar {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.page-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+/* =========================================================
+   MỤC LỤC TRANG (TABLE OF CONTENTS)
+   ========================================================= */
+.book-toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toc-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.toc-item:hover {
+  background: rgba(197, 152, 67, 0.14);
+}
+
+.toc-ch {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--amber);
+  min-width: 24px;
+  font-size: 1.05rem;
+}
+
+.toc-name {
+  color: var(--text-main);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.toc-item:hover .toc-name {
+  color: var(--amber-soft);
+}
+
+.toc-dots {
+  flex: 1;
+  border-bottom: 1px dotted rgba(197, 152, 67, 0.4);
+  margin-bottom: 4px;
+}
+
+.toc-pg {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--amber);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.toc-flavor-note {
+  margin-top: auto;
+  padding: 14px;
+  background: rgba(10, 8, 6, 0.55);
+  border: 1px solid rgba(197, 152, 67, 0.18);
+  border-radius: var(--radius-sm);
+}
+
+.flavor-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--amber);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.flavor-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ftag {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: rgba(197, 152, 67, 0.08);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(197, 152, 67, 0.15);
+  word-break: break-word;
+}
+
+/* =========================================================
+   THẺ ĐỒ UỐNG CHỐNG TRÀN CHỮ - TỰ ĐỘNG XUỐNG DÒNG
+   ========================================================= */
+
+/* 1. Thẻ Signature (3 món hoặc 4 món/trang) */
+.book-drinks-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.book-drinks-stack-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.book-drink-card {
+  display: flex;
+  gap: 14px;
+  padding: 12px 16px;
+  background: rgba(10, 8, 7, 0.52);
+  border: 1px solid rgba(197, 152, 67, 0.2);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  min-height: 128px;
+}
+
+.book-drinks-stack-4 .book-drink-card {
+  padding: 8px 12px;
+  min-height: 104px;
+  gap: 12px;
+}
+
+.book-drink-card:hover {
+  background: rgba(197, 152, 67, 0.08);
+  border-color: rgba(197, 152, 67, 0.35);
+}
+
+.book-drink-thumb-wrap {
+  width: 68px;
+  height: 68px;
+  min-width: 68px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(197, 152, 67, 0.25);
+  background: #000;
+  flex-shrink: 0;
+}
+
+.book-drinks-stack-4 .book-drink-thumb-wrap {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+}
+
+.book-drink-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.book-drink-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+}
+
+.book-drink-star {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--amber);
+  border-radius: 50%;
+  padding: 2px;
+  display: flex;
+}
+
+.book-drink-soldout {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(180, 40, 40, 0.88);
+  color: #fff;
+  font-size: 0.65rem;
+  text-align: center;
+  padding: 2px 0;
+}
+
+.book-drink-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.book-drink-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.book-drink-name {
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  color: #fff;
+  margin: 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+}
+
+.book-drink-price {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--amber);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.book-drink-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  word-break: break-word;
+}
+
+.meta-sep {
+  opacity: 0.4;
+}
+
+.book-drink-cat {
+  color: var(--amber-soft);
+}
+
+.book-drink-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  margin: 2px 0 4px;
+}
+
+.book-drink-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.book-drink-tastes {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.book-taste-pill {
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(197, 152, 67, 0.12);
+  color: var(--amber-soft);
+  border: 1px solid rgba(197, 152, 67, 0.2);
+  word-break: break-word;
+}
+
+.book-drink-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.book-btn-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.book-btn-detail:hover {
+  color: var(--amber-soft);
+}
+
+.book-btn-order {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(197, 152, 67, 0.2);
+  border: 1px solid rgba(197, 152, 67, 0.45);
+  color: var(--amber-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.book-btn-order:hover:not(:disabled) {
+  background: var(--amber);
+  color: #000;
+}
+
+.book-btn-order:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 2. Thẻ Classic dạng hàng ngang (4 món/trang) */
+.book-drinks-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.book-drink-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(10, 8, 7, 0.45);
+  border: 1px solid rgba(197, 152, 67, 0.16);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.book-drink-row:hover {
+  background: rgba(197, 152, 67, 0.08);
+  border-color: rgba(197, 152, 67, 0.3);
+}
+
+.book-row-thumb {
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(197, 152, 67, 0.25);
+  flex-shrink: 0;
+}
+
+.book-row-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-row-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+  background: #000;
+}
+
+.book-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.book-row-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.book-row-name {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  color: #fff;
+  margin: 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+}
+
+.book-row-price {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--amber);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.book-row-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 2px 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.book-row-desc {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.book-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.book-row-link {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-muted);
+  border: 1px solid var(--border-soft);
+  transition: all 0.2s ease;
+}
+
+.book-row-link:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+/* 3. Lưới 2 cột cho Sour & Fizz (6 món) */
+.book-drinks-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 14px;
+  flex: 1;
+  align-content: start;
+}
+
+.book-grid-card {
+  padding: 10px 12px;
+  background: rgba(10, 8, 7, 0.48);
+  border: 1px solid rgba(197, 152, 67, 0.18);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: all 0.2s ease;
+  min-height: 150px;
+}
+
+.book-grid-card:hover {
+  background: rgba(197, 152, 67, 0.08);
+  border-color: rgba(197, 152, 67, 0.35);
+}
+
+.book-grid-card-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.book-grid-thumb {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(197, 152, 67, 0.22);
+  background: #000;
+  flex-shrink: 0;
+}
+
+.book-grid-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-grid-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+}
+
+.book-grid-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.book-grid-name {
+  font-family: var(--font-serif);
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+}
+
+.book-grid-price {
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--amber);
+  white-space: nowrap;
+}
+
+.book-grid-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.book-grid-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.book-grid-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.book-grid-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.book-grid-link:hover {
+  color: var(--amber-soft);
+}
+
+.book-btn-order-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(197, 152, 67, 0.2);
+  border: 1px solid rgba(197, 152, 67, 0.45);
+  color: var(--amber-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.book-btn-order-sm:hover:not(:disabled) {
+  background: var(--amber);
+  color: #000;
+}
+
+.book-btn-order-sm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Thẻ tính năng đặc biệt (Slot thứ 6 trang Sour/Spritz) */
+.book-grid-card-feature {
+  border-style: dashed;
+  border-color: rgba(197, 152, 67, 0.35);
+  background: rgba(197, 152, 67, 0.05);
+}
+
+.book-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+  background: rgba(197, 152, 67, 0.15);
+}
+
+/* 4. Lưới 2x2 chuyên biệt cho Hầm Rượu Di Sản (4 chai/trang) */
+.book-spirits-grid-2x2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 14px;
+  flex: 1;
+  align-content: start;
+}
+
+.book-spirit-card {
+  padding: 12px 14px;
+  background: rgba(10, 8, 7, 0.52);
+  border: 1px solid rgba(197, 152, 67, 0.22);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+  min-height: 220px;
+}
+
+.book-spirit-card:hover {
+  background: rgba(197, 152, 67, 0.09);
+  border-color: rgba(197, 152, 67, 0.42);
+}
+
+.book-spirit-card-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.book-spirit-thumb {
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(197, 152, 67, 0.3);
+  background: #000;
+  flex-shrink: 0;
+}
+
+.book-spirit-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-spirit-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.book-spirit-name {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+}
+
+.book-spirit-price {
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--amber);
+  white-space: nowrap;
+}
+
+.book-spirit-meta {
+  font-size: 0.72rem;
+  color: var(--amber-soft);
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.book-spirit-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.book-spirit-tastes {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.book-spirit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(197, 152, 67, 0.14);
+}
+
+/* Trang hướng dẫn thưởng thức & CTA */
+.book-guide-box {
+  background: rgba(10, 8, 6, 0.5);
+  border: 1px solid rgba(197, 152, 67, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.book-guide-box h4 {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--amber-soft);
+  margin: 0 0 6px;
+  word-break: break-word;
+}
+
+.book-guide-box p {
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+  word-break: break-word;
+}
+
+.book-cta-card {
+  background: linear-gradient(135deg, rgba(197, 152, 67, 0.15) 0%, rgba(10, 8, 6, 0.6) 100%);
+  border: 1px solid rgba(197, 152, 67, 0.35);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.book-cta-badge {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--amber);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.book-cta-title {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  color: #fff;
+  margin: 0 0 14px;
+  word-break: break-word;
+}
+
+.book-contact-note {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 0 4px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Bìa sau */
+.cover-back-emblem {
+  margin: 24px 0;
+}
+
+.cover-wax-badge {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #8a2424 0%, #521313 70%, #2f0b0b 100%);
+  border: 2px solid rgba(197, 152, 67, 0.55);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.65), inset 0 2px 6px rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffd89b;
+}
+
+.cover-back-title {
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+  color: var(--amber-soft);
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.cover-back-quote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 360px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.cover-back-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin: 24px 0;
+  word-break: break-word;
+}
+
+.btn-cover-reopen {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 26px;
+  background: rgba(197, 152, 67, 0.18);
+  border: 1px solid rgba(197, 152, 67, 0.45);
+  color: var(--amber-soft);
+  border-radius: var(--radius-pill);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-cover-reopen:hover {
+  background: rgba(197, 152, 67, 0.28);
+  transform: translateY(-2px);
+}
+
+/* Góc lật trang (Dog-ear) */
+.sheet-dogear {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  z-index: 10;
+  pointer-events: auto;
+  opacity: 0.75;
+  transition: all 0.2s ease;
+}
+
+.sheet-dogear-br {
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(135deg, transparent 50%, rgba(197, 152, 67, 0.4) 50%, rgba(255, 230, 160, 0.6) 100%);
+  border-radius: 0 0 4px 0;
+}
+
+.sheet-dogear-bl {
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(-135deg, transparent 50%, rgba(197, 152, 67, 0.4) 50%, rgba(255, 230, 160, 0.6) 100%);
+  border-radius: 0 0 0 4px;
+}
+
+.book-sheet:hover .sheet-dogear {
+  width: 40px;
+  height: 40px;
+  opacity: 1;
+}
+
+/* =========================================================
+   THANH ĐIỀU KHIỂN DƯỚI GÁY SÁCH (CONTROLS BAR)
+   ========================================================= */
+.book-controls-bar {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  z-index: 5;
+}
+
+.book-controls-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.book-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: rgba(20, 16, 12, 0.88);
+  border: 1px solid rgba(197, 152, 67, 0.45);
+  color: var(--amber-soft);
+  border-radius: var(--radius-pill);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+}
+
+.book-nav-btn:hover:not(:disabled) {
+  background: var(--amber);
+  color: #0b0907;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(197, 152, 67, 0.4);
+}
+
+.book-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.book-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 22px;
+  background: rgba(10, 8, 6, 0.92);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+.book-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+}
+
+/* Dải nút nhảy nhanh chương */
+.book-chapters-jump {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chapter-jump-btn {
+  padding: 6px 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: rgba(14, 11, 9, 0.75);
+  border: 1px solid rgba(197, 152, 67, 0.2);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chapter-jump-btn:hover {
+  color: var(--amber-soft);
+  border-color: rgba(197, 152, 67, 0.45);
+}
+
+.chapter-jump-btn.active {
+  background: rgba(197, 152, 67, 0.25);
+  color: var(--amber);
+  border-color: var(--amber);
+  font-weight: 600;
+}
+
+/* Tiện ích âm thanh */
+.book-tools-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.book-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-muted);
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.book-tool-btn:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+   ========================================================= */
+@media (max-width: 1360px) {
+  .book-container {
+    width: 1140px;
+    height: 680px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .book-container {
+    width: 980px;
+    height: 630px;
+  }
+}
+
+@media (max-width: 1040px) {
+  .book-container {
+    width: 860px;
+    height: 580px;
+  }
+}
+
+@media (max-width: 920px) {
+  .book-container {
+    width: 740px;
+    height: 540px;
+  }
+
+  .cover-main-title {
+    font-size: 1.9rem;
+  }
+
+  .page-inner {
+    padding: 14px 12px;
+  }
+
+  .book-drink-card {
+    padding: 8px 10px;
+  }
+
+  .book-drink-thumb-wrap {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .book-spirits-grid-2x2 {
+    gap: 8px 10px;
+  }
+
+  .book-spirit-card {
+    min-height: 180px;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .book-viewport-wrapper {
+    padding: 14px 8px 14px;
+  }
+
+  .book-stage {
+    min-height: 550px;
+  }
+
+  .book-container {
+    width: 95%;
+    max-width: 420px;
+    height: 550px;
+  }
+
+  .book-container.book-closed-front,
+  .book-container.book-closed-back,
+  .book-container.book-opened {
+    transform: none;
+  }
+
+  .book-spine,
+  .book-bookmark-ribbon {
+    display: none;
+  }
+
+  .book-sheet {
+    left: 0;
+    width: 100%;
+    transform-origin: center center;
+  }
+
+  .cover-stitch-border {
+    padding: 24px 16px;
+  }
+
+  .cover-main-title {
+    font-size: 1.6rem;
+  }
+
+  .page-inner {
+    padding: 14px 12px;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .book-drinks-grid-2col,
+  .book-spirits-grid-2x2 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .book-chapters-jump {
+    display: none;
+  }
+
+  .book-controls-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .book-nav-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+  }
+
+  .book-indicator {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+  }
+}

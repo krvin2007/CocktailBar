@@ -1,0 +1,889 @@
+/* =========================================================
+   SPIRITS.CSS - Giao diện phòng trưng bày chai rượu di sản & hương vị
+   Thiết kế theo chuẩn triển lãm hầm rượu tư nhân (Private Cellar):
+   - Bảng màu trầm ấm gỗ sồi, đồng cổ, ánh hổ phách và vàng lá
+   - Hình dáng chai rượu được điêu khắc ánh sáng kỹ thuật số
+   - Biểu đồ cảm quan 3 tầng hương vị: Nose - Palate - Finish
+   - Modal hồ sơ di sản chuyên sâu chuẩn Sommelier
+   ========================================================= */
+
+/* ---------- Hero Hầm Rượu ---------- */
+.spirits-hero {
+  position: relative;
+  padding: 80px 0 60px;
+  background: radial-gradient(circle at 50% 20%, rgba(197, 152, 67, 0.12) 0%, rgba(18, 14, 10, 0.98) 70%),
+              linear-gradient(180deg, #0b0907 0%, #15100c 100%);
+  border-bottom: 1px solid var(--border-soft);
+  overflow: hidden;
+}
+
+.spirits-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(rgba(226, 186, 114, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.spirits-hero-inner {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.spirits-hero .section-kicker {
+  color: var(--amber);
+  letter-spacing: 0.28em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 6px 16px;
+  background: rgba(197, 152, 67, 0.08);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+}
+
+.spirits-hero h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--text-main);
+  margin-bottom: 18px;
+}
+
+.spirits-hero h1 em {
+  font-style: italic;
+  color: var(--amber-soft);
+  font-weight: 400;
+}
+
+.spirits-hero-desc {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  max-width: 960px;
+  margin: 0 auto 32px;
+}
+
+.cellar-stats-strip {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px 50px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.cellar-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cellar-stat-num {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--amber);
+  line-height: 1;
+}
+
+.cellar-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}
+
+/* ---------- Bộ lọc & Thanh tìm kiếm ---------- */
+.spirits-filter-bar {
+  padding: 32px 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.spirits-search-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.spirits-search-box {
+  position: relative;
+  flex: 1;
+  max-width: 440px;
+  min-width: 280px;
+}
+
+.spirits-search-box input {
+  width: 100%;
+  padding: 13px 18px 13px 44px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: all 0.25s ease;
+}
+
+.spirits-search-box input:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(197, 152, 67, 0.15);
+  background: var(--bg-surface);
+}
+
+.spirits-search-box .search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--amber-dark);
+  pointer-events: none;
+}
+
+.spirits-count-badge {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.spirits-count-badge strong {
+  color: var(--amber-soft);
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+}
+
+.spirits-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.spirit-tab-btn {
+  padding: 9px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.spirit-tab-btn:hover {
+  color: var(--text-main);
+  border-color: var(--amber-dark);
+  background: var(--bg-elevated);
+}
+
+.spirit-tab-btn.active {
+  background: linear-gradient(135deg, rgba(197, 152, 67, 0.2) 0%, rgba(197, 152, 67, 0.08) 100%);
+  border-color: var(--amber);
+  color: var(--amber-soft);
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(197, 152, 67, 0.15);
+}
+
+/* ---------- Lưới thẻ chai rượu ---------- */
+.spirits-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+  padding: 20px 0 60px;
+}
+
+@media (min-width: 992px) {
+  .spirits-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 44px;
+  }
+}
+
+.spirit-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-soft);
+}
+
+.spirit-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Khối mô phỏng chai rượu & nhãn huy chương */
+.spirit-showcase-header {
+  position: relative;
+  padding: 36px 32px 28px;
+  background: radial-gradient(circle at 50% 120%, rgba(197, 152, 67, 0.15) 0%, rgba(14, 11, 8, 0.95) 75%);
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.spirit-bottle-real-wrap {
+  position: relative;
+  width: 155px;
+  height: 235px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 50%, rgba(197, 152, 67, 0.18) 0%, rgba(10, 8, 6, 0.9) 75%);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.9), 0 10px 24px rgba(0, 0, 0, 0.7);
+}
+
+.spirit-bottle-real-wrap::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 15%;
+  right: 15%;
+  height: 12px;
+  background: radial-gradient(ellipse at center, rgba(197, 152, 67, 0.35) 0%, transparent 75%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.real-bottle-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.9));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.spirit-card:hover .real-bottle-img {
+  transform: scale(1.08) translateY(-4px);
+}
+
+.spirit-header-content {
+  flex: 1;
+}
+
+.spirit-badge-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.spirit-family-badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.spirit-seal-chip {
+  padding: 3px 8px;
+  background: rgba(197, 152, 67, 0.14);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--amber-soft);
+}
+
+.spirit-title {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.spirit-tagline {
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* Thông số Sommelier tóm lược */
+.spirit-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 18px;
+  padding: 20px 28px;
+  background: rgba(14, 11, 8, 0.4);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.spirit-spec-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.spirit-spec-title {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.spirit-spec-val {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-top: 2px;
+}
+
+/* Bản đồ 3 tầng hương vị (Nose - Palate - Finish) */
+.spirit-tasting-matrix {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.tasting-tier-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.tasting-tier-tag {
+  flex-shrink: 0;
+  width: 78px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.tier-nose {
+  background: rgba(229, 167, 62, 0.14);
+  color: #e5a73e;
+  border: 1px solid rgba(229, 167, 62, 0.28);
+}
+
+.tier-palate {
+  background: rgba(197, 152, 67, 0.18);
+  color: var(--amber-soft);
+  border: 1px solid var(--border-soft);
+}
+
+.tier-finish {
+  background: rgba(216, 126, 47, 0.15);
+  color: #e2803b;
+  border: 1px solid rgba(216, 126, 47, 0.3);
+}
+
+.tasting-tier-desc {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+/* Thang đo cảm quan Radar/Bars */
+.spirit-radar-box {
+  padding: 18px 28px 22px;
+  background: rgba(11, 9, 7, 0.6);
+  border-top: 1px solid var(--border-soft);
+}
+
+.spirit-radar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.spirit-radar-head span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.radar-bars-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 18px;
+}
+
+.radar-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.radar-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.radar-bar-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.radar-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--amber-dark) 0%, var(--amber) 100%);
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Khối thức uống pha chế biểu tượng từ chai rượu */
+.spirit-crafted-section {
+  padding: 20px 28px 24px;
+  background: rgba(19, 15, 12, 0.85);
+  border-top: 1px solid var(--border-soft);
+}
+
+.crafted-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.crafted-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--amber-soft);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.crafted-title svg {
+  color: var(--amber);
+}
+
+.crafted-sub-badge {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.crafted-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.crafted-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  transition: all 0.25s ease;
+}
+
+.crafted-item:hover {
+  border-color: var(--amber);
+  background: var(--bg-elevated);
+}
+
+.crafted-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.crafted-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crafted-cat-tag {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.crafted-badge-inmenu {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(76, 183, 121, 0.15);
+  border: 1px solid rgba(76, 183, 121, 0.3);
+  border-radius: 999px;
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.crafted-badge-inmenu:hover {
+  background: rgba(76, 183, 121, 0.25);
+  color: #fff;
+}
+
+.crafted-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.crafted-recipe-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--amber-dark);
+}
+
+.crafted-recipe-row svg {
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+/* Phần chân thẻ & Nút thao tác */
+.spirit-card-footer {
+  padding: 16px 28px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.spirit-footer-glass {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.spirit-footer-glass svg {
+  color: var(--amber);
+}
+
+.spirit-card-footer .btn {
+  font-size: 0.85rem;
+  padding: 8px 16px;
+}
+
+/* ---------- Cẩm nang Sommelier 5 bước ---------- */
+.sommelier-guide-section {
+  padding: 70px 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.guide-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.guide-step-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 28px 22px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-step-num {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--amber-dark);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.guide-step-title {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+
+.guide-step-desc {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ---------- Modal Hồ Sơ Di Sản Chai Rượu ---------- */
+.spirit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.spirit-modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.spirit-modal-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.spirit-modal-head {
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface);
+  z-index: 10;
+}
+
+.spirit-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.spirit-modal-close:hover {
+  color: var(--text-main);
+}
+
+.spirit-modal-body {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.modal-bio-quote {
+  padding: 18px 24px;
+  border-left: 3px solid var(--amber);
+  background: rgba(197, 152, 67, 0.08);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--amber-soft);
+  line-height: 1.5;
+}
+
+.modal-section-title {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  color: var(--text-main);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-section-title svg {
+  color: var(--amber);
+}
+
+.modal-bio-text {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+  white-space: pre-line;
+}
+
+.modal-pairing-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.modal-cocktail-chip {
+  padding: 6px 14px;
+  background: rgba(197, 152, 67, 0.12);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--amber-soft);
+}
+
+.spirit-modal-foot {
+  padding: 20px 32px;
+  border-top: 1px solid var(--border-soft);
+  background: var(--bg-card);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* =========================================================
+   RESPONSIVE DI ĐỘNG CHO TRANG TRƯNG BÀY RƯỢU
+   ========================================================= */
+@media (max-width: 768px) {
+  .spirits-hero {
+    padding: 50px 0 40px;
+  }
+
+  .spirit-showcase-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+    padding: 28px 20px 20px;
+  }
+
+  .spirit-bottle-figure {
+    margin: 0 auto;
+  }
+
+  .spirit-badge-row {
+    justify-content: center;
+  }
+
+  .spirit-specs-grid {
+    grid-template-columns: 1fr;
+    padding: 16px 20px;
+  }
+
+  .spirit-tasting-matrix {
+    padding: 20px;
+  }
+
+  .radar-bars-list {
+    grid-template-columns: 1fr;
+  }
+
+  .spirit-radar-box {
+    padding: 16px 20px;
+  }
+
+  .spirit-card-footer {
+    padding: 14px 20px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .spirit-card-footer > div {
+    display: flex;
+    justify-content: stretch;
+  }
+
+  .spirit-card-footer .btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .spirit-modal-body {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .spirit-modal-head {
+    padding: 18px 20px;
+  }
+
+  .spirit-modal-foot {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
+
+  .spirit-modal-foot .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Chưa có ảnh đúng chai -> biểu tượng thay thế (không dùng ảnh chai khác) */
+.bottle-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  color: var(--amber);
+  text-align: center;
+}
+
+.bottle-missing span {
+  font-size: 0.66rem;
+  line-height: 1.3;
+  color: var(--text-dim);
+}

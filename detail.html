@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi tiết đồ uống - Quán Bar Đêm</title>
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<main class="page-body">
+  <section class="section" id="detail-section">
+    <div class="container" id="detail-container">
+      <!-- Nội dung được JS render vào đây; xem js/pages/detail.js -->
+    </div>
+  </section>
+
+  <section class="section related-section" id="related-section" hidden>
+    <div class="container">
+      <div class="section-head">
+        <h2>Có thể bạn cũng thích</h2>
+        <p>Các món khác cùng danh mục</p>
+      </div>
+      <div class="drink-grid" id="related-grid"></div>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer"></footer>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/detail.js"></script>
+</body>
+</html>

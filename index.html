@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quán Bar Đêm — Artisan Cocktail Lounge &amp; Speakeasy</title>
+<meta name="description" content="Quán Bar Đêm - Không gian cocktail thủ công, thưởng thức hương vị rượu nguyên bản, đặt bàn trực tuyến và quản lý gọi món chuyên nghiệp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<main class="page-body">
+
+  <!-- ---------- Hero Banner Phong Cách Speakeasy Cao Cấp ---------- -->
+  <section class="hero hero-cinematic">
+    <div class="hero-backdrop" style="background-image: url('img/hero-bar.jpg');"></div>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <div class="hero-tag">
+        <span class="hero-tag-line"></span>
+        <span class="hero-tag-text" data-i18n="hero_kicker">EST. 2019 · ARTISAN COCKTAIL LOUNGE</span>
+        <span class="hero-tag-line"></span>
+      </div>
+      <h1 class="hero-title" data-i18n="hero_title">Quán Bar Đêm</h1>
+      <p class="hero-lead" data-i18n="hero_lead">
+        Nơi mỗi ly cocktail là một bản giao hưởng giữa rượu hảo hạng, thảo mộc tươi
+        và sự yên tĩnh đầy mê hoặc của thành phố về đêm.
+      </p>
+
+      <div class="hero-actions">
+        <a href="menu.html" class="btn btn-primary btn-lg">
+          <span data-i18n="hero_btn_menu">Xem Menu</span>
+          <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#lounge-3d-section" class="btn btn-outline btn-lg" style="border-color: rgba(212, 163, 89, 0.5); color: var(--amber-soft);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          <span data-i18n="hero_btn_3d">Khám Phá Không Gian 3D</span>
+        </a>
+        <a href="order.html" class="btn btn-ghost btn-lg">
+          <span data-i18n="hero_btn_order">Đặt Bàn Tối Nay</span>
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <strong id="stat-drinks">0</strong>
+          <span data-i18n="stat_drinks">Món Đặc Tuyển</span>
+        </div>
+        <div class="hero-stat-sep"></div>
+        <div class="hero-stat">
+          <strong id="stat-orders">0</strong>
+          <span data-i18n="stat_orders">Lượt Phục Vụ</span>
+        </div>
+        <div class="hero-stat-sep"></div>
+        <div class="hero-stat">
+          <strong>18:00 – 02:00</strong>
+          <span data-i18n="stat_hours">Giờ Mở Cửa Đêm</span>
+        </div>
+        <div class="hero-stat-sep"></div>
+        <div class="hero-stat">
+          <strong>100% Craft</strong>
+          <span data-i18n="stat_craft">Pha Chế Thủ Công</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Bộ Sưu Tập Danh Mục ---------- -->
+  <section class="section section-categories">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-kicker" data-i18n="sec_curated_kicker">CURATED EXPERIENCES</span>
+        <h2 data-i18n="sec_curated_title">Bộ Sưu Tập Đồ Uống</h2>
+        <p data-i18n="sec_curated_sub">Lựa chọn ly nước phù hợp với tâm trạng và gu thưởng thức của bạn</p>
+      </div>
+      <div class="category-strip" id="category-strip"></div>
+    </div>
+  </section>
+
+  <!-- ---------- Món Nổi Bật (Featured Cocktails) ---------- -->
+  <section class="section section-featured">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-kicker" data-i18n="sec_featured_kicker">SIGNATURE COCKTAILS</span>
+        <h2 data-i18n="sec_featured_title">Được Yêu Thích Nhất</h2>
+        <p data-i18n="sec_featured_sub">Những công thức độc bản được sáng tạo và hoàn thiện qua nhiều năm bởi đội ngũ Bartender</p>
+      </div>
+      <div class="drink-grid" id="featured-grid"></div>
+      <div class="text-center mt-3">
+        <a href="menu.html" class="btn btn-outline btn-lg">
+          <span data-i18n="btn_explore_all_menu">Khám Phá Toàn Bộ Menu</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Mô Hình Không Gian Quán Bar 3D (3D Virtual Lounge) ---------- -->
+  <section class="section section-lounge-3d" id="lounge-3d-section">
+    <div class="container">
+      <div id="lounge-3d-mount"></div>
+    </div>
+  </section>
+
+  <!-- ---------- Spotlight Hầm Rượu Di Sản & Tri Thức Thưởng Thức ---------- -->
+  <section class="section section-spirits-spotlight" style="background: radial-gradient(circle at 50% 50%, rgba(197, 152, 67, 0.08) 0%, rgba(18, 14, 10, 0.9) 100%), linear-gradient(180deg, #130f0c 0%, #0b0907 100%); border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); padding: 50px 0;">
+    <div class="container">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 32px; background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: 36px 40px; box-shadow: var(--shadow-lift);">
+        <div style="flex: 1; min-width: 300px;">
+          <span class="section-kicker" data-i18n="spirits_spotlight_kicker">CONNOISSEUR ARCHIVE</span>
+          <h2 data-i18n="spirits_spotlight_title" style="font-family: var(--font-heading); font-size: 2.2rem; color: var(--text-main); margin: 8px 0 14px;">Hầm Rượu Di Sản &amp; Bản Đồ Hương Vị</h2>
+          <p data-i18n="spirits_spotlight_desc" style="color: var(--text-muted); font-size: 1rem; line-height: 1.7; max-width: 620px; margin-bottom: 22px;">
+            Khám phá tiểu sử hào hùng, bí quyết chưng cất nồi đồng và bản đồ 3 tầng hương vị (Khứu giác - Vị giác - Hậu vị) của những chai rượu huyền thoại: The Macallan 18, Hennessy X.O, Don Julio 1942, Monkey 47, Lagavulin 16...
+          </p>
+          <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+            <a href="spirits.html" class="btn btn-primary">
+              <span data-i18n="spirits_spotlight_btn">Tham Quan Phòng Trưng Bày Rượu</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+          <div style="text-align: center; padding: 18px 22px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-soft); border-radius: var(--radius-md);">
+            <div style="font-family: var(--font-heading); font-size: 2rem; color: var(--amber); font-weight: 600;">8+</div>
+            <div data-i18n="spirits_stat_bottles" style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px;">Chai Di Sản</div>
+          </div>
+          <div style="text-align: center; padding: 18px 22px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-soft); border-radius: var(--radius-md);">
+            <div style="font-family: var(--font-heading); font-size: 2rem; color: var(--amber); font-weight: 600;">5 Bước</div>
+            <div data-i18n="spirits_stat_steps" style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px;">Nếm Sommelier</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Câu Chuyện & Triết Lý Quán (About) ---------- -->
+  <section class="section section-story">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-photo-wrapper">
+          <div class="about-photo-frame">
+            <img src="img/about-bartender.jpg" alt="Bartender chuyên nghiệp đang rót cocktail thủ công" class="about-img" loading="lazy">
+          </div>
+          <div class="about-photo-caption">
+            <div class="caption-inner">
+              <span class="caption-gold">Craftsmanship</span>
+              <span class="caption-sub">Tỉ mỉ trong từng giọt rượu</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-text">
+          <span class="section-kicker" data-i18n="about_kicker">OUR PHILOSOPHY</span>
+          <h2 data-i18n="about_title">Hơi Thở Speakeasy Giữa Lòng Thành Phố</h2>
+          <p class="about-highlight" data-i18n="about_highlight">
+            Được thành lập từ năm 2019, Quán Bar Đêm được định vị là chốn dừng chân ấm cúng
+            dành cho những ai trân trọng giá trị nguyên bản của nghệ thuật pha chế.
+          </p>
+          <p data-i18n="about_desc">
+            Chúng tôi tin rằng cocktail không chỉ đơn thuần là đồ uống có cồn, mà là sự cân bằng tuyệt đối
+            của nhiệt độ, độ pha loãng của đá thủ công và hương vị tự nhiên của thảo mộc tươi.
+          </p>
+
+          <div class="about-features">
+            <div class="about-feat-item">
+              <div class="feat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 22h8m-4-7v7M4 4l8 8 8-8H4z"/></svg>
+              </div>
+              <div class="feat-text">
+                <h4 data-i18n="about_feat_1_title">Nguyên Liệu Tự Nhiên &amp; Rượu Chuẩn Nguồn</h4>
+                <p data-i18n="about_feat_1_desc">Nước ép quả tươi ép trong ngày, siro hoa quả tự nấu và rượu nền nhập khẩu chính ngạch.</p>
+              </div>
+            </div>
+
+            <div class="about-feat-item">
+              <div class="feat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+              </div>
+              <div class="feat-text">
+                <h4 data-i18n="about_feat_2_title">Đá Viên Cắt Tay Trong Suốt</h4>
+                <p data-i18n="about_feat_2_desc">Khối đá được tinh lọc và gọt tay tỉ mỉ, tan cực chậm để giữ vị rượu nguyên bản đến giọt cuối cùng.</p>
+              </div>
+            </div>
+
+            <div class="about-feat-item">
+              <div class="feat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              </div>
+              <div class="feat-text">
+                <h4 data-i18n="about_feat_3_title">Đặt Bàn Nhanh &amp; Giữ Vị Trí Ưa Thích</h4>
+                <p data-i18n="about_feat_3_desc">Chọn quầy bar để theo dõi pha chế trực tiếp, hoặc bàn sofa riêng tư cho những cuộc trò chuyện sâu lắng.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Tri Thức & Huyền Thoại Ngành Rượu ---------- -->
+  <section class="section" style="padding-top: 40px; padding-bottom: 40px; background: rgba(19, 15, 12, 0.5);">
+    <div class="container">
+      <div class="section-head" style="text-align: center; max-width: 720px; margin: 0 auto 36px;">
+        <span class="section-kicker" data-i18n="heritage_kicker">HERITAGE &amp; CULTURE</span>
+        <h2 data-i18n="heritage_title">Di Sản &amp; Những Huyền Thoại Quầy Bar</h2>
+        <p class="text-muted" data-i18n="heritage_sub">
+          Khám phá những bộ óc sáng tạo vĩ đại đã định hình nghệ thuật cocktail và những nhà sưu tầm cất giữ các hầm rượu vô giá của nhân loại.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+        <!-- Card Bartenders -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(197, 152, 67, 0.15), transparent 70%); pointer-events: none;"></div>
+          <div>
+            <span class="section-kicker" style="margin-bottom: 8px; display: inline-block;">MIXOLOGY ICONS</span>
+            <h3 data-i18n="card_bartenders_title" style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--text-main); margin-bottom: 12px;">Huyền Thoại Master Bartenders</h3>
+            <p data-i18n="card_bartenders_desc" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
+              Chiêm ngưỡng chân dung, triết lý phục vụ và công thức kinh điển của những bậc thầy như Salvatore Calabrese, Ada Coleman, Dale DeGroff và Harry Craddock.
+            </p>
+          </div>
+          <div>
+            <a href="bartenders.html" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 8px;">
+              <span data-i18n="card_bartenders_btn">Khám Phá Master Bartenders</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Card Collectors -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(197, 152, 67, 0.15), transparent 70%); pointer-events: none;"></div>
+          <div>
+            <span class="section-kicker" style="margin-bottom: 8px; display: inline-block;">LIQUID HISTORY</span>
+            <h3 data-i18n="card_collectors_title" style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--text-main); margin-bottom: 12px;">Nhà Sưu Tầm Rượu Lừng Danh</h3>
+            <p data-i18n="card_collectors_desc" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
+              Bước vào những hầm rượu bảo mật triệu đô lưu giữ Macallan 1926, Cognac 1789 và những mẻ thùng đơn độc bản từ các lò chưng cất đã vĩnh viễn đóng cửa.
+            </p>
+          </div>
+          <div>
+            <a href="collectors.html" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 8px;">
+              <span data-i18n="card_collectors_btn">Khám Phá Nhà Sưu Tầm</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Đặt Bàn & Trải Nghiệm Không Gian Đêm ---------- -->
+  <section class="cta-banner">
+    <div class="container">
+      <div class="cta-inner">
+        <span class="cta-badge" data-i18n="cta_badge">RESERVATIONS &amp; PRIVATE EVENTS</span>
+        <h2 data-i18n="cta_title">Dành Cho Những Buổi Hẹn Đầy Cảm Xúc</h2>
+        <p data-i18n="cta_desc">
+          Dù bạn tìm kiếm một góc riêng tư thư giãn sau giờ làm việc, một buổi hẹn hò lãng mạn
+          hay bữa tiệc kỷ niệm ấm cúng cùng bạn bè, Quán Bar Đêm luôn sẵn sàng chuẩn bị không gian ưng ý nhất.
+        </p>
+        <div class="cta-actions">
+          <a href="order.html" class="btn btn-primary btn-lg">
+            <span data-i18n="cta_btn">Đặt Bàn Giữ Chỗ Tối Nay</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="site-footer"></footer>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu Cocktail & Thức Uống — Quán Bar Đêm</title>
+<meta name="description" content="Khám phá quyển menu cocktail 3D lật trang bìa da speakeasy và danh mục cocktail thủ công tại Quán Bar Đêm.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/menu-book.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<main class="page-body">
+  <section class="section menu-page-section">
+    <div class="container container-wide">
+      <div class="section-head">
+        <span class="section-kicker" data-i18n="menu_book_kicker">SPEAKEASY COCKTAIL BOOK</span>
+        <h2 data-i18n="menu_book_title">Quyển Menu Cocktail Bìa Da 3D</h2>
+        <p data-i18n="menu_book_sub">Lật từng trang như cuốn menu bìa da ngoài đời thực để khám phá 30 công thức cocktail &amp; rượu di sản độc bản</p>
+      </div>
+
+      <!-- Thanh chuyển đổi chế độ xem: Cuốn Sách 3D vs Bộ Lọc Lưới -->
+      <div class="menu-view-switcher">
+        <div class="menu-view-title-group">
+          <span class="menu-view-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </span>
+          <div>
+            <span class="menu-view-text-title" data-i18n="menu_book_title">Quyển Menu Bìa Da 3D</span>
+            <div class="menu-view-text-sub" data-i18n="menu_book_sub">Trải nghiệm lật từng trang menu như tại quầy bar ngoài đời thực</div>
+          </div>
+        </div>
+
+        <div class="menu-mode-pills">
+          <button type="button" class="menu-mode-pill active" id="btn-mode-book">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span data-i18n="btn_mode_book">Quyển Menu Lật 3D</span>
+          </button>
+          <button type="button" class="menu-mode-pill" id="btn-mode-grid">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span data-i18n="btn_mode_grid">Bộ Lọc &amp; Tìm Kiếm</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vùng hiển thị Quyển Sách Menu 3D Lật Trang Ngoài Đời -->
+      <div id="menu-book-root"></div>
+
+      <!-- Gợi ý hầm rượu di sản -->
+      <div style="margin-bottom: 28px; padding: 16px 24px; background: rgba(197, 152, 67, 0.08); border: 1px solid var(--border-soft); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="color: var(--amber);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </span>
+          <span style="font-size: 0.95rem; color: var(--text-main);">Bạn muốn khám phá tiểu sử nhà chưng cất &amp; bản đồ 3 tầng hương vị của các chai rượu huyền thoại?</span>
+        </div>
+        <a href="spirits.html" class="btn btn-outline btn-sm">
+          <span>Khám Phá Hầm Rượu Di Sản</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="menu-layout" id="menu-grid-section" style="display: none;">
+        <!-- ---------- Bộ Lọc Bên Trái ---------- -->
+        <aside class="filter-panel">
+          <div class="filter-panel-header">
+            <h3>Bộ lọc tìm kiếm</h3>
+            <button type="button" class="btn-filter-reset" id="f-reset" title="Đặt lại bộ lọc">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>Đặt lại</span>
+            </button>
+          </div>
+
+          <div class="filter-group">
+            <label for="f-keyword">Tìm kiếm đồ uống</label>
+            <div class="search-input-wrap">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="f-keyword" placeholder="Tên món, rượu nền, hương vị...">
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label for="f-category">Danh mục phục vụ</label>
+            <select id="f-category">
+              <option value="all">Tất cả danh mục</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Khoảng giá (VNĐ)</label>
+            <div class="filter-row">
+              <input type="number" id="f-min" placeholder="Từ" min="0" step="5000">
+              <span class="filter-sep">–</span>
+              <input type="number" id="f-max" placeholder="Đến" min="0" step="5000">
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-checkbox-custom">
+              <input type="checkbox" id="f-available">
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">Chỉ hiển thị món sẵn sàng phục vụ</span>
+            </label>
+          </div>
+        </aside>
+
+        <!-- ---------- Kết Quả Hiển Thị ---------- -->
+        <div class="menu-content">
+          <div class="menu-toolbar">
+            <div class="menu-count-badge">
+              <span class="count-dot"></span>
+              <span id="result-count">0 món</span>
+            </div>
+            <div class="menu-sort-wrap">
+              <label for="f-sort">Sắp xếp:</label>
+              <select id="f-sort">
+                <option value="default">Đề xuất của quán</option>
+                <option value="price-asc">Giá từ thấp đến cao</option>
+                <option value="price-desc">Giá từ cao đến thấp</option>
+                <option value="name-asc">Tên A → Z</option>
+                <option value="name-desc">Tên Z → A</option>
+                <option value="newest">Mới cập nhật</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="drink-grid" id="drink-grid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer"></footer>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/menu.js"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhà Sưu Tầm Rượu Lừng Danh &amp; Hầm Bí Mật — Quán Bar Đêm</title>
+<meta name="description" content="Khám phá các hầm rượu bọc thép, bộ sưu tập triệu đô và báu vật vô giá của những nhà sưu tầm rượu vĩ đại: Richard Gooding, Michel-Jack Chasseuil, Valentino Zagatti...">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/legends.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<main class="page-body">
+  <!-- ---------- Hero Spirits Collectors ---------- -->
+  <section class="legends-hero">
+    <div class="container">
+      <div class="legends-hero-inner">
+        <span class="section-kicker">NGƯỜI LƯU GIỮ LỊCH SỬ RƯỢU</span>
+        <h1>Nhà Sưu Tầm Rượu Lừng Danh &amp; <em>Hầm Bí Mật</em></h1>
+        <p class="legends-hero-desc">
+          Bước vào những thánh đường riêng tư và hầm ngầm bọc thép của các nhà sưu tầm vĩ đại—những người đã giải cứu các thùng ủ từ lò chưng cất đã đóng cửa, dòng Cognac trước Cách mạng Pháp và những tuyệt tác Single Malt huyền thoại.
+        </p>
+
+        <div class="legends-stats-strip">
+          <div class="legends-stat-item">
+            <span class="legends-stat-num">5</span>
+            <span class="legends-stat-label">Bậc Thầy Sưu Tầm</span>
+          </div>
+          <div class="legends-stat-item">
+            <span class="legends-stat-num">65,000+</span>
+            <span class="legends-stat-label">Chai Rượu Lưu Giữ</span>
+          </div>
+          <div class="legends-stat-item">
+            <span class="legends-stat-num">$100M+</span>
+            <span class="legends-stat-label">Giá Trị Di Sản</span>
+          </div>
+          <div class="legends-stat-item">
+            <span class="legends-stat-num">1780</span>
+            <span class="legends-stat-label">Niên Đại Cổ Nhất</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Search & Filter Section ---------- -->
+  <section class="section" style="padding-top: 24px;">
+    <div class="container">
+      <div class="legends-filter-bar">
+        <div class="legends-search-row">
+          <div class="legends-search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="collectors-search-input" placeholder="Tìm kiếm nhà sưu tầm, hầm rượu, kiệt tác (Macallan 1926, Yquem 1811, Karuizawa)...">
+          </div>
+          <div class="legends-count-badge" id="collectors-count">
+            Đang tải dữ liệu hầm rượu sưu tầm...
+          </div>
+        </div>
+
+        <div class="legends-tabs" id="collector-tabs"></div>
+      </div>
+
+      <!-- Collectors Grid -->
+      <div class="legends-grid" id="collectors-grid"></div>
+
+      <!-- Cross-Navigation Banner -->
+      <div class="cross-nav-strip">
+        <div class="cross-nav-info">
+          <h3>Hội Ngộ Những Master Bartenders Huyền Thoại</h3>
+          <p>
+            Khám phá chân dung những người đứng sau quầy bar đã sáng tạo nên các món cocktail chúng ta thưởng thức ngày nay, từ Ada Coleman, Harry Craddock đến Salvatore Calabrese và Dale DeGroff.
+          </p>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <a href="bartenders.html" class="btn btn-primary btn-sm">
+            Xem Master Bartenders 🍸
+          </a>
+          <a href="spirits.html" class="btn btn-outline btn-sm">
+            Khám Phá Hầm Rượu 🥃
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ---------- Modal Dossier Collector ---------- -->
+<div class="legend-modal-overlay" id="collector-modal" role="dialog" aria-modal="true" aria-labelledby="modal-name">
+  <div class="legend-modal-box">
+    <div class="legend-modal-head">
+      <div>
+        <h2 id="modal-name" style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--text-main); line-height: 1.2;"></h2>
+        <p id="modal-subtitle" style="font-size: 0.88rem; color: var(--amber); margin-top: 4px;"></p>
+      </div>
+      <button type="button" class="legend-modal-close" id="modal-close-btn" aria-label="Close modal">&times;</button>
+    </div>
+
+    <div class="legend-modal-body">
+      <p id="modal-quote" class="legend-quote" style="font-size: 1.05rem; margin-bottom: 0;"></p>
+
+      <div id="modal-vault-info"></div>
+
+      <div>
+        <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
+          Hành Trình Sưu Tầm &amp; Giai Thoại Đời Người
+        </h3>
+        <div id="modal-bio"></div>
+      </div>
+
+      <div>
+        <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
+          Báu Vật Độc Bản &amp; Kỷ Lục Đấu Giá
+        </h3>
+        <div id="modal-crown-jewels"></div>
+      </div>
+    </div>
+
+    <div class="legend-modal-foot">
+      <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('modal-close-btn').click();">
+        Đóng hồ sơ
+      </button>
+      <a href="spirits.html" class="btn btn-primary btn-sm">
+        Khám phá rượu tại Quán Bar Đêm
+      </a>
+    </div>
+  </div>
+</div>
+
+<footer id="site-footer"></footer>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/collectors.js"></script>
+</body>
+</html>
