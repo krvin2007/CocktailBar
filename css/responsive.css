@@ -284,3 +284,77 @@
     padding: 32px 20px;
   }
 }
+
+/* =========================================================
+   THANH ĐIỀU HƯỚNG MỞ RỘNG (thêm mục "Khuyến mãi" + nút "Thành viên")
+   Nút "Thành viên" trên header: hiện tên gọi của khách đã đăng nhập.
+   ========================================================= */
+.nav-account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 150px;
+  white-space: nowrap;
+}
+
+.nav-account-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-account-link.active {
+  border-color: var(--amber);
+  color: var(--amber-soft);
+}
+
+/* Màn hình laptop nhỏ: 8 mục menu + nút hành động dễ tràn -> thu gọn khoảng cách */
+@media (min-width: 861px) and (max-width: 1360px) {
+  .header-inner {
+    gap: 14px;
+  }
+
+  .main-nav {
+    gap: 14px;
+  }
+
+  .main-nav ul {
+    gap: 2px;
+  }
+
+  .main-nav a {
+    padding: 8px 9px;
+    font-size: 0.82rem;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1120px) {
+  .nav-admin-link {
+    display: none;
+  }
+
+  .nav-account-link span {
+    display: none;
+  }
+}
+
+/* Di động: menu xổ xuống dài hơn trước (thêm mục mới) -> cho phép cuộn */
+@media (max-width: 860px) {
+  .main-nav.open {
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+
+  .nav-account-link {
+    max-width: none;
+    justify-content: center;
+    height: 44px;
+  }
+}

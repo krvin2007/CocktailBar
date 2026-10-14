@@ -3,8 +3,9 @@
    Chạy: npm run seed   (hoặc: node tools/tao-db.js)
 
    Lấy dữ liệu mẫu từ chính các module của website (SEED_DRINKS,
-   SEED_ORDERS...) để chỉ có MỘT nguồn dữ liệu mẫu duy nhất - không
-   phải chép tay hai nơi rồi lệch nhau.
+   SEED_ORDERS, SEED_BANNERS, SEED_VOUCHERS, SEED_CUSTOMERS...) để chỉ
+   có MỘT nguồn dữ liệu mẫu duy nhất - không phải chép tay hai nơi
+   rồi lệch nhau.
 
    Dùng khi nào:
    - Lần đầu cài đặt dự án.
@@ -33,6 +34,9 @@ const { SEED_STAFF } = await import(modulePath("staffService.js"));
 const { SPIRITS_COLLECTION } = await import(modulePath("spiritsData.js"));
 const { BARTENDERS_COLLECTION } = await import(modulePath("bartendersData.js"));
 const { COLLECTORS_COLLECTION } = await import(modulePath("collectorsData.js"));
+const { SEED_BANNERS } = await import(modulePath("bannersService.js"));
+const { SEED_VOUCHERS } = await import(modulePath("vouchersService.js"));
+const { SEED_CUSTOMERS } = await import(modulePath("customersService.js"));
 
 // JSON.parse(JSON.stringify(...)) biến các instance class Drink thành object thuần
 const plain = (data) => JSON.parse(JSON.stringify(data));
@@ -45,6 +49,9 @@ const db = {
   spirits: plain(SPIRITS_COLLECTION),
   bartenders: plain(BARTENDERS_COLLECTION),
   collectors: plain(COLLECTORS_COLLECTION),
+  banners: plain(SEED_BANNERS),        // bảng banner(id, tenbanner, hinhbanner) - slider trang chủ
+  vouchers: plain(SEED_VOUCHERS),      // mã giảm giá: công khai + mã cá nhân (khách mới, sinh nhật)
+  customers: plain(SEED_CUSTOMERS),    // khách hàng thành viên (mật khẩu lưu dạng băm SHA-256)
 };
 
 const target = path.join(ROOT, "db.json");

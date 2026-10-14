@@ -5,14 +5,18 @@
    ========================================================= */
 
 import "./ui.js"; // đăng ký banner cảnh báo khi máy chủ API chưa chạy
+import "./chatWidget.js"; // Trợ lý AI dạng khung chat nổi - tự khởi tạo trên mọi trang khách
 import { getCartSummary } from "./ordersService.js";
+import { getCurrentCustomer } from "./customerAuth.js";
 import { ICONS } from "./icons.js";
+import { escapeHtml } from "./utils.js";
 import { getCurrentLang, setLanguage, toggleLanguage, t, applyI18n } from "./i18n.js";
 
 function getNavLinks() {
   return [
     { href: "index.html", label: t("nav_home", "Trang chủ") },
     { href: "menu.html", label: t("nav_menu", "Menu") },
+    { href: "sale.html", label: t("nav_sale", "Khuyến mãi") },
     { href: "spirits.html", label: t("nav_spirits", "Hầm Rượu") },
     { href: "bartenders.html", label: t("nav_bartenders", "Master Bartenders") },
     { href: "collectors.html", label: t("nav_collectors", "Nhà Sưu Tầm") },
@@ -34,6 +38,9 @@ export function renderHeader() {
   const { count } = getCartSummary();
   const currentLang = getCurrentLang();
   const navLinks = getNavLinks();
+  const customer = getCurrentCustomer();
+  // Tên hiển thị ngắn gọn: chỉ lấy tên gọi (từ cuối) để nút không bị tràn
+  const customerShortName = customer ? String(customer.name || "").trim().split(/\s+/).pop() : "";
 
   const linksHtml = navLinks.map((link) => `
     <li>
@@ -81,6 +88,11 @@ export function renderHeader() {
           <a href="order.html" class="btn btn-cart" title="${t("cart_title", "Xem giỏ hàng")}">
             ${ICONS.shoppingBag(17)}
             ${count > 0 ? `<span class="cart-count-dot">${count}</span>` : ""}
+          </a>
+          <a href="account.html" class="btn btn-ghost btn-sm nav-account-link ${page === "account.html" ? "active" : ""}"
+             title="${customer ? escapeHtml(customer.name) : t("nav_account_title", "Đăng nhập / Đăng ký thành viên")}">
+            ${ICONS.user(14)}
+            <span>${customer ? escapeHtml(customerShortName) : t("nav_account", "Thành viên")}</span>
           </a>
           <a href="admin-login.html" class="btn btn-ghost btn-sm nav-admin-link">${t("nav_admin", "Quản trị")}</a>
         </div>
@@ -136,6 +148,8 @@ export function renderFooter() {
       <div class="footer-col">
         <h4>${t("footer_col_experience")}</h4>
         <a href="menu.html">${t("footer_link_menu")}</a>
+        <a href="sale.html">${t("footer_link_sale", "Khuyến mãi & Mã giảm giá")}</a>
+        <a href="account.html">${t("footer_link_account", "Thành viên & Quà sinh nhật")}</a>
         <a href="spirits.html">${t("footer_link_spirits")}</a>
         <a href="bartenders.html">${t("footer_link_bartenders")}</a>
         <a href="collectors.html">${t("footer_link_collectors")}</a>
@@ -192,6 +206,15 @@ export function refreshCartBadge() {
     renderHeader();
   }
 }
+
+// Giỏ hàng đổi ở bất kỳ đâu (trang món, khung chat AI...) -> cập nhật huy hiệu số ly
+window.addEventListener("cartchange", () => refreshCartBadge());
+
+// Khách đăng nhập / đăng xuất / đăng ký -> vẽ lại header để đổi nút "Thành viên"
+window.addEventListener("customerchange", () => {
+  renderHeader();
+  applyI18n();
+});
 
 // Lắng nghe sự kiện thay đổi ngôn ngữ từ bất kỳ đâu trên trang
 window.addEventListener("languagechange", () => {

@@ -17,6 +17,9 @@ function getAdminMenu() {
     { href: "admin-dashboard.html", label: t("admin_menu_dash", "Tổng quan & Thống kê"), icon: ICONS.chart(17) },
     { href: "admin-menu.html", label: t("admin_menu_drinks", "Quản lý thực đơn"), icon: ICONS.cocktail(17) },
     { href: "admin-orders.html", label: t("admin_menu_orders", "Quản lý đơn hàng"), icon: ICONS.receipt(17) },
+    { href: "admin-banners.html", label: t("admin_menu_banners", "Banner quảng cáo"), icon: ICONS.sparkle(17) },
+    { href: "admin-vouchers.html", label: t("admin_menu_vouchers", "Mã giảm giá & Sale"), icon: ICONS.flame(17) },
+    { href: "admin-customers.html", label: t("admin_menu_customers", "Khách hàng thành viên"), icon: ICONS.user(17) },
     { href: "admin-staff.html", label: t("admin_menu_staff", "Quản lý nhân viên"), icon: ICONS.users(17) },
     { href: "admin-messages.html", label: t("admin_menu_messages", "Hộp thư liên hệ"), icon: ICONS.mail(17), badgeId: "nav-unread-badge" },
   ];
