@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="css/reset.css">
 <link rel="stylesheet" href="css/variables.css">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/banner.css">
 <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
@@ -73,6 +74,13 @@
     </div>
   </section>
 
+  <!-- ---------- Slider Banner Quảng Cáo (bảng banners: id, tenbanner, hinhbanner) ----------
+       Nội dung do quản trị viên quản lý tại admin-banners.html, bannerSlider.js dựng slider.
+       Không có banner hợp lệ nào thì cả section tự ẩn. -->
+  <section class="banner-section" id="banner-section">
+    <div id="banner-slider"></div>
+  </section>
+
   <!-- ---------- Bộ Sưu Tập Danh Mục ---------- -->
   <section class="section section-categories">
     <div class="container">
@@ -85,21 +93,54 @@
     </div>
   </section>
 
-  <!-- ---------- Món Nổi Bật (Featured Cocktails) ---------- -->
-  <section class="section section-featured">
+  <!-- ---------- Nổi Bật — Bán Chạy Nhất ----------
+       Xếp hạng theo tổng số ly trong các đơn KHÔNG bị huỷ (rankBestSellers).
+       Chưa có dữ liệu bán -> hiển thị các món Signature (featured) thay thế. -->
+  <section class="section section-featured" id="bestseller-section">
     <div class="container">
       <div class="section-head">
-        <span class="section-kicker" data-i18n="sec_featured_kicker">SIGNATURE COCKTAILS</span>
-        <h2 data-i18n="sec_featured_title">Được Yêu Thích Nhất</h2>
-        <p data-i18n="sec_featured_sub">Những công thức độc bản được sáng tạo và hoàn thiện qua nhiều năm bởi đội ngũ Bartender</p>
+        <span class="section-kicker" data-home-i18n="best_kicker">BEST SELLERS</span>
+        <h2 data-home-i18n="best_title">Nổi Bật — Bán Chạy Nhất</h2>
+        <p data-home-i18n="best_sub">Bảng xếp hạng theo số ly khách đã gọi thực tế tại quán (không tính đơn đã huỷ)</p>
       </div>
-      <div class="drink-grid" id="featured-grid"></div>
+      <p class="home-pick-note" id="bestseller-note" hidden></p>
+      <div class="drink-grid home-pick-grid" id="bestseller-grid"></div>
       <div class="text-center mt-3">
         <a href="menu.html" class="btn btn-outline btn-lg">
           <span data-i18n="btn_explore_all_menu">Khám Phá Toàn Bộ Menu</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
+    </div>
+  </section>
+
+  <!-- ---------- Món Mới Nhất (sắp theo ngày thêm vào thực đơn - getNewestDrinks) ---------- -->
+  <section class="section section-newest" id="newest-section">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-kicker" data-home-i18n="new_kicker">NEW ARRIVALS</span>
+        <h2 data-home-i18n="new_title">Món Mới Nhất</h2>
+        <p data-home-i18n="new_sub">Những công thức vừa ra mắt tại quầy bar</p>
+      </div>
+      <div class="drink-grid home-pick-grid" id="newest-grid"></div>
+      <div class="text-center mt-3">
+        <a href="menu.html?sort=newest" class="btn btn-outline btn-lg">
+          <span data-home-i18n="new_btn">Xem tất cả</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Dải Ưu Đãi: Khách hàng mới · Sinh nhật · Sale theo món ---------- -->
+  <section class="section section-offers" id="offers-section">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-kicker" data-home-i18n="offers_kicker">MEMBER PERKS &amp; OFFERS</span>
+        <h2 data-home-i18n="offers_title">Ưu Đãi Đang Diễn Ra</h2>
+        <p data-home-i18n="offers_sub">Trở thành thành viên để nhận quà chào mừng, mã sinh nhật và săn sale mỗi đêm</p>
+      </div>
+      <div class="offer-strip" id="offer-strip"></div>
     </div>
   </section>
 
@@ -113,8 +154,8 @@
   <!-- ---------- Spotlight Hầm Rượu Di Sản & Tri Thức Thưởng Thức ---------- -->
   <section class="section section-spirits-spotlight" style="background: radial-gradient(circle at 50% 50%, rgba(197, 152, 67, 0.08) 0%, rgba(18, 14, 10, 0.9) 100%), linear-gradient(180deg, #130f0c 0%, #0b0907 100%); border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); padding: 50px 0;">
     <div class="container">
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 32px; background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: 36px 40px; box-shadow: var(--shadow-lift);">
-        <div style="flex: 1; min-width: 300px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 32px; background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: clamp(22px, 4vw, 36px) clamp(18px, 4vw, 40px); box-shadow: var(--shadow-lift);">
+        <div style="flex: 1; min-width: min(300px, 100%);">
           <span class="section-kicker" data-i18n="spirits_spotlight_kicker">CONNOISSEUR ARCHIVE</span>
           <h2 data-i18n="spirits_spotlight_title" style="font-family: var(--font-heading); font-size: 2.2rem; color: var(--text-main); margin: 8px 0 14px;">Hầm Rượu Di Sản &amp; Bản Đồ Hương Vị</h2>
           <p data-i18n="spirits_spotlight_desc" style="color: var(--text-muted); font-size: 1rem; line-height: 1.7; max-width: 620px; margin-bottom: 22px;">

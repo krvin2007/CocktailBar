@@ -34,6 +34,14 @@
           <select id="f-category">
             <option value="all">Tất cả danh mục</option>
           </select>
+          <!-- Lọc theo chương trình giá: sale theo món / món mới tự giảm 10% -->
+          <select id="f-pricing" aria-label="Lọc theo chương trình giá">
+            <option value="all">Mọi chương trình giá</option>
+            <option value="discounted">Đang có ưu đãi (sale + món mới)</option>
+            <option value="sale">Đang sale theo món</option>
+            <option value="new">Món mới (14 ngày)</option>
+            <option value="regular">Giá gốc (không ưu đãi)</option>
+          </select>
         </div>
         <button type="button" class="btn btn-primary" id="add-drink-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -47,7 +55,7 @@
             <th style="width: 60px;">Ảnh</th>
             <th>Tên đồ uống</th>
             <th>Danh mục</th>
-            <th>Giá bán</th>
+            <th>Giá bán (sau ưu đãi)</th>
             <th>Trạng thái</th>
             <th>Signature</th>
             <th style="text-align: right;">Thao tác</th>
@@ -90,6 +98,12 @@
         <div class="form-group">
           <label>Giá bán (VNĐ) <span class="req">*</span></label>
           <input type="number" name="price" data-rule="required|positive" min="0" step="1000" placeholder="85000">
+        </div>
+        <div class="form-group">
+          <label for="drink-form-sale">Mức sale (%)</label>
+          <!-- Các mức lấy từ SALE_TIERS (drinksService.js), JS tự nạp; 0 = không sale -->
+          <select name="salePercent" id="drink-form-sale"></select>
+          <span class="sale-preview-hint" id="drink-sale-preview" aria-live="polite"></span>
         </div>
 
         <div class="form-group">

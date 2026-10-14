@@ -5,6 +5,8 @@
      gáy sách đổ bóng, mép cong lật giấy, âm thanh lật giấy qua Web Audio API.
    - Khổ sách rộng lớn 1140px, bố cục chống tràn nội dung, tích hợp
      không gian quầy bar bàn da & phụ kiện ly pha lê, nến hổ phách 2 bên.
+   - Giá in trong sách là GIÁ SAU ƯU ĐÃI (getDrinkPricing): món sale/món
+     mới có giá gốc gạch ngang + nhãn "-X%" như bảng giá in ngoài đời.
    ========================================================= */
 
 import { formatMoney, escapeHtml } from "./utils.js";
@@ -13,7 +15,7 @@ import { addToCart } from "./ordersService.js";
 import { toast } from "./ui.js";
 import { refreshCartBadge } from "./navbar.js";
 import { getCurrentLang, t } from "./i18n.js";
-import { getCategoryLabel } from "./drinksService.js";
+import { getCategoryLabel, getDrinkPricing } from "./drinksService.js";
 
 let soundEnabled = true;
 
@@ -76,6 +78,36 @@ export class MenuBookController {
     return this.drinks.filter((d) => d.category === cat);
   }
 
+  /**
+   * Giá in trên trang sách. Món thường: một giá như cũ. Món có ưu đãi:
+   * nhãn "-X%" (món mới: "Mới -10%") + giá gốc gạch ngang + giá sau giảm.
+   * @param {object} drink
+   * @param {string} cls - class giá sẵn có của từng kiểu thẻ (book-drink-price, book-row-price...)
+   */
+  priceHtml(drink, cls) {
+    const pricing = getDrinkPricing(drink);
+    if (!pricing.onSale) {
+      return `<span class="${cls}">${formatMoney(pricing.originalPrice)}</span>`;
+    }
+
+    const isEn = getCurrentLang() === "en";
+    const tag = pricing.reason === "new"
+      ? `${isEn ? "New" : "Mới"} -${pricing.percent}%`
+      : `-${pricing.percent}%`;
+    const title = pricing.reason === "new"
+      ? (isEn ? `New arrival: ${pricing.percent}% off` : `Món mới giảm ${pricing.percent}%`)
+      : (isEn ? `On sale: ${pricing.percent}% off` : `Đang sale ${pricing.percent}%`);
+
+    return `
+      <span class="${cls} book-price-sale" title="${title}">
+        <span class="book-price-meta">
+          <em class="book-price-tag">${tag}</em>
+          <s class="book-price-old">${formatMoney(pricing.originalPrice)}</s>
+        </span>
+        <span class="book-price-now">${formatMoney(pricing.finalPrice)}</span>
+      </span>`;
+  }
+
   /** Thẻ đồ uống tiêu chuẩn (Trang Signature - 3 món/trang) */
   renderSignatureCard(drink) {
     const isEn = getCurrentLang() === "en";
@@ -98,7 +130,7 @@ export class MenuBookController {
         <div class="book-drink-info">
           <div class="book-drink-header">
             <h4 class="book-drink-name">${escapeHtml(drink.name)}</h4>
-            <span class="book-drink-price">${formatMoney(drink.price)}</span>
+            ${this.priceHtml(drink, "book-drink-price")}
           </div>
           <div class="book-drink-meta">
             <span class="book-drink-cat">${catLabel}</span>
@@ -139,7 +171,7 @@ export class MenuBookController {
         <div class="book-row-main">
           <div class="book-row-header">
             <h4 class="book-row-name">${escapeHtml(drink.name)}</h4>
-            <span class="book-row-price">${formatMoney(drink.price)}</span>
+            ${this.priceHtml(drink, "book-row-price")}
           </div>
           <div class="book-row-meta">
             <span>${drink.abv > 0 ? `${drink.abv}% ABV` : "0% ABV"}</span>
@@ -173,7 +205,7 @@ export class MenuBookController {
           </div>
           <div class="book-grid-titles">
             <h5 class="book-grid-name">${escapeHtml(drink.name)}</h5>
-            <span class="book-grid-price">${formatMoney(drink.price)}</span>
+            ${this.priceHtml(drink, "book-grid-price")}
           </div>
         </div>
         <div class="book-grid-meta">
@@ -212,7 +244,7 @@ export class MenuBookController {
           </div>
           <div class="book-spirit-titles">
             <h5 class="book-spirit-name">${escapeHtml(drink.name)}</h5>
-            <span class="book-spirit-price">${formatMoney(drink.price)}</span>
+            ${this.priceHtml(drink, "book-spirit-price")}
           </div>
         </div>
         <div class="book-spirit-meta">
@@ -685,10 +717,15 @@ export class MenuBookController {
       const drinkId = orderBtn.getAttribute("data-order-id");
       const drink = this.drinks.find((d) => d.id === drinkId);
       if (drink) {
+        // ordersService tự lưu giá SAU ƯU ĐÃI vào giỏ - ở đây chỉ báo cho khách biết
         addToCart(drink, 1);
         refreshCartBadge();
         const isEn = getCurrentLang() === "en";
-        toast(isEn ? `Added "${drink.name}" to cart` : `Đã thêm "${drink.name}" vào giỏ hàng`, "success");
+        const pricing = getDrinkPricing(drink);
+        const priceNote = pricing.onSale
+          ? (isEn ? ` at ${formatMoney(pricing.finalPrice)} (-${pricing.percent}%)` : ` với giá ưu đãi ${formatMoney(pricing.finalPrice)} (-${pricing.percent}%)`)
+          : "";
+        toast(isEn ? `Added "${drink.name}" to cart${priceNote}` : `Đã thêm "${drink.name}" vào giỏ hàng${priceNote}`, "success");
       }
     });
 

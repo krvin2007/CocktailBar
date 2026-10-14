@@ -1662,3 +1662,80 @@
     font-size: 0.85rem;
   }
 }
+
+/* =========================================================
+   GIÁ ƯU ĐÃI TRONG QUYỂN MENU 3D (PRICING)
+   Món sale theo món / món mới: nhãn "-X%" + giá gốc gạch ngang
+   + giá sau giảm - giống bảng giá in tay có dấu "đã giảm".
+   ========================================================= */
+
+/* Thẻ có tiêu đề + giá cùng hàng (Signature, Classic): xếp 2 dòng, canh phải */
+.book-price-sale {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.book-price-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.book-price-tag {
+  font-family: var(--font-body);
+  font-style: normal;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #b8322a 0%, #8f1f19 100%);
+  color: #fff4e6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.book-price-old {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(232, 198, 130, 0.55);
+  text-decoration: line-through;
+  text-decoration-color: rgba(226, 92, 80, 0.85);
+}
+
+.book-price-now {
+  color: var(--amber-soft);
+}
+
+/* Thẻ lưới / rượu di sản: giá nằm dưới tên -> xếp 1 hàng, giá mới đứng trước */
+.book-grid-price.book-price-sale,
+.book-spirit-price.book-price-sale {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-start;
+  column-gap: 6px;
+  row-gap: 2px;
+  white-space: normal;
+}
+
+.book-grid-price.book-price-sale .book-price-now,
+.book-spirit-price.book-price-sale .book-price-now {
+  order: -1;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .book-price-tag {
+    font-size: 0.56rem;
+    padding: 1px 4px;
+  }
+
+  .book-price-old {
+    font-size: 0.64rem;
+  }
+}

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý banner — Quán Bar Đêm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/banner.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside id="admin-sidebar"></aside>
+
+  <div class="admin-main">
+    <button type="button" class="admin-sidebar-toggle" id="admin-sidebar-toggle" aria-label="Mở menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div id="admin-topbar"></div>
+
+    <!-- ---------- Giới thiệu nhanh: banner hiển thị ở đâu, ảnh thế nào là đẹp ---------- -->
+    <div class="banner-admin-intro">
+      <p>
+        Banner hiển thị thành <strong>slider ở đầu trang chủ</strong> (ngay dưới ảnh bìa) theo đúng thứ tự trong bảng,
+        mỗi banner tự dẫn khách tới trang <strong>Khuyến mãi</strong>. Nên dùng ảnh ngang (tỉ lệ khoảng 16:6, rộng từ 1600px):
+        đường dẫn ảnh trong dự án, URL <code>http(s)://</code> hoặc tải ảnh từ máy (tối đa 400KB).
+      </p>
+      <div class="banner-admin-count">
+        <strong id="banner-total">0</strong> <span>banner</span>
+        <span aria-hidden="true">·</span>
+        <a href="index.html#banner-section" class="text-amber" target="_blank" rel="noopener">Xem trên trang chủ</a>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="filters">
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="f-keyword" placeholder="Tìm theo tên banner..." aria-label="Tìm banner theo tên">
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" id="add-banner-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm banner mới</span>
+        </button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 140px;">Ảnh</th>
+            <th>Tên banner</th>
+            <th>Đường dẫn ảnh</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="banners-body"></tbody>
+      </table>
+
+      <div class="table-pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Modal thêm / sửa banner ---------- -->
+<div class="modal-overlay" id="banner-modal" hidden>
+  <div class="modal-box modal-wide" role="dialog" aria-modal="true" aria-labelledby="banner-modal-title">
+    <div class="modal-head">
+      <h3 id="banner-modal-title">Thêm banner mới</h3>
+      <button type="button" class="modal-close-x" id="banner-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <form id="banner-form" class="banner-form" novalidate>
+      <input type="hidden" name="id">
+      <div class="form-grid">
+        <div class="form-group full">
+          <div class="banner-label-row">
+            <label for="banner-name">Tên banner (thông điệp quảng bá) <span class="req">*</span></label>
+            <span class="char-counter" id="banner-name-counter" aria-live="polite">0/80</span>
+          </div>
+          <input type="text" id="banner-name" name="tenbanner" data-rule="required|min:3|max:80"
+                 placeholder="VD: Giảm đến 35% cocktail cuối tuần" autocomplete="off">
+        </div>
+
+        <div class="form-group full">
+          <label for="banner-image">Ảnh banner <span class="req">*</span></label>
+          <input type="text" id="banner-image" name="hinhbanner" list="banner-image-suggestions"
+                 placeholder="VD: img/hero-bar.jpg hoặc https://..." autocomplete="off" spellcheck="false">
+          <datalist id="banner-image-suggestions">
+            <option value="img/hero-bar.jpg">Ảnh bìa quầy bar</option>
+            <option value="img/lounge/bar-counter.jpg">Quầy bar trung tâm</option>
+            <option value="img/lounge/vip-sofa.jpg">Khu sofa VIP</option>
+            <option value="img/lounge/dj-stage.jpg">Sân khấu DJ</option>
+            <option value="img/lounge/high-tables.jpg">Khu bàn cao</option>
+            <option value="img/lounge/cellar-display.jpg">Hầm rượu trưng bày</option>
+            <option value="img/about-bartender.jpg">Bartender pha chế</option>
+          </datalist>
+
+          <div class="banner-upload-row">
+            <input type="file" id="banner-file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden>
+            <button type="button" class="btn btn-ghost btn-sm" id="banner-file-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Chọn ảnh từ máy</span>
+            </button>
+            <span class="banner-upload-hint">PNG, JPG, GIF, WEBP, SVG · tối đa 400KB</span>
+          </div>
+
+          <div class="banner-upload-chip" id="banner-upload-chip" hidden>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span id="banner-upload-name"></span>
+            <button type="button" class="btn btn-ghost btn-sm" id="banner-upload-clear">Bỏ ảnh tải lên</button>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <span class="banner-preview-label">Xem trước trên trang chủ</span>
+          <div class="banner-preview" id="banner-preview">
+            <img id="banner-preview-img" alt="Ảnh xem trước của banner" hidden>
+            <div class="banner-preview-shade" aria-hidden="true"></div>
+            <div class="banner-preview-content">
+              <span class="banner-preview-title is-placeholder" id="banner-preview-title">Tên banner sẽ hiển thị ở đây</span>
+              <span class="banner-preview-cta" aria-hidden="true">Xem ưu đãi →</span>
+            </div>
+            <span class="banner-preview-status" id="banner-preview-status" aria-live="polite">Chưa có ảnh</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions mt-3">
+        <button type="button" class="btn btn-ghost" id="banner-form-cancel">Huỷ bỏ</button>
+        <button type="submit" class="btn btn-primary" id="banner-form-submit">Lưu banner</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/admin-banners.js"></script>
+</body>
+</html>

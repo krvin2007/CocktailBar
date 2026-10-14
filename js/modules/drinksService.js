@@ -11,6 +11,49 @@ import { uid } from "./utils.js";
 
 const COLLECTION = "drinks";
 
+/* ---------------- Chính sách giá bán & khuyến mãi theo món ---------------- */
+
+/**
+ * Các "loại sale" (% giảm) quản trị viên được chọn cho TỪNG món.
+ * 0 = không sale. Chỉ cho phép đúng các mức này để bảng giá gọn gàng,
+ * tránh nhập tay 17% hay 33% khó đọc trên menu.
+ */
+export const SALE_TIERS = [0, 10, 15, 20, 25, 30, 35, 40, 50];
+
+/** Món được tạo trong số ngày gần nhất này được coi là "món mới" */
+export const NEW_DRINK_DAYS = 14;
+
+/** Chương trình "Sale sản phẩm mới": món mới tự động giảm 10% trong NEW_DRINK_DAYS ngày đầu ra mắt */
+export const NEW_DRINK_DISCOUNT = 10;
+
+/** Số mili-giây của một ngày - dùng tính tuổi món & ngày tạo mẫu */
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Chuẩn hoá % sale: chỉ chấp nhận giá trị thuộc SALE_TIERS, sai/thiếu -> 0.
+ * Nhận cả chuỗi "25" (từ <select> của form quản trị) lẫn số 25.
+ */
+export function normalizeSalePercent(value) {
+  const n = Number(value);
+  return SALE_TIERS.includes(n) ? n : 0;
+}
+
+/** Đổi tham số "now" (Date | số mili-giây | chuỗi ngày) thành mili-giây, sai thì lấy giờ hiện tại */
+function toTimestamp(now) {
+  const ms = now instanceof Date ? now.getTime() : new Date(now).getTime();
+  return Number.isNaN(ms) ? Date.now() : ms;
+}
+
+/**
+ * Ngày tạo tương đối cho dữ liệu mẫu: daysAgo(30) = đúng 30 ngày trước
+ * lúc nạp module (ISO). Nhờ vậy mỗi lần chạy "npm run seed", các "món
+ * mới" luôn mới 3–10 ngày - demo chương trình sale món mới không bao giờ
+ * bị "hết hạn" dù bảo vệ đồ án vào tháng nào.
+ */
+function daysAgo(days) {
+  return new Date(Date.now() - days * DAY_MS).toISOString();
+}
+
 /** Một món đồ uống trong thực đơn chuẩn bar */
 export class Drink {
   constructor({
@@ -29,6 +72,7 @@ export class Drink {
     featured = false,
     stock = 20,
     abv = 0,
+    salePercent = 0,
     createdAt = new Date().toISOString(),
   }) {
     this.id = id;
@@ -46,7 +90,8 @@ export class Drink {
     this.featured = Boolean(featured);
     this.stock = Number(stock) || 0;   // tồn kho hiện có (ly có thể pha được)
     this.abv = Number(abv) || 0;       // nồng độ cồn (%) - 0 với đồ uống không cồn
-    this.createdAt = createdAt;
+    this.salePercent = normalizeSalePercent(salePercent); // % sale theo món (thuộc SALE_TIERS)
+    this.createdAt = createdAt;        // ngày lên thực đơn - quyết định "món mới"
   }
 }
 
@@ -86,6 +131,14 @@ export function getCategoryLabel(category) {
  * Dữ liệu đồ uống mẫu - 100% thức uống có cồn & cocktail thủ công.
  * Dùng cho 2 việc: (1) script tools/tao-db.js sinh ra db.json từ đây,
  * (2) dữ liệu dự phòng khi máy chủ API chưa chạy và chưa có bản đệm.
+ *
+ * Dữ liệu khuyến mãi mẫu (để demo đủ các chương trình giá):
+ * - createdAt tính TƯƠNG ĐỐI bằng daysAgo(): đa số món lên thực đơn 40–400
+ *   ngày trước; đúng 4 món mới (d19, d22, d27, d29) ra mắt 3–10 ngày trước
+ *   -> tự động giảm NEW_DRINK_DISCOUNT% trong NEW_DRINK_DAYS ngày đầu.
+ * - salePercent: 6 món sale theo món với các mức 10/15/25/30/35%.
+ * - d1, d2, d3, d4, d10 cố ý giữ GIÁ GỐC (không sale, không mới) vì bộ
+ *   test nghiệp vụ tồn kho/giỏ hàng (npm test) dựa vào giá của chúng.
  */
 export const SEED_DRINKS = [
   new Drink({
@@ -103,6 +156,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 25,
     abv: 24,
+    createdAt: daysAgo(400),
   }),
   new Drink({
     id: "d2",
@@ -119,6 +173,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 20,
     abv: 30,
+    createdAt: daysAgo(385),
   }),
   new Drink({
     id: "d3",
@@ -135,6 +190,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 18,
     abv: 28,
+    createdAt: daysAgo(370),
   }),
   new Drink({
     id: "d4",
@@ -151,6 +207,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 22,
     abv: 18,
+    createdAt: daysAgo(355),
   }),
   new Drink({
     id: "d5",
@@ -167,6 +224,8 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 26,
     abv: 20,
+    salePercent: 15,
+    createdAt: daysAgo(330),
   }),
   new Drink({
     id: "d6",
@@ -183,6 +242,8 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 30,
     abv: 14,
+    salePercent: 10,
+    createdAt: daysAgo(310),
   }),
   new Drink({
     id: "d7",
@@ -199,6 +260,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 20,
     abv: 19,
+    createdAt: daysAgo(290),
   }),
   new Drink({
     id: "d8",
@@ -215,6 +277,7 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 28,
     abv: 11,
+    createdAt: daysAgo(270),
   }),
   new Drink({
     id: "d9",
@@ -231,6 +294,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 16,
     abv: 30,
+    createdAt: daysAgo(255),
   }),
   new Drink({
     id: "d10",
@@ -247,6 +311,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 12,
     abv: 40,
+    createdAt: daysAgo(240),
   }),
   new Drink({
     id: "d11",
@@ -263,6 +328,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 20,
     abv: 32,
+    createdAt: daysAgo(220),
   }),
   new Drink({
     id: "d12",
@@ -279,6 +345,8 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 25,
     abv: 22,
+    salePercent: 25,
+    createdAt: daysAgo(200),
   }),
   new Drink({
     id: "d13",
@@ -295,6 +363,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 22,
     abv: 26,
+    createdAt: daysAgo(185),
   }),
   new Drink({
     id: "d14",
@@ -311,6 +380,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 18,
     abv: 16,
+    createdAt: daysAgo(165),
   }),
   new Drink({
     id: "d15",
@@ -327,6 +397,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 20,
     abv: 24,
+    createdAt: daysAgo(150),
   }),
   new Drink({
     id: "d16",
@@ -343,6 +414,7 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 24,
     abv: 21,
+    createdAt: daysAgo(135),
   }),
   new Drink({
     id: "d17",
@@ -359,6 +431,8 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 22,
     abv: 19,
+    salePercent: 30,
+    createdAt: daysAgo(118),
   }),
   new Drink({
     id: "d18",
@@ -375,6 +449,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 18,
     abv: 22,
+    createdAt: daysAgo(102),
   }),
   new Drink({
     id: "d19",
@@ -391,6 +466,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 20,
     abv: 18,
+    createdAt: daysAgo(4), // MÓN MỚI -> tự giảm NEW_DRINK_DISCOUNT%
   }),
   new Drink({
     id: "d20",
@@ -407,6 +483,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 16,
     abv: 15,
+    createdAt: daysAgo(80),
   }),
   new Drink({
     id: "d21",
@@ -423,6 +500,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 15,
     abv: 35,
+    createdAt: daysAgo(66),
   }),
   new Drink({
     id: "d22",
@@ -439,6 +517,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 14,
     abv: 40,
+    createdAt: daysAgo(6), // MÓN MỚI -> tự giảm NEW_DRINK_DISCOUNT%
   }),
   new Drink({
     id: "d23",
@@ -455,6 +534,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 10,
     abv: 43,
+    createdAt: daysAgo(52),
   }),
   new Drink({
     id: "d24",
@@ -471,6 +551,8 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 12,
     abv: 43,
+    salePercent: 35,
+    createdAt: daysAgo(45),
   }),
   new Drink({
     id: "d25",
@@ -487,6 +569,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 12,
     abv: 40,
+    createdAt: daysAgo(175),
   }),
   new Drink({
     id: "d26",
@@ -503,6 +586,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 10,
     abv: 38,
+    createdAt: daysAgo(128),
   }),
   new Drink({
     id: "d27",
@@ -519,6 +603,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 15,
     abv: 47,
+    createdAt: daysAgo(8), // MÓN MỚI -> tự giảm NEW_DRINK_DISCOUNT%
   }),
   new Drink({
     id: "d28",
@@ -535,6 +620,7 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 18,
     abv: 45,
+    createdAt: daysAgo(95),
   }),
   new Drink({
     id: "d29",
@@ -551,6 +637,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 16,
     abv: 40,
+    createdAt: daysAgo(9), // MÓN MỚI -> tự giảm NEW_DRINK_DISCOUNT%
   }),
   new Drink({
     id: "d30",
@@ -567,9 +654,105 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 25,
     abv: 25,
+    salePercent: 15,
+    createdAt: daysAgo(40),
   }),
 ];
 
+
+/* ---------------- Giá bán: sale theo món & món mới ---------------- */
+
+/**
+ * Món có phải "món mới" không: tạo trong vòng NEW_DRINK_DAYS ngày gần nhất.
+ * Thiếu/sai createdAt -> false; createdAt ở TƯƠNG LAI (nhập sai giờ máy)
+ * -> false, để không món nào được giảm giá "trước khi ra mắt".
+ * @param {object} drink - Drink hoặc object thuần đọc từ API
+ * @param {Date|number} [now] - thời điểm xét (mặc định: bây giờ) - truyền vào để test được
+ */
+export function isNewDrink(drink, now = Date.now()) {
+  if (!drink || !drink.createdAt) return false;
+  const created = new Date(drink.createdAt).getTime();
+  if (Number.isNaN(created)) return false;
+
+  const age = toTimestamp(now) - created;
+  return age >= 0 && age <= NEW_DRINK_DAYS * DAY_MS;
+}
+
+/**
+ * Tính giá bán thực tế của một món theo các chương trình đang chạy.
+ * Quy tắc KHÔNG cộng dồn: lấy mức giảm CAO HƠN giữa
+ *   (1) sale theo món (salePercent quản trị viên chọn) và
+ *   (2) ưu đãi món mới (NEW_DRINK_DISCOUNT% nếu isNewDrink).
+ * Giá sau giảm làm tròn tới nghìn đồng cho dễ thanh toán tiền mặt.
+ * Chịu được object thiếu trường (VD món trong giỏ { id, name, price, image })
+ * -> không có sale, percent = 0, giá giữ nguyên.
+ *
+ * @returns {{ originalPrice: number, finalPrice: number, percent: number,
+ *             reason: ""|"sale"|"new", isNew: boolean, onSale: boolean }}
+ */
+export function getDrinkPricing(drink, now = Date.now()) {
+  const originalPrice = Math.max(0, Number(drink?.price) || 0);
+  const salePercent = normalizeSalePercent(drink?.salePercent);
+  const isNew = isNewDrink(drink, now);
+  const newPercent = isNew ? NEW_DRINK_DISCOUNT : 0;
+
+  const percent = Math.max(salePercent, newPercent);
+  let reason = "";
+  if (percent > 0) {
+    // Hoà nhau (VD món mới đang sale 10%) -> ghi nhận là sale theo món
+    reason = salePercent >= newPercent ? "sale" : "new";
+  }
+
+  const finalPrice = percent > 0
+    ? Math.round((originalPrice * (100 - percent)) / 100 / 1000) * 1000
+    : originalPrice;
+
+  return { originalPrice, finalPrice, percent, reason, isNew, onSale: percent > 0 };
+}
+
+/**
+ * Xếp hạng món bán chạy từ lịch sử đơn hàng.
+ * - Cộng số ly (qty) theo item.drinkId của mọi đơn KHÔNG bị huỷ.
+ * - Chỉ giữ món CÒN trong thực đơn (`drinks`) - món đã xoá không quảng bá nữa.
+ * - Sắp số ly giảm dần; hoà thì món đánh giá (rating) cao hơn đứng trước.
+ * Hàm thuần (không gọi API) -> trang chủ, dashboard, trợ lý AI dùng chung.
+ * @returns {Array<{ drink: object, sold: number }>}
+ */
+export function rankBestSellers(drinks, orders, limit = 4) {
+  const soldMap = new Map();
+  (Array.isArray(orders) ? orders : [])
+    .filter((order) => order && order.status !== "cancelled")
+    .forEach((order) => {
+      (Array.isArray(order.items) ? order.items : []).forEach((item) => {
+        const key = String(item?.drinkId ?? "");
+        const qty = Number(item?.qty) || 0;
+        if (!key || qty <= 0) return;
+        soldMap.set(key, (soldMap.get(key) || 0) + qty);
+      });
+    });
+
+  return (Array.isArray(drinks) ? drinks : [])
+    .filter((drink) => drink && soldMap.has(String(drink.id)))
+    .map((drink) => ({ drink, sold: soldMap.get(String(drink.id)) }))
+    .sort((a, b) =>
+      b.sold - a.sold
+      || (Number(b.drink.rating) || 0) - (Number(a.drink.rating) || 0)
+      || String(a.drink.name || "").localeCompare(String(b.drink.name || ""), "vi"))
+    .slice(0, Math.max(0, limit));
+}
+
+/** Thời điểm tạo món dạng số để so sánh; thiếu/sai -> 0 (coi như cũ nhất) */
+function createdTime(drink) {
+  const ms = new Date(drink?.createdAt).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+/** Các món mới lên thực đơn gần nhất (KHÔNG làm đổi thứ tự mảng gốc) */
+export function getNewestDrinks(drinks, limit = 4) {
+  return [...(Array.isArray(drinks) ? drinks : [])]
+    .sort((a, b) => createdTime(b) - createdTime(a))
+    .slice(0, Math.max(0, limit));
+}
 
 /* ---------------- CRUD qua API ---------------- */
 
@@ -596,6 +779,9 @@ export async function addDrink(data) {
 /** Cập nhật (U) - PATCH /drinks/:id, chỉ gửi những trường thay đổi */
 export async function updateDrink(id, changes) {
   const { id: _ignored, ...body } = changes; // không cho phép đổi id
+  if ("salePercent" in body) {
+    body.salePercent = normalizeSalePercent(body.salePercent); // chặn mức sale ngoài SALE_TIERS
+  }
   return api.patch(`/${COLLECTION}/${encodeURIComponent(id)}`, body);
 }
 
@@ -612,6 +798,13 @@ export async function deleteDrink(id) {
  * Trang thực đơn tải dữ liệu 1 lần rồi gọi hàm này mỗi khi người dùng
  * gõ phím - không phải gọi lại API liên tục, và không bị "kết quả cũ
  * về sau ghi đè kết quả mới" khi gõ nhanh.
+ *
+ * Khoảng giá và sắp xếp theo giá dùng GIÁ SAU ƯU ĐÃI (finalPrice) - đúng
+ * số tiền khách thật sự trả. Tuỳ chọn thêm:
+ *   onlySale: true      -> chỉ món đang giảm giá (sale theo món hoặc món mới)
+ *   sortBy: "newest"    -> món mới lên thực đơn trước
+ *   sortBy: "sale-desc" -> món giảm sâu nhất trước
+ *   now                 -> thời điểm xét "món mới" (mặc định: bây giờ)
  */
 export function filterDrinks(drinks, opts = {}) {
   const {
@@ -620,10 +813,17 @@ export function filterDrinks(drinks, opts = {}) {
     minPrice = 0,
     maxPrice = Infinity,
     onlyAvailable = false,
+    onlySale = false,
     sortBy = "default",
+    now = Date.now(),
   } = opts;
 
   let list = [...drinks];
+
+  // Tính giá một lần cho mỗi món (Map theo object) - comparator của sort()
+  // gọi lại rất nhiều lần, không nên tính lại giá trong từng lần so sánh
+  const pricing = new Map(list.map((d) => [d, getDrinkPricing(d, now)]));
+  const finalOf = (d) => pricing.get(d).finalPrice;
 
   const kw = keyword.trim().toLowerCase();
   if (kw) {
@@ -639,19 +839,27 @@ export function filterDrinks(drinks, opts = {}) {
     list = list.filter((d) => d.category === category);
   }
 
-  list = list.filter((d) => d.price >= minPrice && d.price <= maxPrice);
+  list = list.filter((d) => finalOf(d) >= minPrice && finalOf(d) <= maxPrice);
 
   if (onlyAvailable) {
     list = list.filter((d) => d.status === "available" && d.stock > 0);
   }
 
+  if (onlySale) {
+    list = list.filter((d) => pricing.get(d).onSale);
+  }
+
   const sorters = {
-    "price-asc": (a, b) => a.price - b.price,
-    "price-desc": (a, b) => b.price - a.price,
+    "price-asc": (a, b) => finalOf(a) - finalOf(b),
+    "price-desc": (a, b) => finalOf(b) - finalOf(a),
     "name-asc": (a, b) => a.name.localeCompare(b.name, "vi"),
     "name-desc": (a, b) => b.name.localeCompare(a.name, "vi"),
-    newest: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-    oldest: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    newest: (a, b) => createdTime(b) - createdTime(a),
+    oldest: (a, b) => createdTime(a) - createdTime(b),
+    // Giảm sâu nhất trước; cùng mức giảm thì món tiết kiệm được nhiều tiền hơn đứng trước
+    "sale-desc": (a, b) =>
+      pricing.get(b).percent - pricing.get(a).percent
+      || (pricing.get(b).originalPrice - finalOf(b)) - (pricing.get(a).originalPrice - finalOf(a)),
   };
 
   if (sorters[sortBy]) {

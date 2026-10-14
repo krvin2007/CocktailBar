@@ -51,6 +51,9 @@
         </div>
       </div>
 
+      <!-- Dải thông báo ưu đãi: số món đang sale / món mới - JS (menu.js) vẽ, ẩn nếu không có ưu đãi -->
+      <div class="menu-promo-strip" id="menu-promo-strip" hidden></div>
+
       <!-- Vùng hiển thị Quyển Sách Menu 3D Lật Trang Ngoài Đời -->
       <div id="menu-book-root"></div>
 
@@ -101,6 +104,7 @@
               <span class="filter-sep">–</span>
               <input type="number" id="f-max" placeholder="Đến" min="0" step="5000">
             </div>
+            <span class="filter-hint">Lọc theo giá sau ưu đãi (giá khách thực trả)</span>
           </div>
 
           <div class="filter-group">
@@ -108,6 +112,15 @@
               <input type="checkbox" id="f-available">
               <span class="checkbox-box"></span>
               <span class="checkbox-label">Chỉ hiển thị món sẵn sàng phục vụ</span>
+            </label>
+          </div>
+
+          <!-- Lọc nhanh món đang có giá ưu đãi (sale theo món hoặc món mới giảm 10%) - hỗ trợ menu.html?sale=1 -->
+          <div class="filter-group filter-group-sale">
+            <label class="filter-checkbox-custom">
+              <input type="checkbox" id="f-sale">
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">Chỉ món đang giảm giá <span class="filter-sale-count" id="f-sale-count"></span></span>
             </label>
           </div>
         </aside>
@@ -123,11 +136,12 @@
               <label for="f-sort">Sắp xếp:</label>
               <select id="f-sort">
                 <option value="default">Đề xuất của quán</option>
+                <option value="newest">Mới nhất</option>
+                <option value="sale-desc">Giảm giá nhiều nhất</option>
                 <option value="price-asc">Giá từ thấp đến cao</option>
                 <option value="price-desc">Giá từ cao đến thấp</option>
                 <option value="name-asc">Tên A → Z</option>
                 <option value="name-desc">Tên Z → A</option>
-                <option value="newest">Mới cập nhật</option>
               </select>
             </div>
           </div>

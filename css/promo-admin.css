@@ -1,0 +1,760 @@
+/* =========================================================
+   PROMO-ADMIN.CSS - Giao diện 2 trang quản trị khuyến mãi:
+     - admin-vouchers.html  : Mã giảm giá & Sale
+     - admin-customers.html : Khách hàng thành viên
+   Dùng lại khung admin.css (stat-card, panel, data-table...) và chỉ
+   bổ sung các thành phần riêng: thẻ mã dạng "vé", nhãn % giảm, thanh
+   lượt dùng, khối chương trình tự động, huy hiệu sinh nhật.
+   Mọi màu lấy từ css/variables.css để đồng bộ tông Speakeasy.
+   ========================================================= */
+
+/* =========================================================
+   1. THẺ THỐNG KÊ NHỎ (4 thẻ đầu trang)
+   ========================================================= */
+.stat-cards.promo-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.promo-stats .stat-card {
+  padding: 16px 18px;
+  gap: 14px;
+  min-width: 0;
+}
+
+.promo-stats .stat-icon-wrapper {
+  width: 44px;
+  height: 44px;
+}
+
+.promo-stats .stat-value {
+  font-size: 1.5rem;
+}
+
+.promo-stats .stat-label {
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.promo-stat-success .stat-icon-wrapper {
+  background: var(--success-bg);
+  border-color: rgba(76, 183, 121, 0.3);
+  color: var(--success);
+}
+
+.promo-stat-birthday .stat-icon-wrapper {
+  background: rgba(214, 112, 160, 0.12);
+  border-color: rgba(214, 112, 160, 0.32);
+  color: #e59ac0;
+}
+
+/* =========================================================
+   2. KHỐI "CHƯƠNG TRÌNH TỰ ĐỘNG"
+   ========================================================= */
+.panel.promo-auto {
+  margin-bottom: 24px;
+}
+
+.promo-auto .panel-head {
+  margin-bottom: 18px;
+}
+
+.promo-auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+
+.promo-program {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(197, 152, 67, 0.1), transparent 55%),
+    var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.promo-program::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--amber-soft), var(--amber-dark));
+  opacity: 0.7;
+}
+
+.promo-program:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.promo-program-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.promo-program-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: rgba(197, 152, 67, 0.12);
+  border: 1px solid rgba(197, 152, 67, 0.28);
+  color: var(--amber-soft);
+}
+
+.promo-program-percent {
+  font-family: var(--font-heading);
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--amber-soft);
+  text-shadow: 0 0 18px rgba(197, 152, 67, 0.35);
+}
+
+.promo-program-title {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.promo-program-desc {
+  flex: 1;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.promo-program-desc strong {
+  color: var(--amber-soft);
+  letter-spacing: 0.5px;
+}
+
+.promo-program-desc em {
+  color: var(--text-dim);
+}
+
+.promo-program-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-soft);
+}
+
+.promo-program-meta {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.promo-program-foot .panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+}
+
+/* =========================================================
+   3. THANH CÔNG CỤ + BẢNG DỮ LIỆU KHUYẾN MÃI
+   ========================================================= */
+/* Ô tìm kiếm + các bộ lọc nằm trên một hàng (select mặc định rộng 100%) */
+.promo-toolbar .filters {
+  flex: 1 1 auto;
+}
+
+.promo-toolbar .search-input-wrap {
+  flex: 1 1 240px;
+  max-width: 340px;
+}
+
+.promo-toolbar .filters select {
+  width: auto;
+  min-width: 150px;
+  max-width: 220px;
+  flex: 0 1 auto;
+}
+
+.promo-result-count {
+  padding: 10px 24px 0;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+
+.promo-result-count:empty {
+  display: none;
+}
+
+/* Bảng nhiều cột: tự cuộn ngang thay vì bị cắt mất ở màn hình vừa */
+.promo-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.promo-table-scroll .promo-table {
+  display: table;
+  min-width: 100%;
+  white-space: nowrap;
+}
+
+.promo-table th,
+.promo-table td {
+  padding: 12px 8px;
+}
+
+.promo-table th:first-child,
+.promo-table td:first-child {
+  padding-left: 16px;
+}
+
+.promo-table th:last-child,
+.promo-table td:last-child {
+  padding-right: 16px;
+}
+
+.promo-table th {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.promo-table td {
+  font-size: 0.84rem;
+  vertical-align: middle;
+}
+
+/* Ô thao tác vẫn là table-cell (không đặt flex lên <td> để hàng không lệch) */
+.promo-table td.promo-actions-cell {
+  text-align: right;
+}
+
+.promo-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.promo-table td.promo-audience-cell {
+  min-width: 128px;
+  max-width: 150px;
+  white-space: normal;
+}
+
+.promo-table td.promo-contact-cell {
+  min-width: 175px;
+  max-width: 230px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Nút thao tác chỉ có biểu tượng (có title + aria-label để đọc được) */
+.promo-icon-btn {
+  width: 31px;
+  height: 31px;
+  padding: 0;
+}
+
+.promo-icon-btn .btn-spinner {
+  margin: 0;
+}
+
+.promo-icon-btn .btn-spinner + span:empty {
+  display: none;
+}
+
+.promo-toggle {
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-soft);
+}
+
+.promo-toggle.is-on {
+  color: var(--success);
+  background: var(--success-bg);
+  border-color: rgba(76, 183, 121, 0.35);
+}
+
+.promo-toggle:hover {
+  color: var(--cream);
+  border-color: var(--amber);
+}
+
+.promo-table td.promo-name-cell {
+  min-width: 140px;
+  max-width: 230px;
+  white-space: normal;
+}
+
+.promo-name-cell strong {
+  color: var(--cream);
+}
+
+.promo-row-muted td {
+  opacity: 0.62;
+}
+
+.promo-row-muted td.promo-actions-cell {
+  opacity: 1;
+}
+
+.promo-row-birthday {
+  background: linear-gradient(90deg, rgba(214, 112, 160, 0.09), transparent 70%);
+}
+
+.promo-row-birthday td:first-child {
+  box-shadow: inset 3px 0 0 #e59ac0;
+}
+
+/* Mã giảm giá trình bày như một tấm vé: chữ đơn cách, viền đứt */
+.voucher-code {
+  display: inline-block;
+  padding: 4px 8px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--amber-soft);
+  background: rgba(197, 152, 67, 0.08);
+  border: 1px dashed rgba(197, 152, 67, 0.55);
+  border-radius: var(--radius-sm);
+}
+
+.voucher-code-sm {
+  padding: 1px 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.8px;
+}
+
+.percent-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 4px 9px;
+  font-weight: 700;
+  font-size: 0.84rem;
+  color: #120e0a;
+  background: linear-gradient(135deg, var(--amber-soft), var(--amber));
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(197, 152, 67, 0.22);
+}
+
+.audience-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.audience-new-customer {
+  color: var(--info);
+  border-color: rgba(90, 159, 227, 0.3);
+  background: var(--info-bg);
+}
+
+.audience-birthday {
+  color: #e59ac0;
+  border-color: rgba(214, 112, 160, 0.32);
+  background: rgba(214, 112, 160, 0.1);
+}
+
+.promo-owner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: var(--text-muted);
+}
+
+/* Lượt dùng + thanh tiến độ */
+.promo-usage strong {
+  color: var(--cream);
+}
+
+.promo-meter {
+  display: block;
+  width: 80px;
+  height: 4px;
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.promo-meter > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--amber-dark), var(--amber-soft));
+  border-radius: inherit;
+}
+
+.promo-meter.is-high > span {
+  background: var(--warning);
+}
+
+.promo-meter.is-full > span {
+  background: var(--danger);
+}
+
+/* =========================================================
+   4. KHÁCH HÀNG THÀNH VIÊN
+   ========================================================= */
+.promo-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-sm);
+}
+
+.promo-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--amber-soft);
+}
+
+.promo-note strong {
+  color: var(--cream);
+}
+
+.promo-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.promo-member strong {
+  color: var(--cream);
+}
+
+.promo-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--amber-soft);
+  background: radial-gradient(circle at 30% 30%, rgba(232, 198, 130, 0.25), rgba(150, 108, 36, 0.12));
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.promo-phone {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.promo-countdown strong {
+  color: var(--cream);
+}
+
+.badge-birthday {
+  color: #f1b3d2;
+  background: rgba(214, 112, 160, 0.14);
+  border: 1px solid rgba(214, 112, 160, 0.35);
+}
+
+.badge-birthday.is-today {
+  color: #120e0a;
+  background: linear-gradient(135deg, #f1b3d2, var(--amber-soft));
+  border-color: transparent;
+  box-shadow: 0 0 16px rgba(229, 154, 192, 0.45);
+  animation: promo-glow 2.4s ease-in-out infinite;
+}
+
+.badge-birthday.is-past {
+  color: var(--amber-soft);
+  background: rgba(197, 152, 67, 0.12);
+  border-color: rgba(197, 152, 67, 0.3);
+}
+
+@keyframes promo-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(229, 154, 192, 0.3); }
+  50%      { box-shadow: 0 0 20px rgba(229, 154, 192, 0.6); }
+}
+
+.promo-count-btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 10px;
+  font: inherit;
+  color: var(--text-muted);
+  background: rgba(197, 152, 67, 0.06);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.promo-count-btn strong {
+  color: var(--amber-soft);
+  font-size: 0.95rem;
+}
+
+.promo-count-btn:hover,
+.promo-count-btn:focus-visible {
+  color: var(--cream);
+  border-color: var(--amber);
+  outline: none;
+}
+
+/* Danh sách mã cá nhân trong modal */
+.promo-voucher-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+}
+
+.promo-voucher-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.promo-voucher-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.promo-voucher-info strong {
+  color: var(--cream);
+  font-size: 0.88rem;
+}
+
+/* =========================================================
+   5. MODAL THÊM / SỬA MÃ
+   ========================================================= */
+.promo-modal .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.promo-modal .field-error {
+  font-size: 0.74rem;
+  color: var(--danger);
+}
+
+.promo-modal .field-error:empty {
+  display: none;
+}
+
+.promo-modal .invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(226, 92, 80, 0.12);
+}
+
+.promo-form-hint {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+/* Ô mã + nút "Tạo ngẫu nhiên"; lỗi (nếu có) xuống dòng riêng bên dưới */
+.promo-code-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.promo-code-input input {
+  order: 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.promo-code-input .btn {
+  order: 1;
+  height: 100%;
+}
+
+.promo-code-input .field-error {
+  order: 2;
+  grid-column: 1 / -1;
+}
+
+.promo-form-check {
+  justify-content: center;
+}
+
+.promo-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 12px 14px;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  background: rgba(197, 152, 67, 0.05);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.promo-preview:empty {
+  display: none;
+}
+
+.promo-preview strong {
+  color: var(--cream);
+}
+
+.promo-preview-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+/* =========================================================
+   6. RESPONSIVE (máy tính bảng -> điện thoại 360px)
+   ========================================================= */
+@media (max-width: 1200px) {
+  .stat-cards.promo-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .promo-toolbar .search-input-wrap {
+    flex: 0 0 auto;
+    max-width: none;
+  }
+
+  .promo-toolbar .filters select {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .stat-cards.promo-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .promo-stats .stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .promo-stats .stat-icon-wrapper {
+    width: 36px;
+    height: 36px;
+  }
+
+  .promo-stats .stat-value {
+    font-size: 1.3rem;
+  }
+
+  .panel.promo-auto {
+    padding: 18px 16px;
+  }
+
+  .promo-auto .panel-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .promo-result-count {
+    padding: 10px 16px 0;
+  }
+
+  .promo-voucher-item {
+    grid-template-columns: 1fr auto;
+  }
+
+  .promo-voucher-info {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+
+  .promo-code-input {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-code-input .btn {
+    justify-self: start;
+  }
+
+  .promo-modal .form-actions .btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 400px) {
+  .stat-cards.promo-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-stats .stat-card {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .promo-program {
+    padding: 16px;
+  }
+
+  .promo-program-percent {
+    font-size: 1.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-birthday.is-today {
+    animation: none;
+  }
+
+  .promo-program,
+  .promo-program:hover {
+    transition: none;
+    transform: none;
+  }
+}

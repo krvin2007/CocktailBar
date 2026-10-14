@@ -51,6 +51,33 @@
       </div>
     </div>
 
+    <!-- Chương trình giá đang chạy: sale theo món + món mới tự giảm (js/pages/admin-dashboard.js) -->
+    <div class="panel mt-2">
+      <div class="panel-head">
+        <div class="panel-title-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <h3>Món đang có giá ưu đãi</h3>
+          <span class="panel-badge" id="promo-drinks-count">0 món</span>
+        </div>
+        <a href="admin-menu.html" class="panel-link">Chỉnh mức sale →</a>
+      </div>
+
+      <div class="table-wrap" style="border:none;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Đồ uống</th>
+              <th>Chương trình</th>
+              <th>Giá gốc</th>
+              <th>Giá bán</th>
+              <th>Tiết kiệm / ly</th>
+            </tr>
+          </thead>
+          <tbody id="promo-drinks-body"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="panel mt-2">
       <div class="panel-head">
         <div class="panel-title-wrap">

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Khuyến Mãi &amp; Sale — Quán Bar Đêm</title>
+<meta name="description" content="Ưu đãi tại Quán Bar Đêm: sale món mới, quà khách hàng mới, sale theo mức 10% đến 35%, quà sinh nhật và các mã giảm giá đang phát hành.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/promo.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<main class="page-body promo-page">
+  <!-- ---------- Hero ---------- -->
+  <section class="promo-hero">
+    <div class="container">
+      <div class="promo-hero-inner">
+        <span class="section-kicker">SPECIAL OFFERS · HAPPY NIGHTS</span>
+        <h1>Ưu đãi tại <em>Quán Bar Đêm</em></h1>
+        <p class="promo-hero-desc">
+          Bốn chương trình chạy song song mỗi đêm: món mới tự giảm giá, quà cho khách hàng mới,
+          sale theo từng mức và quà sinh nhật cho thành viên - cộng thêm các mã giảm giá đang phát hành.
+        </p>
+
+        <div class="promo-stats" aria-live="polite">
+          <div class="promo-stat">
+            <span class="promo-stat-num" id="stat-sale-count">—</span>
+            <span class="promo-stat-label">Món đang sale</span>
+          </div>
+          <div class="promo-stat">
+            <span class="promo-stat-num" id="stat-max-percent">—</span>
+            <span class="promo-stat-label">Giảm sâu nhất</span>
+          </div>
+          <div class="promo-stat">
+            <span class="promo-stat-num" id="stat-new-count">—</span>
+            <span class="promo-stat-label">Món mới ra mắt</span>
+          </div>
+          <div class="promo-stat">
+            <span class="promo-stat-num" id="stat-voucher-count">—</span>
+            <span class="promo-stat-label">Mã đang phát hành</span>
+          </div>
+        </div>
+
+        <div class="promo-hero-actions">
+          <a href="#voucher-section" class="btn btn-primary btn-lg">Xem mã giảm giá</a>
+          <a href="#program-tiers" class="btn btn-outline btn-lg">Món đang sale</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Tổng quan 4 chương trình ---------- -->
+  <section class="section promo-overview-section">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-kicker">4 CHƯƠNG TRÌNH ƯU ĐÃI</span>
+        <h2>Chọn Ưu Đãi Hợp Với Bạn</h2>
+        <p>Giá sale theo món được trừ trực tiếp trên thực đơn; mã giảm giá được nhập thêm ở bước đặt món (mỗi đơn 1 mã).</p>
+      </div>
+      <div class="program-grid" id="program-grid"></div>
+    </div>
+  </section>
+
+  <!-- ---------- 01. Sale sản phẩm mới ---------- -->
+  <section class="section promo-block" id="program-new">
+    <div class="container">
+      <div class="promo-block-head">
+        <span class="promo-block-num" aria-hidden="true">01</span>
+        <div>
+          <span class="section-kicker">NEW ARRIVALS</span>
+          <h2>Sale Sản Phẩm Mới</h2>
+          <p id="new-program-desc">Món vừa ra mắt được tự động giảm giá trong những ngày đầu - không cần mã.</p>
+        </div>
+      </div>
+      <div class="drink-grid promo-grid" id="new-drinks-grid" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ---------- 02. Khách hàng mới ---------- -->
+  <section class="section promo-block promo-block-alt" id="program-newcustomer">
+    <div class="container">
+      <div class="promo-block-head">
+        <span class="promo-block-num" aria-hidden="true">02</span>
+        <div>
+          <span class="section-kicker">FIRST VISIT</span>
+          <h2>Ưu Đãi Khách Hàng Mới</h2>
+          <p>Lần đầu ghé quán? Chọn một trong hai món quà dưới đây cho đơn đầu tiên của bạn.</p>
+        </div>
+      </div>
+      <div class="newcomer-grid">
+        <div class="newcomer-card" id="newcomer-public" aria-live="polite"></div>
+        <div class="newcomer-card newcomer-member" id="newcomer-member"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- 03. Sale theo mức ---------- -->
+  <section class="section promo-block" id="program-tiers">
+    <div class="container">
+      <div class="promo-block-head">
+        <span class="promo-block-num" aria-hidden="true">03</span>
+        <div>
+          <span class="section-kicker">SALE TIERS</span>
+          <h2>Sale Theo Mức <span class="tier-legend" id="tier-legend">10% · 15% · 25% · 30% · 35%…</span></h2>
+          <p>Mỗi món được quán gắn một mức sale riêng. Chọn mức giảm để lọc nhanh các món đang sale.</p>
+        </div>
+      </div>
+
+      <div class="tier-toolbar">
+        <div class="tier-filter" id="tier-filter" role="toolbar" aria-label="Lọc món theo mức giảm"></div>
+        <span class="tier-result" id="tier-result" aria-live="polite"></span>
+      </div>
+      <div class="drink-grid promo-grid" id="sale-drinks-grid" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ---------- 04. Quà sinh nhật ---------- -->
+  <section class="section promo-block promo-block-alt" id="program-birthday">
+    <div class="container">
+      <div class="promo-block-head">
+        <span class="promo-block-num" aria-hidden="true">04</span>
+        <div>
+          <span class="section-kicker">BIRTHDAY GIFT</span>
+          <h2>Quà Sinh Nhật Thành Viên</h2>
+          <p id="birthday-program-desc">Thành viên nhận mã giảm giá cá nhân trong tuần sinh nhật.</p>
+        </div>
+      </div>
+
+      <div class="birthday-program">
+        <ol class="birthday-steps">
+          <li>
+            <span class="step-num">1</span>
+            <div>
+              <strong>Đăng ký thành viên</strong>
+              <span>Khai báo đúng ngày sinh (quán phục vụ khách từ 18 tuổi).</span>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <div>
+              <strong>Đăng nhập trong tuần sinh nhật</strong>
+              <span>Từ 7 ngày trước đến 7 ngày sau sinh nhật, hệ thống tự gửi mã vào ví.</span>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">3</span>
+            <div>
+              <strong>Dùng mã cho một đơn bất kỳ</strong>
+              <span id="birthday-step-3">Mã cá nhân dạng SNyy····, dùng 1 lần, hạn tới hết 7 ngày sau sinh nhật.</span>
+            </div>
+          </li>
+        </ol>
+        <div class="birthday-status" id="birthday-status" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Mã giảm giá đang phát hành ---------- -->
+  <section class="section promo-block" id="voucher-section">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-kicker">VOUCHER WALL</span>
+        <h2>Mã Giảm Giá Đang Phát Hành</h2>
+        <p>Sao chép mã rồi dán vào ô "Mã giảm giá" khi đặt món, hoặc bấm "Dùng ngay" để mã được điền sẵn.
+          Mức giảm tính trên tạm tính (đã trừ sale theo món), mỗi đơn áp dụng 1 mã.</p>
+      </div>
+      <div class="coupon-grid" id="voucher-grid" aria-live="polite"></div>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer"></footer>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/sale.js"></script>
+</body>
+</html>

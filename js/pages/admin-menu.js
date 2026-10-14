@@ -4,11 +4,16 @@
      Thêm  : POST   /drinks
      Sửa   : PATCH  /drinks/:id
      Xoá   : DELETE /drinks/:id
+   Quản lý giá bán: mỗi món chọn một "Mức sale (%)" trong SALE_TIERS
+   (0 = không sale). Món mới (tạo trong NEW_DRINK_DAYS ngày) tự giảm
+   NEW_DRINK_DISCOUNT% - hệ thống lấy mức CAO HƠN, không cộng dồn.
+   Bảng hiển thị giá sau ưu đãi + giá gốc gạch + huy hiệu Mới / -X%.
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
 import {
   getAllDrinks, filterDrinks, addDrink, updateDrink, deleteDrink, CATEGORY_LABELS,
+  SALE_TIERS, NEW_DRINK_DAYS, NEW_DRINK_DISCOUNT, getDrinkPricing, normalizeSalePercent,
 } from "../modules/drinksService.js";
 import { formatMoney, debounce, paginate, renderPagination, escapeHtml } from "../modules/utils.js";
 import { validateForm, clearFormErrors, setFieldError } from "../modules/validation.js";
@@ -19,9 +24,12 @@ const bodyEl = document.getElementById("drinks-body");
 const paginationEl = document.getElementById("pagination");
 const keywordInput = document.getElementById("f-keyword");
 const categorySelect = document.getElementById("f-category");
+const pricingSelect = document.getElementById("f-pricing");
 
 const formEl = document.getElementById("drink-form");
 const formCategorySelect = document.getElementById("drink-form-category");
+const formSaleSelect = document.getElementById("drink-form-sale");
+const salePreviewEl = document.getElementById("drink-sale-preview");
 const modalTitle = document.getElementById("drink-modal-title");
 const submitBtn = document.getElementById("drink-form-submit");
 
@@ -29,12 +37,92 @@ const submitBtn = document.getElementById("drink-form-submit");
 let allDrinks = [];
 let currentPage = 1;
 
+/** Món đang mở trong form Sửa (null = form Thêm) - cần createdAt để xem trước giá món mới */
+let editingDrink = null;
+
 /* ---------------- Nạp danh mục cho 2 select ---------------- */
 function fillCategorySelects() {
   Object.entries(CATEGORY_LABELS).forEach(([value, label]) => {
     categorySelect.insertAdjacentHTML("beforeend", `<option value="${value}">${label}</option>`);
     formCategorySelect.insertAdjacentHTML("beforeend", `<option value="${value}">${label}</option>`);
   });
+}
+
+/** Nạp các mức sale cho form từ SALE_TIERS - một nguồn duy nhất, không gõ tay trong HTML */
+function fillSaleSelect() {
+  if (!formSaleSelect) return;
+  formSaleSelect.innerHTML = SALE_TIERS
+    .map((p) => `<option value="${p}">${p === 0 ? "0% — Không sale" : `Giảm ${p}%`}</option>`)
+    .join("");
+}
+
+/* ---------------- Hiển thị giá & chương trình ưu đãi ---------------- */
+
+/** Ô "Giá bán" trong bảng: giá sau ưu đãi, giá gốc gạch, huy hiệu Mới / -X% */
+function priceCellHtml(d) {
+  const pricing = getDrinkPricing(d);
+  const saleTitle = pricing.reason === "new"
+    ? `Ưu đãi món mới tự động ${pricing.percent}% (${NEW_DRINK_DAYS} ngày đầu)`
+    : `Sale theo món ${pricing.percent}%`;
+
+  return `
+    <div class="admin-price-cell">
+      <strong class="text-amber">${formatMoney(pricing.finalPrice)}</strong>
+      ${pricing.onSale ? `<s class="admin-price-old">${formatMoney(pricing.originalPrice)}</s>` : ""}
+      ${pricing.isNew || pricing.onSale ? `
+        <div class="pricing-badges">
+          ${pricing.isNew ? `<span class="pricing-badge pricing-badge-new">Mới</span>` : ""}
+          ${pricing.onSale ? `<span class="pricing-badge pricing-badge-sale" title="${escapeHtml(saleTitle)}">-${pricing.percent}%</span>` : ""}
+        </div>` : ""}
+    </div>`;
+}
+
+/** Lọc theo chương trình giá đang chọn ở thanh công cụ */
+function matchesPricingFilter(d) {
+  const mode = pricingSelect ? pricingSelect.value : "all";
+  if (mode === "all") return true;
+  const pricing = getDrinkPricing(d);
+  if (mode === "discounted") return pricing.onSale;
+  if (mode === "sale") return normalizeSalePercent(d.salePercent) > 0;
+  if (mode === "new") return pricing.isNew;
+  if (mode === "regular") return !pricing.onSale;
+  return true;
+}
+
+/**
+ * Xem trước giá khách trả ngay trong form (khi đổi giá hoặc mức sale).
+ * Form Thêm: món sẽ được tạo "bây giờ" -> chắc chắn là món mới, tự giảm 10%.
+ */
+function updateSalePreview() {
+  if (!salePreviewEl) return;
+  const price = Number(formEl.elements.price.value) || 0;
+  const salePercent = normalizeSalePercent(formSaleSelect?.value);
+  if (price <= 0) {
+    salePreviewEl.textContent = "Nhập giá bán để xem giá khách trả sau ưu đãi.";
+    salePreviewEl.classList.remove("is-active");
+    return;
+  }
+
+  const preview = {
+    price,
+    salePercent,
+    createdAt: editingDrink ? editingDrink.createdAt : new Date().toISOString(),
+  };
+  const pricing = getDrinkPricing(preview);
+
+  let text = pricing.onSale
+    ? `Giá khách trả: ${formatMoney(pricing.finalPrice)} (-${pricing.percent}%, tiết kiệm ${formatMoney(pricing.originalPrice - pricing.finalPrice)}).`
+    : `Giá khách trả: ${formatMoney(pricing.finalPrice)} (không ưu đãi).`;
+
+  if (pricing.isNew && pricing.reason === "new") {
+    text += ` Món mới đang tự giảm ${NEW_DRINK_DISCOUNT}% trong ${NEW_DRINK_DAYS} ngày đầu.`;
+  } else if (pricing.isNew && salePercent > NEW_DRINK_DISCOUNT) {
+    text += ` Món mới (giảm ${NEW_DRINK_DISCOUNT}%) nhưng mức sale ${salePercent}% cao hơn nên được áp dụng - không cộng dồn.`;
+  } else if (pricing.isNew) {
+    text += ` Mức sale ${salePercent}% trùng ưu đãi món mới - không cộng dồn.`;
+  }
+  salePreviewEl.textContent = text;
+  salePreviewEl.classList.toggle("is-active", pricing.onSale);
 }
 
 /* ---------------- Bảng danh sách ---------------- */
@@ -52,7 +140,7 @@ function rowHtml(d) {
         ${d.baseSpirit ? `<div class="text-xs text-muted">${escapeHtml(d.baseSpirit)}</div>` : ""}
       </td>
       <td><span class="text-sm">${CATEGORY_LABELS[d.category] || d.category}</span></td>
-      <td><strong class="text-amber">${formatMoney(d.price)}</strong></td>
+      <td>${priceCellHtml(d)}</td>
       <td>
         <span class="badge ${d.status === "available" ? "badge-success" : "badge-danger"}">
           ${d.status === "available" ? "Đang phục vụ" : "Tạm ngưng"}
@@ -67,7 +155,8 @@ function rowHtml(d) {
 }
 
 function renderTable() {
-  const list = filterDrinks(allDrinks, { keyword: keywordInput.value, category: categorySelect.value, sortBy: "name-asc" });
+  const list = filterDrinks(allDrinks, { keyword: keywordInput.value, category: categorySelect.value, sortBy: "name-asc" })
+    .filter(matchesPricingFilter);
   const { items, page, totalPages } = paginate(list, currentPage, 8);
   currentPage = page;
 
@@ -100,6 +189,9 @@ function openForCreate() {
   formEl.elements.abv.value = "0";
   formEl.elements.status.value = "available";
   formEl.elements.image.value = "";
+  formEl.elements.salePercent.value = "0";
+  editingDrink = null;
+  updateSalePreview();
   modalTitle.textContent = "Thêm đồ uống mới";
   openModal("drink-modal");
 }
@@ -121,6 +213,9 @@ function openForEdit(drink) {
   formEl.elements.glassType.value = drink.glassType || "";
   formEl.elements.ingredients.value = (drink.ingredients || []).join(", ");
   formEl.elements.description.value = drink.description;
+  formEl.elements.salePercent.value = String(normalizeSalePercent(drink.salePercent));
+  editingDrink = drink;
+  updateSalePreview();
 
   modalTitle.textContent = `Chỉnh sửa: ${drink.name}`;
   openModal("drink-modal");
@@ -175,6 +270,7 @@ formEl.addEventListener("submit", async (e) => {
     category: data.category,
     image: data.image || "", // để trống -> biểu tượng mặc định, không mượn ảnh món khác
     price: Number(data.price),
+    salePercent: normalizeSalePercent(data.salePercent), // 0 = không sale; sai mức -> 0
     stock: data.status === "soldout" ? 0 : (Number(data.stock) || 50),
     abv: Number(data.abv) || 0,
     rating: Number(data.rating) || 4.5,
@@ -190,10 +286,14 @@ formEl.addEventListener("submit", async (e) => {
   try {
     if (data.id) {
       await updateDrink(data.id, payload);
-      toast(`Đã cập nhật món "${payload.name}".`, "success");
+      toast(`Đã cập nhật món "${payload.name}"${payload.salePercent ? ` (sale ${payload.salePercent}%)` : ""}.`, "success");
     } else {
       await addDrink(payload);
-      toast(`Đã thêm món "${payload.name}" vào thực đơn.`, "success");
+      // Món vừa tạo là "món mới": tự giảm NEW_DRINK_DISCOUNT%, trừ khi mức sale chọn cao hơn
+      const promoNote = payload.salePercent > NEW_DRINK_DISCOUNT
+        ? `đang sale ${payload.salePercent}%`
+        : `món mới tự giảm ${NEW_DRINK_DISCOUNT}% trong ${NEW_DRINK_DAYS} ngày đầu`;
+      toast(`Đã thêm món "${payload.name}" vào thực đơn (${promoNote}).`, "success");
     }
     closeModal("drink-modal");
     await reloadTable();
@@ -209,6 +309,11 @@ function bindEvents() {
   const debouncedRender = debounce(() => { currentPage = 1; renderTable(); }, 250);
   keywordInput.addEventListener("input", debouncedRender);
   categorySelect.addEventListener("change", () => { currentPage = 1; renderTable(); });
+  if (pricingSelect) pricingSelect.addEventListener("change", () => { currentPage = 1; renderTable(); });
+
+  // Xem trước giá sau ưu đãi ngay khi quản trị viên đổi giá hoặc mức sale
+  formEl.elements.price.addEventListener("input", updateSalePreview);
+  if (formSaleSelect) formSaleSelect.addEventListener("change", updateSalePreview);
 
   document.getElementById("add-drink-btn").addEventListener("click", openForCreate);
   document.getElementById("drink-modal-close").addEventListener("click", () => closeModal("drink-modal"));
@@ -218,6 +323,7 @@ function bindEvents() {
 // Chưa đăng nhập -> initAdminLayout chuyển hướng và trả false: dừng, không gọi API
 if (initAdminLayout("Quản Lý Thực Đơn")) {
   fillCategorySelects();
+  fillSaleSelect();
   bindEvents();
   bodyEl.innerHTML = `<tr><td colspan="8" class="table-empty py-4 text-center text-muted">Đang tải thực đơn từ máy chủ...</td></tr>`;
   reloadTable();

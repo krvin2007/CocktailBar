@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mã giảm giá &amp; Sale — Quán Bar Đêm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/promo-admin.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside id="admin-sidebar"></aside>
+
+  <div class="admin-main">
+    <button type="button" class="admin-sidebar-toggle" id="admin-sidebar-toggle" aria-label="Mở menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div id="admin-topbar"></div>
+
+    <!-- 4 thẻ thống kê nhanh -->
+    <section class="stat-cards promo-stats" id="voucher-stats" aria-label="Thống kê mã giảm giá"></section>
+
+    <!-- Các chương trình khuyến mãi chạy tự động (không cần tạo mã tay) -->
+    <section class="panel promo-auto" aria-labelledby="promo-auto-title">
+      <div class="panel-head">
+        <div class="panel-title-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <h3 id="promo-auto-title">Chương trình tự động</h3>
+        </div>
+        <span class="panel-badge">Hệ thống tự áp dụng</span>
+      </div>
+      <div class="promo-auto-grid" id="promo-auto-grid"></div>
+    </section>
+
+    <div class="table-wrap">
+      <div class="table-toolbar promo-toolbar">
+        <div class="filters">
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="f-keyword" placeholder="Tìm theo mã, tên chương trình, tên khách..." aria-label="Tìm mã giảm giá">
+          </div>
+          <select id="f-audience" aria-label="Lọc theo đối tượng">
+            <option value="all">Mọi đối tượng</option>
+          </select>
+          <select id="f-status" aria-label="Lọc theo trạng thái">
+            <option value="all">Mọi trạng thái</option>
+          </select>
+          <select id="f-percent" aria-label="Lọc theo mức giảm">
+            <option value="all">Mọi mức giảm</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary" id="add-voucher-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Tạo mã giảm giá</span>
+        </button>
+      </div>
+
+      <p class="promo-result-count" id="result-count" aria-live="polite"></p>
+
+      <div class="promo-table-scroll">
+      <table class="data-table promo-table">
+        <thead>
+          <tr>
+            <th>Mã</th>
+            <th>Tên chương trình</th>
+            <th>Giảm</th>
+            <th>Điều kiện</th>
+            <th>Đối tượng</th>
+            <th>Thời hạn</th>
+            <th>Đã dùng / Giới hạn</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="vouchers-body"></tbody>
+      </table>
+      </div>
+
+      <div class="table-pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Modal thêm / sửa mã giảm giá ---------- -->
+<div class="modal-overlay" id="voucher-modal" hidden>
+  <div class="modal-box modal-wide promo-modal" role="dialog" aria-modal="true" aria-labelledby="voucher-modal-title">
+    <div class="modal-head">
+      <h3 id="voucher-modal-title">Tạo mã giảm giá</h3>
+      <button type="button" class="modal-close-x" id="voucher-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <form id="voucher-form" novalidate>
+      <input type="hidden" name="id">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="vf-code">Mã giảm giá <span class="req">*</span></label>
+          <div class="promo-code-input">
+            <input type="text" id="vf-code" name="code" data-rule="required|min:4|max:16" maxlength="16"
+                   autocomplete="off" spellcheck="false" placeholder="VD: CUOITUAN25">
+            <button type="button" class="btn btn-ghost btn-sm" id="vf-generate" title="Sinh mã ngẫu nhiên không trùng">Tạo ngẫu nhiên</button>
+          </div>
+          <small class="promo-form-hint">4–16 ký tự, chỉ chữ IN HOA (A–Z) và số, tự chuyển khi gõ.</small>
+        </div>
+        <div class="form-group">
+          <label for="vf-name">Tên chương trình <span class="req">*</span></label>
+          <input type="text" id="vf-name" name="name" data-rule="required|min:3|max:60" placeholder="VD: Cuối tuần rực rỡ">
+        </div>
+
+        <div class="form-group full">
+          <label for="vf-description">Mô tả cho khách</label>
+          <textarea id="vf-description" name="description" data-rule="max:200" rows="2" placeholder="VD: Giảm 25% đơn từ 600.000đ, tối đa 200.000đ."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="vf-percent">Loại sale (% giảm) <span class="req">*</span></label>
+          <select id="vf-percent" name="percent" data-rule="required"></select>
+        </div>
+        <div class="form-group">
+          <label for="vf-audience">Đối tượng áp dụng <span class="req">*</span></label>
+          <select id="vf-audience" name="audience" data-rule="required"></select>
+        </div>
+
+        <div class="form-group">
+          <label for="vf-min">Đơn tối thiểu (VNĐ)</label>
+          <input type="number" id="vf-min" name="minOrder" data-rule="number|integer|minval:0" min="0" step="1000" value="0">
+          <small class="promo-form-hint">0 = áp dụng cho mọi giá trị đơn.</small>
+        </div>
+        <div class="form-group">
+          <label for="vf-max">Giảm tối đa (VNĐ)</label>
+          <input type="number" id="vf-max" name="maxDiscount" data-rule="number|integer|minval:0" min="0" step="1000" value="0">
+          <small class="promo-form-hint">0 = không giới hạn số tiền giảm.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="vf-start">Ngày bắt đầu <span class="req">*</span></label>
+          <input type="date" id="vf-start" name="startDate" data-rule="required|date">
+        </div>
+        <div class="form-group">
+          <label for="vf-end">Ngày kết thúc</label>
+          <input type="date" id="vf-end" name="endDate" data-rule="date">
+          <small class="promo-form-hint">Để trống = không thời hạn. Mã hết hạn lúc 23:59 ngày này.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="vf-limit">Giới hạn lượt dùng</label>
+          <input type="number" id="vf-limit" name="usageLimit" data-rule="number|integer|minval:0" min="0" step="1" value="0">
+          <small class="promo-form-hint" id="vf-limit-hint">0 = không giới hạn.</small>
+        </div>
+        <div class="form-group promo-form-check">
+          <label class="filter-checkbox-custom">
+            <input type="checkbox" name="active" id="vf-active" checked>
+            <span class="checkbox-box"></span>
+            <span class="checkbox-label">Đang bật (khách dùng được ngay khi tới ngày bắt đầu)</span>
+          </label>
+        </div>
+
+        <div class="form-group full">
+          <div class="promo-preview" id="vf-preview" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="form-actions mt-3">
+        <button type="button" class="btn btn-ghost" id="voucher-form-cancel">Huỷ bỏ</button>
+        <button type="submit" class="btn btn-primary" id="voucher-form-submit">Lưu mã giảm giá</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/admin-vouchers.js"></script>
+</body>
+</html>

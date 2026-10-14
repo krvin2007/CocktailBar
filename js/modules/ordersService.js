@@ -2,13 +2,21 @@
    ORDERS-SERVICE.JS - Giỏ hàng + CRUD đơn hàng
    - Giỏ hàng (cart): trạng thái tạm của riêng trình duyệt khách,
      lưu ở localStorage -> các hàm giỏ hàng là hàm đồng bộ.
+     Mỗi món lưu GIÁ BÁN THỰC TẾ (đã trừ sale món / ưu đãi món mới,
+     tính bằng getDrinkPricing) và GIÁ GỐC để hiển thị giá gạch.
+     Mọi thay đổi giỏ đều phát sự kiện window "cartchange" để navbar,
+     khung chat AI và trang đặt món tự vẽ lại.
    - Đơn hàng (orders): dữ liệu chung của quán, lưu trên máy chủ
      json-server tại /orders -> các hàm đơn hàng là async.
+     Đơn có thể kèm MÃ GIẢM GIÁ: tạm tính (theo giá sale) - giảm theo
+     mã = tổng thanh toán. Lượt dùng mã được trừ khi đặt, hoàn lại khi
+     huỷ / xoá đơn chưa phục vụ, trừ lại khi phục hồi đơn đã huỷ.
    ========================================================= */
 
 import { getItem, setItem } from "./storage.js";
 import { api, getCollection, getRecord } from "./api.js";
-import { getAllDrinks, adjustStock } from "./drinksService.js";
+import { getAllDrinks, adjustStock, getDrinkPricing } from "./drinksService.js";
+import { validateVoucher, redeemVoucher, releaseVoucher, normalizeCode } from "./vouchersService.js";
 import { uid, formatDateTime } from "./utils.js";
 
 const CART_KEY = "cart";
@@ -80,6 +88,18 @@ export const SEED_ORDERS = [
 
 /* ============== GIỎ HÀNG (localStorage) ============== */
 
+/**
+ * Báo cho giao diện biết giỏ hàng vừa đổi (navbar cập nhật huy hiệu số ly,
+ * trang đặt món tính lại tiền + kiểm tra lại mã giảm giá...).
+ * Kiểm tra có window/CustomEvent trước để module vẫn chạy được trong Node
+ * (npm test không có trình duyệt).
+ */
+function emitCartChange(cart) {
+  if (typeof window === "undefined" || typeof window.dispatchEvent !== "function"
+    || typeof CustomEvent !== "function") return;
+  window.dispatchEvent(new CustomEvent("cartchange", { detail: { cart, ...summarize(cart) } }));
+}
+
 export function getCart() {
   const cart = getItem(CART_KEY, []);
   return Array.isArray(cart) ? cart : [];
@@ -87,7 +107,19 @@ export function getCart() {
 
 function saveCart(cart) {
   setItem(CART_KEY, cart);
+  emitCartChange(cart);
   return cart;
+}
+
+/**
+ * Giá gốc của một dòng giỏ/đơn. Dữ liệu cũ (trước khi có sale) không có
+ * originalPrice -> coi giá gốc = giá bán; giá gốc thấp hơn giá bán (sửa tay
+ * dữ liệu) cũng quy về giá bán để "tiết kiệm" không bao giờ âm.
+ */
+function originalPriceOf(item) {
+  const price = Number(item.price) || 0;
+  const original = Number(item.originalPrice) || 0;
+  return original > price ? original : price;
 }
 
 /** Thêm món vào giỏ; nếu đã có thì cộng dồn số lượng */
@@ -96,13 +128,17 @@ export function addToCart(drink, qty = 1) {
   const index = cart.findIndex((item) => item.drinkId === drink.id);
 
   if (index !== -1) {
-    // Đã có trong giỏ: thay bằng bản sao có số lượng mới (spread operator)
+    // Đã có trong giỏ: thay bằng bản sao có số lượng mới (spread operator).
+    // Giá giữ nguyên - trang đặt món đối chiếu lại với thực đơn trước khi đặt.
     cart[index] = { ...cart[index], qty: cart[index].qty + qty };
   } else {
+    // Giá bán = giá SAU sale món / ưu đãi món mới; giữ giá gốc để hiện giá gạch
+    const { finalPrice, originalPrice } = getDrinkPricing(drink);
     cart.push({
       drinkId: drink.id,
       name: drink.name,
-      price: drink.price,
+      price: finalPrice,
+      originalPrice,
       image: drink.image,
       qty,
     });
@@ -128,15 +164,28 @@ export function clearCart() {
   return saveCart([]);
 }
 
-/** Tổng tiền + tổng số ly trong giỏ, dùng reduce() theo yêu cầu đề bài */
-export function getCartSummary() {
-  return getCart().reduce(
-    (sum, item) => ({
-      total: sum.total + item.price * item.qty,
-      count: sum.count + item.qty,
+/** Cộng dồn tiền + số ly của một danh sách món bằng reduce() */
+function summarize(items) {
+  const sum = items.reduce(
+    (acc, item) => ({
+      total: acc.total + item.price * item.qty,
+      count: acc.count + item.qty,
+      originalTotal: acc.originalTotal + originalPriceOf(item) * item.qty,
     }),
-    { total: 0, count: 0 },
+    { total: 0, count: 0, originalTotal: 0 },
   );
+  // Tiền khách được bớt nhờ sale món / ưu đãi món mới (chưa tính mã giảm giá)
+  return { ...sum, savings: sum.originalTotal - sum.total };
+}
+
+/**
+ * Tổng tiền + tổng số ly trong giỏ, dùng reduce() theo yêu cầu đề bài.
+ * @returns {{ total: number, count: number, originalTotal: number, savings: number }}
+ *   total = tạm tính theo giá bán (đã trừ sale món), originalTotal = theo giá gốc,
+ *   savings = originalTotal - total
+ */
+export function getCartSummary() {
+  return summarize(getCart());
 }
 
 /**
@@ -173,14 +222,20 @@ export async function syncCartWithCatalog() {
       changes.push({ type: "reduced", name: drink.name, from: qty, to: drink.stock });
       qty = drink.stock;
     }
-    if (item.price !== drink.price) {
-      changes.push({ type: "price", name: drink.name, from: item.price, to: drink.price });
+
+    // So với giá bán HIỆN TẠI (đã trừ sale): admin đổi giá, bật/tắt sale,
+    // hết tuần ưu đãi món mới... đều làm giá trong giỏ khác giá thật
+    const { finalPrice, originalPrice, percent, reason } = getDrinkPricing(drink);
+    if (item.price !== finalPrice) {
+      changes.push({ type: "price", name: drink.name, from: item.price, to: finalPrice, originalPrice, percent, reason });
     }
 
-    nextCart.push({ drinkId: drink.id, name: drink.name, price: drink.price, image: drink.image, qty });
+    nextCart.push({ drinkId: drink.id, name: drink.name, price: finalPrice, originalPrice, image: drink.image, qty });
   });
 
-  if (changes.length > 0) saveCart(nextCart);
+  // Ghi lại khi có thay đổi khách cần biết, hoặc khi chỉ cần bổ sung/cập nhật
+  // dữ liệu phụ (giỏ cũ chưa có originalPrice, đổi tên/ảnh món...)
+  if (changes.length > 0 || JSON.stringify(nextCart) !== JSON.stringify(cart)) saveCart(nextCart);
   return { cart: nextCart, changes, drinkMap };
 }
 
