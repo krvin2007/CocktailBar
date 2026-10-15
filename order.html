@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="css/reset.css">
 <link rel="stylesheet" href="css/variables.css">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/checkout.css">
 <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
@@ -46,16 +47,59 @@
             <span class="bill-tag">Speakeasy Service</span>
           </div>
 
-          <div class="summary-row">
-            <span>Tổng số lượng ly</span>
-            <span id="sum-count" class="font-bold">0</span>
+          <!-- ---------- Mã giảm giá: nhập tay hoặc bấm chip gợi ý ---------- -->
+          <div class="voucher-box" id="voucher-box" aria-labelledby="voucher-title">
+            <div class="voucher-box-head">
+              <span class="voucher-box-title" id="voucher-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a3 3 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a3 3 0 0 0 0-6z"/><path d="M14 5v2m0 4v2m0 4v2"/></svg>
+                <span>Mã giảm giá</span>
+              </span>
+              <a href="sale.html" class="voucher-box-link">Xem ưu đãi đang chạy</a>
+            </div>
+            <div class="voucher-input-row">
+              <label for="voucher-input" class="sr-only">Nhập mã giảm giá</label>
+              <input type="text" id="voucher-input" class="voucher-input" placeholder="Nhập mã, VD: HAPPY10"
+                     maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                     aria-describedby="voucher-message">
+              <button type="button" class="btn btn-outline btn-sm voucher-apply-btn" id="voucher-apply-btn">Áp dụng</button>
+              <button type="button" class="voucher-remove-btn" id="voucher-remove-btn" hidden
+                      title="Bỏ mã giảm giá" aria-label="Bỏ mã giảm giá">&times;</button>
+            </div>
+            <p class="voucher-message" id="voucher-message" role="status" aria-live="polite"></p>
+            <div class="voucher-suggest" id="voucher-suggest" hidden>
+              <span class="voucher-suggest-label">Mã dành cho bạn</span>
+              <div class="voucher-chips" id="voucher-chips"></div>
+            </div>
           </div>
-          <div class="summary-row total">
-            <span>Tổng tạm tính</span>
-            <span id="sum-total" class="font-serif">0₫</span>
+
+          <!-- ---------- Bảng tổng tiền ---------- -->
+          <div class="bill-totals">
+            <div class="summary-row">
+              <span>Tổng số ly</span>
+              <span id="sum-count" class="font-bold">0 ly</span>
+            </div>
+            <div class="summary-row">
+              <span>Tạm tính theo giá gốc</span>
+              <span id="sum-original">0₫</span>
+            </div>
+            <div class="summary-row summary-saving" id="row-savings" hidden>
+              <span>Tiết kiệm từ sale món</span>
+              <span id="sum-savings">−0₫</span>
+            </div>
+            <div class="summary-row summary-discount" id="row-discount" hidden>
+              <span>Giảm theo mã <span class="summary-code" id="sum-voucher-code"></span></span>
+              <span id="sum-discount">−0₫</span>
+            </div>
+            <div class="summary-row total">
+              <span>TỔNG THANH TOÁN</span>
+              <span id="sum-total" class="font-serif">0₫</span>
+            </div>
           </div>
 
           <form id="order-form" class="order-form-body">
+            <!-- Khách đã đăng nhập thành viên: thông tin được điền sẵn (vẫn sửa được) -->
+            <p class="member-note" id="member-note" hidden></p>
+
             <label class="form-group-title">Hình thức trải nghiệm</label>
             <div class="service-type-tabs">
               <label class="service-tab">

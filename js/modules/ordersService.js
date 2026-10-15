@@ -275,6 +275,7 @@ export class Order {
   constructor({
     id, code, name, phone, email = "", serviceType,
     items = [], note = "", status = "pending", createdAt = new Date().toISOString(),
+    discount = 0, voucherCode = "", voucherId = "", customerId = "",
   } = {}) {
     this.id = id;
     this.code = code;
@@ -282,10 +283,16 @@ export class Order {
     this.phone = phone;
     this.email = email;
     this.serviceType = serviceType;
-    this.items = items.map((item) => ({ ...item }));
+    this.items = (Array.isArray(items) ? items : []).map((item) => ({ ...item }));
     this.note = note;
     this.status = status; // đi qua setter -> trạng thái sai sẽ bị từ chối ngay
     this.createdAt = createdAt;
+    // Thông tin mã giảm giá + thành viên. Đơn cũ (tạo trước khi có tính năng
+    // khuyến mãi) không có các trường này -> nhận giá trị mặc định "không mã".
+    this.discount = Math.max(0, Math.round(Number(discount) || 0));
+    this.voucherCode = voucherCode ? String(voucherCode).trim().toUpperCase() : "";
+    this.voucherId = voucherId ? String(voucherId) : "";
+    this.customerId = customerId ? String(customerId) : "";
   }
 
   get status() {
@@ -300,9 +307,32 @@ export class Order {
     this.#status = value;
   }
 
-  /** Tổng tiền luôn tính lại từ danh sách món -> không bao giờ lệch với các món */
+  /**
+   * Tạm tính = Σ giá bán (ĐÃ trừ sale món) x số lượng, luôn tính lại từ
+   * danh sách món -> không bao giờ lệch với các món.
+   */
+  get subtotal() {
+    return this.items.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
+  }
+
+  /** Tổng theo GIÁ GỐC (trước sale món) - món cũ không có originalPrice thì lấy giá bán */
+  get originalSubtotal() {
+    return this.items.reduce((sum, item) => sum + originalPriceOf(item) * (Number(item.qty) || 0), 0);
+  }
+
+  /** Tiền khách được bớt nhờ sale món / ưu đãi món mới (chưa tính mã giảm giá) */
+  get productSavings() {
+    return this.originalSubtotal - this.subtotal;
+  }
+
+  /** Đơn có áp dụng mã giảm giá không */
+  get hasVoucher() {
+    return Boolean(this.voucherCode) && this.discount > 0;
+  }
+
+  /** Tổng thanh toán = tạm tính - giảm theo mã (không bao giờ âm) */
   get total() {
-    return this.items.reduce((sum, item) => sum + item.price * item.qty, 0);
+    return Math.max(0, this.subtotal - this.discount);
   }
 
   get itemCount() {
@@ -337,7 +367,12 @@ export class Order {
 
   /**
    * Dữ liệu thuần để gửi lên API. JSON.stringify không lấy được trường
-   * private (#status) và getter (total), nên phải liệt kê ra đây.
+   * private (#status) và getter (subtotal, total), nên phải liệt kê ra đây.
+   *
+   * voucherId / customerId CHỈ ghi khi có giá trị: json-server 0.17 coi mọi
+   * trường kết thúc bằng "Id" là khoá ngoại; mỗi lệnh DELETE bất kỳ nó sẽ
+   * tự xoá các bản ghi trỏ tới id không tồn tại - kể cả chuỗi rỗng "" ->
+   * nếu ghi voucherId: "" thì mọi đơn KHÔNG dùng mã sẽ bị xoá sạch.
    */
   toJSON() {
     return {
@@ -350,6 +385,11 @@ export class Order {
       items: this.items,
       note: this.note,
       status: this.status,
+      subtotal: this.subtotal,
+      discount: this.discount,
+      voucherCode: this.voucherCode,
+      ...(this.voucherId ? { voucherId: this.voucherId } : {}),
+      ...(this.customerId ? { customerId: this.customerId } : {}),
       total: this.total,
       createdAt: this.createdAt,
     };
@@ -449,25 +489,62 @@ function nextOrderCode(orders) {
 }
 
 /**
+ * Ghi nhận lượt dùng mã sau khi đơn ĐÃ lưu. Lỗi mạng lúc này không được làm
+ * hỏng kết quả đặt đơn (đơn đã nằm trên máy chủ, giỏ đã xoá) -> chỉ ghi log.
+ */
+async function safeRedeem(voucherId) {
+  try {
+    await redeemVoucher(voucherId);
+  } catch (err) {
+    console.warn(`[orders] Chưa ghi nhận được lượt dùng mã ${voucherId}:`, err.message);
+  }
+}
+
+/**
  * Tạo đơn hàng mới từ giỏ hàng + thông tin khách - POST /orders.
  * Đối chiếu tồn kho lần cuối ngay trước khi lưu (an toàn kép: order.js
  * đã đối chiếu để báo khách, hàm này vẫn tự kiểm tra độc lập).
  *
- * @param {object} customerInfo { name, phone, email, serviceType, tableNumber, bookingTime, guestCount, note }
- * @returns {Promise<{ success: boolean, order?: Order, changes?: Array }>}
+ * Mã giảm giá được kiểm tra LẠI ở đây (không tin số tiền giảm trang gửi
+ * lên): tạm tính lấy từ giỏ đã đồng bộ giá mới nhất. Mã không hợp lệ ->
+ * KHÔNG tạo đơn, KHÔNG xoá giỏ, trả voucherError để trang báo tại ô nhập mã.
+ *
+ * @param {object} customerInfo { name, phone, email, serviceType, tableNumber, bookingTime,
+ *                                guestCount, note, voucherCode?, customerId? }
+ * @returns {Promise<{ success: boolean, order?: Order, changes?: Array, voucherError?: string }>}
  */
-export async function createOrder(customerInfo) {
+export async function createOrder(customerInfo = {}) {
+  const { voucherCode = "", customerId = "", ...info } = customerInfo;
   const { cart, changes } = await syncCartWithCatalog();
   if (cart.length === 0) return { success: false, changes };
 
+  // Kiểm tra mã trên tạm tính THỰC (giá sau sale món của giỏ vừa đồng bộ)
+  const code = normalizeCode(voucherCode);
+  const owner = customerId ? String(customerId) : "";
+  let voucher = null;
+  let discount = 0;
+  if (code) {
+    const result = await validateVoucher(code, {
+      subtotal: summarize(cart).total,
+      phone: info.phone || "",
+      customerId: owner,
+    });
+    if (!result.valid) return { success: false, voucherError: result.message, changes };
+    ({ voucher, discount } = result);
+  }
+
   const orders = await getAllOrders();
   const order = Order.from({
+    ...info,
     id: uid("order"),
     code: nextOrderCode(orders),
-    ...customerInfo,
     items: cart,
     status: "pending",
     createdAt: new Date().toISOString(),
+    customerId: owner,
+    discount,
+    voucherCode: voucher ? voucher.code : "",
+    voucherId: voucher ? String(voucher.id) : "",
   });
 
   const saved = await api.post(`/${COLLECTION}`, order.toJSON());
@@ -475,17 +552,22 @@ export async function createOrder(customerInfo) {
   // Chỉ xoá giỏ hàng SAU KHI máy chủ đã lưu đơn thành công
   clearCart();
 
-  // Trừ tồn kho các món đã bán. Mỗi món là 1 bản ghi riêng nên có thể
-  // gửi song song bằng Promise.all thay vì chờ lần lượt từng món.
-  await Promise.all(cart.map((item) => adjustStock(item.drinkId, -item.qty)));
+  // Trừ tồn kho các món đã bán + trừ 1 lượt dùng mã. Mỗi việc ghi một bản
+  // ghi riêng nên gửi song song bằng Promise.all thay vì chờ lần lượt.
+  await Promise.all([
+    ...cart.map((item) => adjustStock(item.drinkId, -item.qty)),
+    ...(voucher ? [safeRedeem(voucher.id)] : []),
+  ]);
 
   return { success: true, order: Order.from(saved), changes };
 }
 
 /**
  * Đổi trạng thái đơn hàng - PATCH /orders/:id.
- * - Chuyển SANG "cancelled": hoàn lại tồn kho các món trong đơn.
- * - Phục hồi TỪ "cancelled": trừ lại tồn kho, tránh lệch kho khi admin bấm nhầm.
+ * - Chuyển SANG "cancelled": hoàn lại tồn kho các món trong đơn và trả lại
+ *   lượt dùng mã giảm giá (nếu đơn có dùng mã).
+ * - Phục hồi TỪ "cancelled": trừ lại tồn kho + lượt dùng mã, tránh lệch số
+ *   liệu khi admin bấm nhầm.
  */
 export async function updateOrderStatus(id, status) {
   const order = await getOrderById(id);
@@ -495,9 +577,15 @@ export async function updateOrderStatus(id, status) {
   order.status = status; // setter kiểm tra TRƯỚC - trạng thái sai thì dừng, chưa đụng tới kho
 
   if (previous !== "cancelled" && status === "cancelled") {
-    await Promise.all(order.items.map((item) => adjustStock(item.drinkId, item.qty)));
+    await Promise.all([
+      ...order.items.map((item) => adjustStock(item.drinkId, item.qty)),
+      ...(order.voucherId ? [releaseVoucher(order.voucherId)] : []),
+    ]);
   } else if (previous === "cancelled" && status !== "cancelled") {
-    await Promise.all(order.items.map((item) => adjustStock(item.drinkId, -item.qty)));
+    await Promise.all([
+      ...order.items.map((item) => adjustStock(item.drinkId, -item.qty)),
+      ...(order.voucherId ? [redeemVoucher(order.voucherId)] : []),
+    ]);
   }
 
   const saved = await api.patch(`/${COLLECTION}/${encodeURIComponent(id)}`, { status: order.status });
@@ -507,13 +595,18 @@ export async function updateOrderStatus(id, status) {
 /**
  * Xoá đơn hàng - DELETE /orders/:id.
  * Đơn đang "Chờ xử lý"/"Đang pha chế" mà bị xoá thì coi như huỷ:
- * hoàn lại số ly đã trừ, nếu không tồn kho sẽ thất thoát vĩnh viễn.
- * Đơn "Hoàn tất" (đồ uống đã thật sự phục vụ) thì không hoàn kho.
+ * hoàn lại số ly đã trừ (nếu không tồn kho sẽ thất thoát vĩnh viễn) và
+ * trả lại lượt dùng mã giảm giá.
+ * Đơn "Hoàn tất" (đồ uống đã thật sự phục vụ) thì không hoàn kho, mã vẫn
+ * tính là đã dùng; đơn "Đã huỷ" thì kho + mã đã được hoàn từ lúc huỷ.
  */
 export async function deleteOrder(id) {
   const order = await getOrderById(id);
   if (order && order.holdsStock) {
-    await Promise.all(order.items.map((item) => adjustStock(item.drinkId, item.qty)));
+    await Promise.all([
+      ...order.items.map((item) => adjustStock(item.drinkId, item.qty)),
+      ...(order.voucherId ? [releaseVoucher(order.voucherId)] : []),
+    ]);
   }
   await api.delete(`/${COLLECTION}/${encodeURIComponent(id)}`);
   return true;
@@ -540,7 +633,8 @@ export function filterOrders(orders, { status = "all", keyword = "", sortBy = "n
   if (kw) {
     list = list.filter((o) => String(o.code).toLowerCase().includes(kw)
       || String(o.name).toLowerCase().includes(kw)
-      || String(o.phone).includes(kw));
+      || String(o.phone).includes(kw)
+      || String(o.voucherCode || "").toLowerCase().includes(kw)); // tìm cả theo mã giảm giá đã dùng
   }
 
   const sorters = {

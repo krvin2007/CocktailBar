@@ -1,0 +1,499 @@
+/* =========================================================
+   CHECKOUT.CSS - Giao diện thanh toán có khuyến mãi
+   - Trang đặt món (order.html): giá gạch trong giỏ, khối "Mã giảm giá"
+     dạng vé (ô nhập IN HOA + nút Áp dụng + nút bỏ mã), chip "Mã dành
+     cho bạn", bảng tổng (giá gốc / tiết kiệm sale / giảm theo mã),
+     lời chào thành viên, các dòng tiền trong modal thành công & tra cứu.
+   - Trang quản trị đơn (admin-orders.html): nhãn mã nhỏ trong bảng,
+     các dòng Tạm tính / Giảm giá trong chi tiết đơn.
+   - Chỉ dùng biến màu của variables.css; responsive tới 360px.
+   ========================================================= */
+
+/* Thuộc tính hidden của HTML phải thắng các lớp display: flex/grid bên dưới */
+.order-summary-box [hidden],
+.order-detail-content [hidden] {
+  display: none !important;
+}
+
+/* Lỗi kiểm tra form của trang đặt món (validation.js chèn .field-error) */
+.order-page-section .field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--danger);
+}
+
+.order-page-section .field-error:empty {
+  display: none;
+}
+
+.order-page-section input.invalid,
+.order-page-section textarea.invalid {
+  border-color: var(--danger);
+}
+
+/* ---------- Giá trong giỏ: giá gốc gạch + giá sale + nhãn % ---------- */
+.cart-item-price.is-sale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.cart-price-old {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-decoration: line-through;
+  text-decoration-color: rgba(226, 92, 80, 0.7);
+}
+
+.cart-price-now {
+  color: var(--amber-soft);
+  font-weight: 700;
+}
+
+.cart-sale-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* ---------- Khối "Mã giảm giá" dạng vé ---------- */
+.voucher-box {
+  position: relative;
+  margin: 4px 0 18px;
+  padding: 16px 16px 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, rgba(197, 152, 67, 0.08), rgba(197, 152, 67, 0) 60%),
+    var(--bg-surface);
+}
+
+/* Hai "lỗ bấm vé" tròn ở mép trái/phải */
+.voucher-box::before,
+.voucher-box::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-strong);
+}
+
+.voucher-box::before {
+  left: -8px;
+  clip-path: inset(0 0 0 50%);
+}
+
+.voucher-box::after {
+  right: -8px;
+  clip-path: inset(0 50% 0 0);
+}
+
+.voucher-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.voucher-box-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.voucher-box-link {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.voucher-box-link:hover {
+  color: var(--amber-soft);
+}
+
+.voucher-input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.voucher-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg-page);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.voucher-input::placeholder {
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  text-transform: none;
+  color: var(--text-dim);
+}
+
+.voucher-input:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(197, 152, 67, 0.18);
+}
+
+.voucher-input.is-applied {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.voucher-input.invalid {
+  border-color: var(--danger);
+}
+
+.voucher-apply-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.voucher-apply-btn.is-applied {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.voucher-remove-btn {
+  flex-shrink: 0;
+  width: 38px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.voucher-remove-btn:hover,
+.voucher-remove-btn:focus-visible {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  outline: none;
+}
+
+.voucher-message {
+  min-height: 0;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.voucher-message:empty {
+  display: none;
+}
+
+.voucher-message.is-success { color: var(--success); }
+.voucher-message.is-error   { color: var(--danger); }
+.voucher-message.is-info    { color: var(--info); }
+
+/* Nhãn chỉ dành cho trình đọc màn hình */
+.voucher-box .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Chip "Mã dành cho bạn" ---------- */
+.voucher-suggest {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.voucher-suggest-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.voucher-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+
+.voucher-chip {
+  --chip-accent: var(--amber);
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 128px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--chip-accent);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.voucher-chip:hover,
+.voucher-chip:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--chip-accent);
+  background: var(--bg-elevated);
+  outline: none;
+}
+
+.voucher-chip.is-personal { --chip-accent: var(--success); }
+.voucher-chip.is-birthday { --chip-accent: #e48fa6; }
+
+.voucher-chip.is-active {
+  border-color: var(--chip-accent);
+  background: rgba(197, 152, 67, 0.12);
+  box-shadow: 0 0 0 1px var(--chip-accent);
+}
+
+/* Chưa đủ đơn tối thiểu: vẫn bấm được (để xem lý do), nhưng làm mờ */
+.voucher-chip.is-locked {
+  opacity: 0.6;
+}
+
+.voucher-chip-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.voucher-chip-code {
+  font-size: 0.82rem;
+  letter-spacing: 1px;
+  color: var(--cream);
+}
+
+.voucher-chip-percent {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--chip-accent);
+}
+
+.voucher-chip-cond {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.voucher-chip-own {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--chip-accent);
+}
+
+/* ---------- Bảng tổng tiền ---------- */
+.bill-totals {
+  margin-bottom: 6px;
+}
+
+.summary-saving span:last-child {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.summary-discount span:last-child {
+  color: var(--amber-soft);
+  font-weight: 700;
+}
+
+.summary-code {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--amber);
+  vertical-align: middle;
+}
+
+.summary-code:empty {
+  display: none;
+}
+
+/* ---------- Lời chào thành viên trong form ---------- */
+.member-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--success-bg);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.member-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--success);
+}
+
+/* ---------- Modal thành công + kết quả tra cứu ---------- */
+.receipt-row.is-saving span:last-child,
+.lookup-item-body .is-saving {
+  color: var(--success);
+}
+
+.receipt-row.is-discount span:last-child,
+.lookup-item-body .is-discount {
+  color: var(--amber-soft);
+}
+
+.receipt-row.receipt-total {
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-soft);
+}
+
+/* ---------- Trang quản trị đơn hàng ---------- */
+.order-voucher-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--amber);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.order-money-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-soft);
+}
+
+.order-detail-row.is-saving strong {
+  color: var(--success);
+}
+
+.order-detail-row.is-discount strong {
+  color: var(--amber-soft);
+}
+
+.order-item-price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.member-id-chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: 0.78rem;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .voucher-box {
+    padding: 14px 12px 12px;
+  }
+
+  .voucher-box-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .voucher-input-row {
+    flex-wrap: wrap;
+  }
+
+  .voucher-input {
+    flex-basis: 100%;
+  }
+
+  .voucher-apply-btn {
+    flex: 1;
+  }
+
+  .voucher-chip {
+    min-width: 116px;
+  }
+
+  .summary-row {
+    gap: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voucher-chip,
+  .voucher-input,
+  .voucher-remove-btn {
+    transition: none;
+  }
+
+  .voucher-chip:hover,
+  .voucher-chip:focus-visible {
+    transform: none;
+  }
+}
+
+/* Cột lưới "1fr" mặc định không co nhỏ hơn nội dung (min-width: auto):
+   hàng chip mã giảm giá dài làm phiếu đặt chỗ nở tràn khung -> cho phép co lại */
+.order-layout > .cart-section,
+.order-layout > .order-summary-box {
+  min-width: 0;
+}

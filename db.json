@@ -26,7 +26,8 @@
       "featured": true,
       "stock": 25,
       "abv": 24,
-      "createdAt": "2026-10-07T13:03:33.146Z"
+      "salePercent": 0,
+      "createdAt": "2025-09-10T00:11:36.042Z"
     },
     {
       "id": "d2",
@@ -54,7 +55,8 @@
       "featured": true,
       "stock": 20,
       "abv": 30,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2025-09-25T00:11:36.042Z"
     },
     {
       "id": "d3",
@@ -81,7 +83,8 @@
       "featured": true,
       "stock": 18,
       "abv": 28,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2025-10-10T00:11:36.042Z"
     },
     {
       "id": "d4",
@@ -109,7 +112,8 @@
       "featured": true,
       "stock": 22,
       "abv": 18,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2025-10-25T00:11:36.042Z"
     },
     {
       "id": "d5",
@@ -136,7 +140,8 @@
       "featured": false,
       "stock": 26,
       "abv": 20,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 15,
+      "createdAt": "2025-11-19T00:11:36.042Z"
     },
     {
       "id": "d6",
@@ -165,7 +170,8 @@
       "featured": false,
       "stock": 30,
       "abv": 14,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 10,
+      "createdAt": "2025-12-09T00:11:36.042Z"
     },
     {
       "id": "d7",
@@ -193,7 +199,8 @@
       "featured": true,
       "stock": 20,
       "abv": 19,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2025-12-29T00:11:36.042Z"
     },
     {
       "id": "d8",
@@ -221,7 +228,8 @@
       "featured": false,
       "stock": 28,
       "abv": 11,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-01-18T00:11:36.042Z"
     },
     {
       "id": "d9",
@@ -248,7 +256,8 @@
       "featured": false,
       "stock": 16,
       "abv": 30,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-02-02T00:11:36.042Z"
     },
     {
       "id": "d10",
@@ -273,7 +282,8 @@
       "featured": false,
       "stock": 12,
       "abv": 40,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-02-17T00:11:36.042Z"
     },
     {
       "id": "d11",
@@ -301,7 +311,8 @@
       "featured": true,
       "stock": 20,
       "abv": 32,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-03-09T00:11:36.042Z"
     },
     {
       "id": "d12",
@@ -329,7 +340,8 @@
       "featured": false,
       "stock": 25,
       "abv": 22,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 25,
+      "createdAt": "2026-03-29T00:11:36.042Z"
     },
     {
       "id": "d13",
@@ -357,7 +369,8 @@
       "featured": true,
       "stock": 22,
       "abv": 26,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-04-13T00:11:36.042Z"
     },
     {
       "id": "d14",
@@ -385,7 +398,8 @@
       "featured": false,
       "stock": 18,
       "abv": 16,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-05-03T00:11:36.042Z"
     },
     {
       "id": "d15",
@@ -412,7 +426,8 @@
       "featured": false,
       "stock": 20,
       "abv": 24,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-05-18T00:11:36.042Z"
     },
     {
       "id": "d16",
@@ -440,7 +455,8 @@
       "featured": false,
       "stock": 24,
       "abv": 21,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-06-02T00:11:36.042Z"
     },
     {
       "id": "d17",
@@ -468,7 +484,8 @@
       "featured": true,
       "stock": 22,
       "abv": 19,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 30,
+      "createdAt": "2026-06-19T00:11:36.042Z"
     },
     {
       "id": "d18",
@@ -496,7 +513,8 @@
       "featured": true,
       "stock": 18,
       "abv": 22,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-07-05T00:11:36.042Z"
     },
     {
       "id": "d19",
@@ -524,7 +542,8 @@
       "featured": false,
       "stock": 20,
       "abv": 18,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-10-11T00:11:36.042Z"
     },
     {
       "id": "d20",
@@ -552,7 +571,8 @@
       "featured": true,
       "stock": 16,
       "abv": 15,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-07-27T00:11:36.042Z"
     },
     {
       "id": "d21",
@@ -579,7 +599,8 @@
       "featured": true,
       "stock": 15,
       "abv": 35,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-08-10T00:11:36.042Z"
     },
     {
       "id": "d22",
@@ -604,7 +625,8 @@
       "featured": false,
       "stock": 14,
       "abv": 40,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-10-09T00:11:36.042Z"
     },
     {
       "id": "d23",
@@ -629,7 +651,8 @@
       "featured": true,
       "stock": 10,
       "abv": 43,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-08-24T00:11:36.042Z"
     },
     {
       "id": "d24",
@@ -654,7 +677,8 @@
       "featured": false,
       "stock": 12,
       "abv": 43,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 35,
+      "createdAt": "2026-08-31T00:11:36.042Z"
     },
     {
       "id": "d25",
@@ -679,7 +703,8 @@
       "featured": false,
       "stock": 12,
       "abv": 40,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-04-23T00:11:36.042Z"
     },
     {
       "id": "d26",
@@ -704,7 +729,8 @@
       "featured": true,
       "stock": 10,
       "abv": 38,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-06-09T00:11:36.042Z"
     },
     {
       "id": "d27",
@@ -730,7 +756,8 @@
       "featured": false,
       "stock": 15,
       "abv": 47,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-10-07T00:11:36.042Z"
     },
     {
       "id": "d28",
@@ -755,7 +782,8 @@
       "featured": false,
       "stock": 18,
       "abv": 45,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-07-12T00:11:36.042Z"
     },
     {
       "id": "d29",
@@ -781,7 +809,8 @@
       "featured": false,
       "stock": 16,
       "abv": 40,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 0,
+      "createdAt": "2026-10-06T00:11:36.042Z"
     },
     {
       "id": "d30",
@@ -808,7 +837,8 @@
       "featured": false,
       "stock": 25,
       "abv": 25,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "salePercent": 15,
+      "createdAt": "2026-09-05T00:11:36.042Z"
     }
   ],
   "orders": [
@@ -832,7 +862,7 @@
       ],
       "total": 250000,
       "status": "completed",
-      "createdAt": "2026-10-01T13:30:00.000Z"
+      "createdAt": "2026-10-09T20:30:00.000Z"
     },
     {
       "id": "o2",
@@ -853,7 +883,7 @@
       ],
       "total": 270000,
       "status": "completed",
-      "createdAt": "2026-10-02T14:30:00.000Z"
+      "createdAt": "2026-10-10T21:30:00.000Z"
     },
     {
       "id": "o3",
@@ -862,7 +892,7 @@
       "phone": "0923334455",
       "email": "",
       "serviceType": "booking",
-      "bookingTime": "2026-10-03T12:30:00.000Z",
+      "bookingTime": "2026-10-11T19:30:00.000Z",
       "guestCount": 4,
       "note": "Bàn lounge gần quầy pha chế",
       "items": [
@@ -883,7 +913,7 @@
       ],
       "total": 500000,
       "status": "completed",
-      "createdAt": "2026-10-03T12:30:00.000Z"
+      "createdAt": "2026-10-11T19:30:00.000Z"
     },
     {
       "id": "o4",
@@ -905,7 +935,7 @@
       ],
       "total": 120000,
       "status": "cancelled",
-      "createdAt": "2026-10-04T15:30:00.000Z"
+      "createdAt": "2026-10-12T22:30:00.000Z"
     },
     {
       "id": "o5",
@@ -933,7 +963,7 @@
       ],
       "total": 335000,
       "status": "completed",
-      "createdAt": "2026-10-05T14:30:00.000Z"
+      "createdAt": "2026-10-13T21:30:00.000Z"
     },
     {
       "id": "o6",
@@ -942,7 +972,7 @@
       "phone": "0956667788",
       "email": "",
       "serviceType": "booking",
-      "bookingTime": "2026-10-06T13:30:00.000Z",
+      "bookingTime": "2026-10-14T20:30:00.000Z",
       "guestCount": 6,
       "note": "Kỷ niệm sinh nhật",
       "items": [
@@ -963,7 +993,7 @@
       ],
       "total": 765000,
       "status": "preparing",
-      "createdAt": "2026-10-06T13:30:00.000Z"
+      "createdAt": "2026-10-14T20:30:00.000Z"
     },
     {
       "id": "o7",
@@ -985,7 +1015,7 @@
       ],
       "total": 240000,
       "status": "pending",
-      "createdAt": "2026-10-07T12:30:00.000Z"
+      "createdAt": "2026-10-15T19:30:00.000Z"
     },
     {
       "id": "o8",
@@ -1006,7 +1036,7 @@
       ],
       "total": 195000,
       "status": "pending",
-      "createdAt": "2026-10-07T13:30:00.000Z"
+      "createdAt": "2026-10-15T20:30:00.000Z"
     }
   ],
   "staff": [
@@ -2097,6 +2127,171 @@
         }
       ],
       "biography": "Edoardo Giaccone, người thường được gọi với biệt danh thân mật \"Baffo\" bởi bộ ria mép đặc trưng, đã mở quán bar đầu tiên của mình tại Salò ven bờ hồ Garda tuyệt đẹp vào năm 1958, ban đầu lấy tên là Garten và sau đổi thành Edward & Edward. Quán bar này lưu giữ tới hơn 1.500 loại whisky thượng hạng.\n\nTừ cuối thập niên 1960, ông tiên phong nhập khẩu các mẻ single malt chính hãng được tuyển chọn và đóng chai riêng, và ông thường được tôn vinh là nhà đóng chai độc lập đầu tiên của nước Ý. Bộ sưu tập đồ sộ của ông – ghi nhận hơn 5.500 mẫu chai khác biệt – đã được Tổ chức Kỷ lục Guinness thế giới công nhận là bộ sưu tập whisky lớn nhất hành tinh, và ông được hậu thế tri ân là người đã biến nước Ý thành chiếc nôi thưởng thức single malt Scotch sớm nhất tại châu Âu."
+    }
+  ],
+  "banners": [
+    {
+      "id": "b1",
+      "tenbanner": "Sale 10–35% cocktail đặc tuyển mỗi đêm",
+      "hinhbanner": "img/lounge/bar-counter.jpg"
+    },
+    {
+      "id": "b2",
+      "tenbanner": "Quà sinh nhật: mã giảm 25% cho thành viên",
+      "hinhbanner": "img/lounge/vip-sofa.jpg"
+    },
+    {
+      "id": "b3",
+      "tenbanner": "Khách hàng mới giảm ngay 10% đơn đầu tiên",
+      "hinhbanner": "img/hero-bar.jpg"
+    },
+    {
+      "id": "b4",
+      "tenbanner": "Món mới ra mắt – giảm 10% trong 14 ngày đầu",
+      "hinhbanner": "img/lounge/dj-stage.jpg"
+    }
+  ],
+  "vouchers": [
+    {
+      "id": "v1",
+      "code": "BANMOI10",
+      "name": "Chào khách mới",
+      "description": "Giảm 10% cho đơn đầu tiên của số điện thoại chưa từng đặt tại quán.",
+      "percent": 10,
+      "minOrder": 0,
+      "maxDiscount": 0,
+      "startDate": "2026-08-16T00:00:00.000Z",
+      "endDate": "2027-08-11T23:59:59.999Z",
+      "usageLimit": 0,
+      "usedCount": 7,
+      "audience": "new-customer",
+      "active": true,
+      "createdAt": "2026-08-16T09:00:00.000Z"
+    },
+    {
+      "id": "v2",
+      "code": "HAPPY10",
+      "name": "Happy Hour mỗi tối",
+      "description": "Giảm 10% cho mọi đơn từ 200.000đ.",
+      "percent": 10,
+      "minOrder": 200000,
+      "maxDiscount": 0,
+      "startDate": "2026-09-15T00:00:00.000Z",
+      "endDate": "2027-04-13T23:59:59.999Z",
+      "usageLimit": 0,
+      "usedCount": 18,
+      "audience": "all",
+      "active": true,
+      "createdAt": "2026-09-15T10:00:00.000Z"
+    },
+    {
+      "id": "v3",
+      "code": "SALE15",
+      "name": "Sale 15% giữa tuần",
+      "description": "Giảm 15% đơn từ 400.000đ, tối đa 100.000đ.",
+      "percent": 15,
+      "minOrder": 400000,
+      "maxDiscount": 100000,
+      "startDate": "2026-09-25T00:00:00.000Z",
+      "endDate": "2027-01-13T23:59:59.999Z",
+      "usageLimit": 0,
+      "usedCount": 9,
+      "audience": "all",
+      "active": true,
+      "createdAt": "2026-09-25T11:00:00.000Z"
+    },
+    {
+      "id": "v4",
+      "code": "CUOITUAN25",
+      "name": "Cuối tuần rực rỡ",
+      "description": "Giảm 25% đơn từ 600.000đ, tối đa 200.000đ - chỉ 50 lượt.",
+      "percent": 25,
+      "minOrder": 600000,
+      "maxDiscount": 200000,
+      "startDate": "2026-10-05T00:00:00.000Z",
+      "endDate": "2026-12-14T23:59:59.999Z",
+      "usageLimit": 50,
+      "usedCount": 12,
+      "audience": "all",
+      "active": true,
+      "createdAt": "2026-10-05T14:00:00.000Z"
+    },
+    {
+      "id": "v5",
+      "code": "VIP30",
+      "name": "Bàn VIP sang trọng",
+      "description": "Giảm 30% đơn từ 1.000.000đ, tối đa 350.000đ - 20 lượt.",
+      "percent": 30,
+      "minOrder": 1000000,
+      "maxDiscount": 350000,
+      "startDate": "2026-09-30T00:00:00.000Z",
+      "endDate": "2026-11-29T23:59:59.999Z",
+      "usageLimit": 20,
+      "usedCount": 5,
+      "audience": "all",
+      "active": true,
+      "createdAt": "2026-09-30T15:00:00.000Z"
+    },
+    {
+      "id": "v6",
+      "code": "DEMNAY35",
+      "name": "Đêm nay bùng nổ",
+      "description": "Giảm 35% đơn từ 1.500.000đ, tối đa 500.000đ - chỉ 10 lượt.",
+      "percent": 35,
+      "minOrder": 1500000,
+      "maxDiscount": 500000,
+      "startDate": "2026-10-10T00:00:00.000Z",
+      "endDate": "2026-11-14T23:59:59.999Z",
+      "usageLimit": 10,
+      "usedCount": 3,
+      "audience": "all",
+      "active": true,
+      "createdAt": "2026-10-10T16:00:00.000Z"
+    },
+    {
+      "id": "v7",
+      "code": "HETHAN20",
+      "name": "Lễ hội mùa hè (đã kết thúc)",
+      "description": "Mã minh hoạ đã hết hạn - dùng để demo thông báo lỗi.",
+      "percent": 20,
+      "minOrder": 300000,
+      "maxDiscount": 150000,
+      "startDate": "2026-07-17T00:00:00.000Z",
+      "endDate": "2026-10-05T23:59:59.999Z",
+      "usageLimit": 100,
+      "usedCount": 41,
+      "audience": "all",
+      "active": true,
+      "createdAt": "2026-07-17T12:00:00.000Z"
+    }
+  ],
+  "customers": [
+    {
+      "id": "c1",
+      "name": "Nguyễn Hoàng Anh",
+      "phone": "0981234567",
+      "email": "hoanganh.nguyen@gmail.com",
+      "birthday": "1998-10-15",
+      "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+      "createdAt": "2026-08-11T20:15:00.000Z"
+    },
+    {
+      "id": "c2",
+      "name": "Trần Bảo Ngọc",
+      "phone": "0382345678",
+      "email": "baongoc.tran@gmail.com",
+      "birthday": "2000-10-20",
+      "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+      "createdAt": "2026-10-06T21:15:00.000Z"
+    },
+    {
+      "id": "c3",
+      "name": "Lê Quang Minh",
+      "phone": "0773456789",
+      "email": "",
+      "birthday": "1992-03-14",
+      "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+      "createdAt": "2026-06-17T22:15:00.000Z"
     }
   ]
 }

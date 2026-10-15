@@ -35,4 +35,19 @@ export default [
       globals: { ...globals.node },
     },
   },
+
+  // Middleware CommonJS cho json-server 0.17 (nạp bằng require qua --middlewares)
+  {
+    files: ["tools/**/*.cjs"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "commonjs",
+      globals: { ...globals.node },
+    },
+    rules: {
+      "no-var": "error",
+      "prefer-const": "error",
+      eqeqeq: ["error", "always", { null: "ignore" }],
+    },
+  },
 ];

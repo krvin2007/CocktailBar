@@ -2,7 +2,11 @@
    ADMIN-ORDERS.JS - Quản lý đơn hàng: xem, đổi trạng thái, xoá
    Đọc GET /orders, đổi trạng thái PATCH /orders/:id, xoá DELETE.
    Đổi trạng thái sang "Đã huỷ" hoặc xoá đơn chưa phục vụ sẽ tự
-   hoàn lại tồn kho các món (xử lý trong ordersService.js).
+   hoàn lại tồn kho các món + trả lại lượt dùng mã giảm giá (xử lý
+   trong ordersService.js).
+   Đơn có dùng mã: bảng hiện nhãn mã nhỏ cạnh tổng tiền, chi tiết đơn
+   tách Tạm tính / Tiết kiệm từ sale món / Giảm giá (mã) / Tổng. Đơn cũ
+   (trước khi có khuyến mãi) không có các trường mới vẫn hiển thị đúng.
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
@@ -31,6 +35,45 @@ let allOrders = [];
 let currentPage = 1;
 let activeOrder = null;
 
+/** Biểu tượng vé nhỏ đánh dấu đơn có dùng mã giảm giá */
+const TICKET_ICON = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a3 3 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a3 3 0 0 0 0-6z"/><path d="M14 5v2m0 4v2m0 4v2"/></svg>`;
+
+/** Một dòng "nhãn - giá trị" trong modal chi tiết */
+const detailRow = (label, value, cls = "") => `
+  <div class="order-detail-row ${cls}"><span>${label}</span><strong>${value}</strong></div>`;
+
+/**
+ * Phần tiền của đơn: chỉ hiện các dòng có ý nghĩa với đơn đó.
+ * Đơn cũ không có originalPrice / discount -> chỉ còn dòng Tạm tính + Tổng.
+ */
+function moneyBreakdownHtml(order) {
+  const rows = [];
+  if (order.productSavings > 0) {
+    rows.push(detailRow("Tạm tính theo giá gốc", formatMoney(order.originalSubtotal)));
+    rows.push(detailRow("Tiết kiệm từ sale món", `−${formatMoney(order.productSavings)}`, "is-saving"));
+  }
+  rows.push(detailRow("Tạm tính", formatMoney(order.subtotal)));
+  if (order.voucherCode || order.discount > 0) {
+    rows.push(detailRow(
+      `Giảm giá <span class="summary-code">${escapeHtml(order.voucherCode || "—")}</span>`,
+      `−${formatMoney(order.discount)}`,
+      "is-discount",
+    ));
+  }
+  return rows.join("");
+}
+
+/** Giá một món trong đơn: món đang sale lúc đặt thì hiện giá gốc gạch ngang */
+function itemPriceHtml(item) {
+  const lineTotal = formatMoney(item.price * item.qty);
+  const original = Number(item.originalPrice) || 0;
+  if (original <= item.price) return `<strong>${lineTotal}</strong>`;
+  return `<span class="order-item-price">
+      <span class="cart-price-old">${formatMoney(original * item.qty)}</span>
+      <strong>${lineTotal}</strong>
+    </span>`;
+}
+
 function rowHtml(o) {
   return `
     <tr data-id="${escapeHtml(o.id)}">
@@ -38,7 +81,13 @@ function rowHtml(o) {
       <td><strong>${escapeHtml(o.name)}</strong></td>
       <td><span class="text-muted text-sm">${escapeHtml(o.phone)}</span></td>
       <td><span class="text-sm">${o.serviceLabel}</span></td>
-      <td><strong>${formatMoney(o.total)}</strong></td>
+      <td>
+        <strong>${formatMoney(o.total)}</strong>
+        ${o.voucherCode ? `
+          <span class="order-voucher-tag" title="Đã áp dụng mã ${escapeHtml(o.voucherCode)}: giảm ${formatMoney(o.discount)}">
+            ${TICKET_ICON}<span>${escapeHtml(o.voucherCode)}</span>
+          </span>` : ""}
+      </td>
       <td><span class="${classNames("badge", o.statusBadge)}">${o.statusLabel}</span></td>
       <td class="text-muted text-sm">${formatDateTime(o.createdAt)}</td>
       <td class="cell-actions" style="text-align: right;">
@@ -85,7 +134,7 @@ function openDetail(order) {
   const itemsHtml = order.items.map((item) => `
     <div class="order-detail-row item-row">
       <span>${escapeHtml(item.name)} <span class="text-muted">× ${item.qty}</span></span>
-      <strong>${formatMoney(item.price * item.qty)}</strong>
+      ${itemPriceHtml(item)}
     </div>`).join("");
 
   modalBody.innerHTML = `
@@ -95,11 +144,15 @@ function openDetail(order) {
     <div class="order-detail-row"><span>Hình thức</span><strong>${order.serviceLabel}</strong></div>
     ${order.serviceDetails().map(([label, value]) => `
       <div class="order-detail-row"><span>${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("")}
+    ${order.customerId ? detailRow("Tài khoản thành viên", `<span class="member-id-chip">${escapeHtml(order.customerId)}</span>`) : ""}
     ${order.note ? `<div class="order-detail-row"><span>Ghi chú pha chế</span><span class="note-box">${escapeHtml(order.note)}</span></div>` : ""}
 
     <div class="order-detail-items mt-3">
       <p class="text-muted text-xs uppercase font-bold mb-2">Thực đơn yêu cầu:</p>
       ${itemsHtml}
+    </div>
+    <div class="order-money-breakdown mt-3">
+      ${moneyBreakdownHtml(order)}
     </div>
     <div class="order-detail-row total-row mt-3">
       <span class="font-bold">Tổng thanh toán</span>
@@ -136,7 +189,11 @@ async function handleSaveStatus() {
   const restoreButton = setButtonLoading(saveStatusBtn, "Đang lưu...");
   try {
     await updateOrderStatus(activeOrder.id, newStatus);
-    toast(`Đơn ${activeOrder.code}: "${ORDER_STATUS[newStatus]}".`, "success");
+    // Nhắc admin biết lượt dùng mã cũng được hoàn / trừ theo trạng thái
+    let voucherNote = "";
+    if (activeOrder.voucherCode && newStatus === "cancelled") voucherNote = ` Đã hoàn 1 lượt dùng mã ${activeOrder.voucherCode}.`;
+    else if (activeOrder.voucherCode && activeOrder.status === "cancelled") voucherNote = ` Đã trừ lại 1 lượt dùng mã ${activeOrder.voucherCode}.`;
+    toast(`Đơn ${activeOrder.code}: "${ORDER_STATUS[newStatus]}".${voucherNote}`, "success");
     closeModal("order-modal");
     await reloadTable();
   } catch (err) {
@@ -157,7 +214,9 @@ async function handleDelete() {
   const restoreButton = setButtonLoading(deleteBtn, "Đang xoá...");
   try {
     await deleteOrder(activeOrder.id);
-    toast(`Đã xoá đơn ${activeOrder.code}.`, "success");
+    const released = activeOrder.voucherCode && activeOrder.holdsStock
+      ? ` Đã hoàn 1 lượt dùng mã ${activeOrder.voucherCode}.` : "";
+    toast(`Đã xoá đơn ${activeOrder.code}.${released}`, "success");
     closeModal("order-modal");
     await reloadTable();
   } catch (err) {
