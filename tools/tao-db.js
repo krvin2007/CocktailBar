@@ -52,6 +52,7 @@ const db = {
   banners: plain(SEED_BANNERS),        // bảng banner(id, tenbanner, hinhbanner) - slider trang chủ
   vouchers: plain(SEED_VOUCHERS),      // mã giảm giá: công khai + mã cá nhân (khách mới, sinh nhật)
   customers: plain(SEED_CUSTOMERS),    // khách hàng thành viên (mật khẩu lưu dạng băm SHA-256)
+  emails: [],                          // thư tặng mã đã gửi về email khách (Hộp thư ưu đãi)
 };
 
 const target = path.join(ROOT, "db.json");

@@ -23,7 +23,7 @@ import {
   CATEGORY_LABELS, NEW_DRINK_DAYS, NEW_DRINK_DISCOUNT, SEED_DRINKS,
 } from "./drinksService.js";
 import { getAllOrders } from "./ordersService.js";
-import { getPublicVouchers, BIRTHDAY_DISCOUNT, WELCOME_DISCOUNT, WELCOME_VALID_DAYS } from "./vouchersService.js";
+import { getPublicVouchers, BIRTHDAY_DISCOUNT, WELCOME_DISCOUNT, WELCOME_VALID_DAYS, HOLIDAYS } from "./vouchersService.js";
 import { formatMoney } from "./utils.js";
 
 /* =========================================================
@@ -105,6 +105,8 @@ const KW = {
   voucher: ["ma giam gia", "ma giam", "ma khuyen mai", "ma uu dai", "ma sale", "voucher", "coupon", "promo code", "discount code", "code", "co ma", "ma nao", "ma gi", "nhap ma"],
   promo: ["khuyen mai", "uu dai", "giam gia", "chuong trinh", "sale", "discount", "promotion", "deal", "dang giam", "duoc giam"],
   birthday: ["sinh nhat", "birthday", "bday", "ngay sinh"],
+  holiday: ["ngay le", "dip le", "le tet", "giang sinh", "noel", "christmas", "xmas", "30 4", "1 5", "2 9", "quoc khanh", "giai phong", "thong nhat", "lao dong", "holiday"],
+  emailGift: ["gui mail", "gui email", "qua email", "ve email", "ve mail", "email ma", "mail ma", "nhan mail", "nhan email"],
   newCustomer: ["khach moi", "khach hang moi", "nguoi moi", "nguoi dung moi", "thanh vien moi", "lan dau", "don dau", "dau tien", "dang ky", "dang ki", "new customer", "first order", "sign up", "register", "thanh vien"],
   newDrink: ["mon moi", "moi ra mat", "moi nhat", "moi len", "vua ra mat", "do uong moi", "cocktail moi", "thuc uong moi", "new drink", "new drinks", "newest", "latest", "ra mat"],
   bestSeller: ["ban chay", "pho bien", "hot", "nhieu nguoi", "best seller", "bestseller", "best sellers", "noi bat", "duoc yeu thich", "yeu thich nhat", "goi nhieu", "top", "popular", "must try", "dang thu", "dac trung", "ngon nhat"],
@@ -532,6 +534,21 @@ const orderingAnswer = () => [
 
 const deliveryAnswer = () => "Website hiện nhận 2 hình thức: **Tại quầy / bàn** và **Đặt bàn trước** – chưa có giao hàng hay mang đi. Cần hỗ trợ thêm, bạn gọi hotline **" + BAR.phone + "** nhé.";
 
+const pad2 = (n) => String(n).padStart(2, "0");
+const holidayAnswer = () => [
+  "**Quà ngày lễ** cho thành viên (mỗi dịp 1 mã cá nhân, dùng 1 lần, gửi về email):",
+  ...HOLIDAYS.map((h) => `• **${h.name}** – giảm **${h.percent}%**, dùng từ ${pad2(h.start.day)}/${pad2(h.start.month)} đến ${pad2(h.end.day)}/${pad2(h.end.month)}`),
+  "Đăng nhập tài khoản thành viên trong dịp lễ là mã tự vào ví và được gửi về email của bạn.",
+].join("\n");
+
+const emailGiftAnswer = () => [
+  "Mã giảm giá cá nhân được **tự gửi về email** bạn đăng ký thành viên:",
+  `• Khách hàng mới: mã chào mừng −${WELCOME_DISCOUNT}% ngay khi tạo tài khoản`,
+  `• Sinh nhật: mã −${BIRTHDAY_DISCOUNT}% trong khoảng 7 ngày trước/sau sinh nhật`,
+  `• Ngày lễ: ${HOLIDAYS.map((h) => `${h.name} −${h.percent}%`).join(", ")}`,
+  "Bản sao thư nằm trong **Hộp thư ưu đãi** ở trang Tài khoản (account.html).",
+].join("\n");
+
 const birthdayAnswer = () => [
   `Quà sinh nhật: thành viên đã khai ngày sinh sẽ tự động nhận **mã giảm ${BIRTHDAY_DISCOUNT}%** khi đăng nhập trong khoảng **7 ngày trước đến 7 ngày sau sinh nhật** (mã cá nhân, dùng 1 lần).`,
   "Đăng ký / đăng nhập tại trang **Tài khoản** (account.html) để xem mã của bạn. Muốn tổ chức tiệc sinh nhật, bạn chọn **Đặt bàn trước** hoặc gọi hotline nhé!",
@@ -813,9 +830,10 @@ export function answerOffline(text, { drinks = [], orders = [], vouchers = [], n
   const wantsBirthday = has("birthday");
   const wantsNewCustomer = has("newCustomer");
   const mentionsDrinkWord = has("drinkWords");
-  const wantsSaleDrinks = (has("promo") || Boolean(percentFilter)) && !wantsVoucher
+  const wantsSaleDrinks = (has("promo") || Boolean(percentFilter)) && !wantsVoucher && !has("holiday") && !has("emailGift")
     && (mentionsDrinkWord || Boolean(percentFilter) || hasAny(norm, ["mon sale", "dang sale", "dang giam", "mon giam", "giam gia mon"]));
-  const wantsPromoOverview = has("promo") && !wantsVoucher && !wantsBirthday && !wantsNewCustomer && !wantsSaleDrinks;
+  const wantsPromoOverview = has("promo") && !wantsVoucher && !wantsBirthday && !wantsNewCustomer && !wantsSaleDrinks
+    && !has("holiday") && !has("emailGift");
   const wantsNewDrink = has("newDrink") && !(wantsNewCustomer && !hasAny(norm, ["mon moi", "do uong moi", "cocktail moi"]));
   const wantsBest = has("bestSeller");
   // "không cồn" gõ có dấu là rõ nghĩa; gõ không dấu thì loại các câu "không còn hàng/món..."
@@ -874,7 +892,9 @@ export function answerOffline(text, { drinks = [], orders = [], vouchers = [], n
   if (has("ageQuestion") && !parts.length) { mark("age"); parts.push(ageAnswer()); }
 
   /* ----- 5. Khuyến mãi ----- */
-  if (wantsBirthday) { mark("birthday"); parts.push(birthdayAnswer()); }
+  if (has("emailGift")) { mark("email-gift"); parts.push(emailGiftAnswer()); }
+  if (has("holiday") && !has("emailGift")) { mark("holiday"); parts.push(holidayAnswer()); }
+  if (wantsBirthday && !has("emailGift")) { mark("birthday"); parts.push(birthdayAnswer()); }
   if (wantsNewCustomer && !wantsNewDrink) { mark("new-customer"); parts.push(newCustomerAnswer(publicVouchers)); }
   if (wantsVoucher) { mark("vouchers"); parts.push(voucherAnswer(publicVouchers, percentFilter)); }
 
@@ -893,7 +913,7 @@ export function answerOffline(text, { drinks = [], orders = [], vouchers = [], n
     if (publicVouchers.length) {
       lines.push(`• Mã giảm giá: ${publicVouchers.slice(0, 6).map((v) => `**${v.code}** (−${Number(v.percent)}%)`).join(", ")} – hỏi "có mã giảm giá nào?" để xem điều kiện.`);
     }
-    lines.push(`• Thành viên mới: mã chào mừng −${WELCOME_DISCOUNT}%. Sinh nhật: mã quà tặng −${BIRTHDAY_DISCOUNT}%.`);
+    lines.push(`• Thành viên mới: mã chào mừng −${WELCOME_DISCOUNT}%. Sinh nhật: mã quà tặng −${BIRTHDAY_DISCOUNT}%. Ngày lễ: ${HOLIDAYS.map((h) => `${h.name} −${h.percent}%`).join(", ")} (mã gửi về email).`);
     lines.push("Xem đầy đủ tại trang **Khuyến mãi** (sale.html).");
     parts.push(lines.join("\n"));
   }

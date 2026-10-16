@@ -10,6 +10,11 @@
    - "birthday"     : quà sinh nhật - mã cá nhân "SNyyxxxx" phát tự động
                       khi thành viên đăng nhập trong khoảng ± 7 ngày quanh
                       sinh nhật (mỗi năm 1 mã).
+   - "holiday"      : quà ngày lễ - mã cá nhân phát khi thành viên đăng nhập
+                      trong dịp lễ (hoặc admin gửi hàng loạt), mỗi dịp mỗi năm
+                      1 mã: Giáng sinh "NOELyy..." 25%, 30/4 - 1/5 "TNyy..." 30%,
+                      Quốc khánh 2/9 "QKyy..." 20%.
+   Mã cá nhân mới được gửi về email của khách (emailService.js).
    Mức giảm chỉ được chọn trong các "loại sale" cố định DISCOUNT_TIERS.
 
    LƯU Ý VÒNG IMPORT: ordersService.js import file này (kiểm tra mã khi
@@ -33,7 +38,30 @@ export const VOUCHER_AUDIENCES = {
   all: "Mọi khách hàng",
   "new-customer": "Khách hàng mới (đơn đầu tiên)",
   birthday: "Quà sinh nhật (mã cá nhân)",
+  holiday: "Quà ngày lễ (mã cá nhân)",
 };
+
+/**
+ * Các dịp lễ có quà giảm giá. Mã dùng được trong khoảng [start, end] (tháng/ngày,
+ * hết ngày end lúc 23:59:59) - cũng là khoảng hệ thống tự phát mã khi khách đăng nhập.
+ */
+export const HOLIDAYS = [
+  {
+    key: "christmas", name: "Giáng sinh", percent: 25, prefix: "NOEL",
+    start: { month: 12, day: 20 }, end: { month: 12, day: 26 },
+    greeting: "Giáng sinh an lành và ấm áp",
+  },
+  {
+    key: "reunification", name: "Lễ 30/4 - 1/5", percent: 30, prefix: "TN",
+    start: { month: 4, day: 27 }, end: { month: 5, day: 3 },
+    greeting: "Chào mừng ngày Giải phóng miền Nam 30/4 và Quốc tế Lao động 1/5",
+  },
+  {
+    key: "national-day", name: "Quốc khánh 2/9", percent: 20, prefix: "QK",
+    start: { month: 8, day: 30 }, end: { month: 9, day: 4 },
+    greeting: "Chào mừng Quốc khánh 2/9",
+  },
+];
 
 /** % giảm của mã quà sinh nhật / mã chào mừng thành viên mới */
 export const BIRTHDAY_DISCOUNT = 25;
@@ -160,6 +188,8 @@ export class Voucher {
     active = true,
     createdAt = "",
     birthdayYear = 0,
+    holidayKey = "",
+    holidayYear = 0,
   } = {}) {
     this.id = id;
     this.code = normalizeCode(code);
@@ -182,6 +212,9 @@ export class Voucher {
     this.birthdayYear = this.audience === "birthday"
       ? Number(birthdayYear) || (fromCode ? 2000 + Number(fromCode[1]) : 0)
       : 0;
+    // Mã ngày lễ: thuộc dịp nào, năm nào (mỗi dịp mỗi năm mỗi khách chỉ 1 mã)
+    this.holidayKey = this.audience === "holiday" ? String(holidayKey || "") : "";
+    this.holidayYear = this.audience === "holiday" ? Number(holidayYear) || 0 : 0;
   }
 
   get percent() {
@@ -298,6 +331,7 @@ export class Voucher {
       active: this.active,
       createdAt: this.createdAt,
       ...(this.birthdayYear ? { birthdayYear: this.birthdayYear } : {}),
+      ...(this.holidayKey ? { holidayKey: this.holidayKey, holidayYear: this.holidayYear } : {}),
     };
   }
 
@@ -702,6 +736,96 @@ export async function ensureBirthdayVoucher(customer, now = new Date(), { force 
     active: true,
     createdAt: today.toISOString(),
     birthdayYear: year,
+  });
+  const saved = await api.post(`/${COLLECTION}`, voucher.toJSON());
+  return Voucher.from(saved);
+}
+
+/* =========================================================
+   CHƯƠNG TRÌNH TỰ ĐỘNG: QUÀ NGÀY LỄ
+   ========================================================= */
+
+/** Tìm dịp lễ theo key ("christmas" | "reunification" | "national-day") */
+export function getHoliday(key) {
+  return HOLIDAYS.find((h) => h.key === key) || null;
+}
+
+/** Khoảng áp dụng của một dịp lễ trong năm `year`: { start: 00:00 ngày đầu, end: 23:59:59 ngày cuối } */
+export function holidayWindow(holiday, year) {
+  const start = new Date(year, holiday.start.month - 1, holiday.start.day, 0, 0, 0, 0);
+  const end = endOfDay(new Date(year, holiday.end.month - 1, holiday.end.day));
+  return { start, end };
+}
+
+/** Dịp lễ đang diễn ra tại thời điểm `now` (kèm năm) - không có thì null */
+export function getActiveHoliday(now = new Date()) {
+  const today = new Date(now);
+  const year = today.getFullYear();
+  for (const holiday of HOLIDAYS) {
+    const { start, end } = holidayWindow(holiday, year);
+    if (today >= start && today <= end) return { holiday, year, start, end };
+  }
+  return null;
+}
+
+/**
+ * Lần gần nhất của một dịp lễ tính từ `now`: đang diễn ra thì lấy năm nay,
+ * đã qua thì lấy năm sau. Dùng khi admin chủ động gửi mã trước dịp lễ.
+ */
+export function nextHolidayOccurrence(holiday, now = new Date()) {
+  const today = new Date(now);
+  let year = today.getFullYear();
+  if (today > holidayWindow(holiday, year).end) year += 1;
+  return { holiday, year, ...holidayWindow(holiday, year) };
+}
+
+/**
+ * Đảm bảo thành viên có mã quà ngày lễ.
+ * - Mặc định: chỉ phát khi hôm nay nằm trong dịp lễ (khách đăng nhập trong dịp lễ).
+ * - { holidayKey } (admin gửi hàng loạt): phát cho lần gần nhất của dịp đó, kể cả
+ *   gửi trước dịp lễ - mã chỉ dùng được trong khoảng ngày lễ.
+ * - Mỗi khách mỗi dịp mỗi năm chỉ 1 mã: đã có thì trả lại mã cũ.
+ * @returns {Promise<Voucher|null>} null nếu không có dịp lễ nào đang diễn ra
+ */
+export async function ensureHolidayVoucher(customer, now = new Date(), { holidayKey = "" } = {}) {
+  if (!customer?.id) return null;
+  let occasion;
+  if (holidayKey) {
+    const holiday = getHoliday(holidayKey);
+    if (!holiday) throw new Error(`Không có dịp lễ "${holidayKey}".`);
+    occasion = nextHolidayOccurrence(holiday, now);
+  } else {
+    occasion = getActiveHoliday(now);
+  }
+  if (!occasion) return null;
+
+  const { holiday, year, start, end } = occasion;
+  const customerId = String(customer.id);
+  const all = await getAllVouchers();
+  const existing = all.find((v) => v.audience === "holiday" && v.customerId === customerId
+    && v.holidayKey === holiday.key && v.holidayYear === year);
+  if (existing) return existing;
+
+  const issuedAt = new Date(now);
+  const voucher = new Voucher({
+    id: uid("vc"),
+    code: generateVoucherCode(`${holiday.prefix}${String(year).slice(-2)}`, 4, all.map((v) => v.code)),
+    name: `Quà ${holiday.name} ${year}`,
+    description: `${holiday.greeting}! Giảm ${holiday.percent}% cho một đơn bất kỳ của ${customer.name || "bạn"}, `
+      + `dùng từ ${formatDayMonth(start)} đến hết ${formatDayMonth(end)}.`,
+    percent: holiday.percent,
+    minOrder: 0,
+    maxDiscount: 0,
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    usageLimit: 1,
+    usedCount: 0,
+    audience: "holiday",
+    customerId,
+    active: true,
+    createdAt: issuedAt.toISOString(),
+    holidayKey: holiday.key,
+    holidayYear: year,
   });
   const saved = await api.post(`/${COLLECTION}`, voucher.toJSON());
   return Voucher.from(saved);

@@ -167,9 +167,10 @@
                        placeholder="VD: 0912 345 678" autocomplete="tel" inputmode="tel">
               </div>
               <div class="form-group">
-                <label for="reg-email">Email</label>
-                <input type="email" id="reg-email" name="email" data-rule="email|max:80"
+                <label for="reg-email">Email <span class="req">*</span></label>
+                <input type="email" id="reg-email" name="email" data-rule="required|email|max:80"
                        placeholder="ban@email.com" autocomplete="email">
+                <span class="hint-text">Mã chào mừng, quà sinh nhật và quà ngày lễ sẽ được gửi về email này</span>
               </div>
               <div class="form-group full">
                 <label for="reg-birthday">Ngày sinh <span class="req">*</span></label>

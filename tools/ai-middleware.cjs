@@ -428,6 +428,8 @@ THÔNG TIN QUÁN
 - Sale theo món: quản trị viên chọn các mức 10/15/20/25/30/35/40/50% cho từng món.
 - Món mới: món lên thực đơn trong ${NEW_DRINK_DAYS} ngày gần nhất tự động giảm ${NEW_DRINK_DISCOUNT}%.
 - Khách hàng mới: đăng ký thành viên (account.html) nhận ngay mã chào mừng cá nhân giảm 15% (dùng 1 lần, hạn 30 ngày); đơn đầu tiên của số điện thoại mới còn có thể dùng mã công khai dành cho khách mới (nếu có trong danh sách bên dưới).
+- Quà ngày lễ (mã cá nhân cho thành viên, mỗi dịp 1 mã, dùng 1 lần): Giáng sinh giảm 25% (dùng 20/12 - 26/12), Lễ 30/4 - 1/5 giảm 30% (dùng 27/04 - 03/05), Quốc khánh 2/9 giảm 20% (dùng 30/08 - 04/09). Thành viên đăng nhập trong dịp lễ tự nhận mã.
+- Gửi mã về email: mã chào mừng, mã sinh nhật, mã ngày lễ được tự gửi về email thành viên đăng ký (bắt buộc khai email khi đăng ký) và lưu trong "Hộp thư ưu đãi" ở trang Tài khoản.
 - Sinh nhật: thành viên đã khai ngày sinh tự động nhận mã quà sinh nhật cá nhân giảm 25% khi đăng nhập trong khoảng 7 ngày trước đến 7 ngày sau sinh nhật (dùng 1 lần). Mã cá nhân chỉ xem được trong trang tài khoản - bạn không biết và không được đoán mã đó.
 
 THỰC ĐƠN (id | tên | danh mục | giá | ABV | rượu nền | hương vị | thành phần | tình trạng | mô tả)

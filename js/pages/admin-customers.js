@@ -16,7 +16,11 @@ import {
   getAllCustomers, deleteCustomer, filterCustomers, findBirthdayInWindow, parseBirthday,
   CUSTOMER_FILTERS, NEW_MEMBER_DAYS, BIRTHDAY_WINDOW_DAYS,
 } from "../modules/customersService.js";
-import { getAllVouchers, deleteVoucher, ensureBirthdayVoucher, BIRTHDAY_DISCOUNT } from "../modules/vouchersService.js";
+import {
+  getAllVouchers, deleteVoucher, ensureBirthdayVoucher, ensureHolidayVoucher, nextHolidayOccurrence,
+  BIRTHDAY_DISCOUNT, HOLIDAYS,
+} from "../modules/vouchersService.js";
+import { sendVoucherEmail, isRealEmailEnabled } from "../modules/emailService.js";
 import { formatDate, debounce, paginate, renderPagination, escapeHtml, getQueryParam } from "../modules/utils.js";
 import { toast, confirmDialog, openModal, closeModal, setButtonLoading, errorHtml } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
@@ -209,13 +213,78 @@ async function handleIssueBirthday(customer, button) {
       toast(`${escapeHtml(customer.name)} đã có mã sinh nhật năm ${voucher.birthdayYear}: `
         + `<strong>${escapeHtml(voucher.code)}</strong> (${voucher.statusLabel.toLowerCase()}).`, "info");
     } else {
+      const mail = await sendVoucherEmail(customer, voucher, "birthday").catch(() => ({ status: "failed" }));
       toast(`Đã phát mã <strong>${escapeHtml(voucher.code)}</strong> giảm ${voucher.percent}% cho ${escapeHtml(customer.name)}`
-        + ` - dùng đến ${formatDate(voucher.endDate)}.`, "success");
+        + ` - dùng đến ${formatDate(voucher.endDate)}. ${mailStatusText(mail.status)}`, "success");
     }
     await reloadData();
   } catch (err) {
     restore();
     toast(escapeHtml(err.message), "error");
+  }
+}
+
+/** Câu báo kết quả gửi mail cho toast */
+function mailStatusText(status) {
+  return {
+    sent: "Đã gửi email.",
+    saved: "Đã lưu vào hộp thư của khách (chưa bật gửi email thật).",
+    failed: "Gửi email lỗi - thư đã lưu vào hộp thư của khách.",
+    "no-email": "Khách chưa có email.",
+    duplicate: "Mã này đã gửi trước đó.",
+  }[status] || "";
+}
+
+/* ---------------- Gửi mã ngày lễ hàng loạt ---------------- */
+
+function fillHolidaySelect() {
+  const select = document.getElementById("holiday-select");
+  if (!select) return;
+  select.innerHTML = HOLIDAYS.map((h) => {
+    const { start, end, year } = nextHolidayOccurrence(h);
+    return `<option value="${h.key}">${escapeHtml(h.name)} ${year} · giảm ${h.percent}% · ${formatDate(start)} - ${formatDate(end)}</option>`;
+  }).join("");
+}
+
+async function handleHolidaySend(button) {
+  const key = document.getElementById("holiday-select").value;
+  const holiday = HOLIDAYS.find((h) => h.key === key);
+  if (!holiday) return;
+  const { year, start, end } = nextHolidayOccurrence(holiday);
+  const withEmail = allCustomers.filter((c) => c.email);
+  if (!withEmail.length) {
+    toast("Chưa có thành viên nào có email.", "info");
+    return;
+  }
+  const ok = await confirmDialog(
+    `Gửi mã ${holiday.name} ${year} (giảm ${holiday.percent}%, dùng ${formatDate(start)} - ${formatDate(end)}) `
+      + `về email của ${withEmail.length} thành viên? Khách đã nhận mã dịp này sẽ không bị gửi lại.`
+      + (isRealEmailEnabled() ? "" : " (Chưa bật EmailJS: thư chỉ được lưu vào Hộp thư ưu đãi của khách.)"),
+    { title: "Gửi mã ngày lễ", okText: "Gửi ngay" },
+  );
+  if (!ok) return;
+
+  const restore = setButtonLoading(button, "Đang gửi...");
+  const counts = { sent: 0, saved: 0, failed: 0, duplicate: 0 };
+  try {
+    // Gửi lần lượt (không song song) để không vượt giới hạn tần suất của EmailJS
+    for (const customer of withEmail) {
+      const voucher = await ensureHolidayVoucher(customer, new Date(), { holidayKey: key });
+      const { status } = await sendVoucherEmail(customer, voucher, "holiday").catch(() => ({ status: "failed" }));
+      if (status in counts) counts[status] += 1;
+    }
+    const parts = [
+      counts.sent && `${counts.sent} email đã gửi`,
+      counts.saved && `${counts.saved} thư lưu vào hộp thư`,
+      counts.duplicate && `${counts.duplicate} khách đã nhận trước đó`,
+      counts.failed && `${counts.failed} lỗi gửi (đã lưu hộp thư)`,
+    ].filter(Boolean);
+    toast(`${escapeHtml(holiday.name)} ${year}: ${parts.join(", ") || "không có thư mới"}.`, counts.failed ? "info" : "success");
+    await reloadData();
+  } catch (err) {
+    toast(escapeHtml(err.message), "error");
+  } finally {
+    restore();
   }
 }
 
@@ -298,6 +367,9 @@ function bindEvents() {
     if (btn.dataset.action === "vouchers") showCustomerVouchers(customer);
   });
 
+  const holidayBtn = document.getElementById("holiday-send-btn");
+  if (holidayBtn) holidayBtn.addEventListener("click", () => handleHolidaySend(holidayBtn));
+
   document.getElementById("cv-modal-close").addEventListener("click", () => closeModal("customer-vouchers-modal"));
   document.getElementById("cv-modal-ok").addEventListener("click", () => closeModal("customer-vouchers-modal"));
 }
@@ -305,6 +377,7 @@ function bindEvents() {
 // Chưa đăng nhập -> initAdminLayout chuyển hướng và trả false: dừng, không gọi API
 if (initAdminLayout("Khách Hàng Thành Viên")) {
   fillGroupSelect();
+  fillHolidaySelect();
   bindEvents();
   bodyEl.innerHTML = `<tr><td colspan="${TABLE_COLUMNS}" class="py-4 text-center text-muted">Đang tải danh sách thành viên...</td></tr>`;
   reloadData();

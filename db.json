@@ -27,7 +27,7 @@
       "stock": 25,
       "abv": 24,
       "salePercent": 0,
-      "createdAt": "2025-09-10T00:11:36.042Z"
+      "createdAt": "2025-09-11T06:22:29.570Z"
     },
     {
       "id": "d2",
@@ -56,7 +56,7 @@
       "stock": 20,
       "abv": 30,
       "salePercent": 0,
-      "createdAt": "2025-09-25T00:11:36.042Z"
+      "createdAt": "2025-09-26T06:22:29.570Z"
     },
     {
       "id": "d3",
@@ -84,7 +84,7 @@
       "stock": 18,
       "abv": 28,
       "salePercent": 0,
-      "createdAt": "2025-10-10T00:11:36.042Z"
+      "createdAt": "2025-10-11T06:22:29.570Z"
     },
     {
       "id": "d4",
@@ -113,7 +113,7 @@
       "stock": 22,
       "abv": 18,
       "salePercent": 0,
-      "createdAt": "2025-10-25T00:11:36.042Z"
+      "createdAt": "2025-10-26T06:22:29.570Z"
     },
     {
       "id": "d5",
@@ -141,7 +141,7 @@
       "stock": 26,
       "abv": 20,
       "salePercent": 15,
-      "createdAt": "2025-11-19T00:11:36.042Z"
+      "createdAt": "2025-11-20T06:22:29.570Z"
     },
     {
       "id": "d6",
@@ -171,7 +171,7 @@
       "stock": 30,
       "abv": 14,
       "salePercent": 10,
-      "createdAt": "2025-12-09T00:11:36.042Z"
+      "createdAt": "2025-12-10T06:22:29.570Z"
     },
     {
       "id": "d7",
@@ -200,7 +200,7 @@
       "stock": 20,
       "abv": 19,
       "salePercent": 0,
-      "createdAt": "2025-12-29T00:11:36.042Z"
+      "createdAt": "2025-12-30T06:22:29.570Z"
     },
     {
       "id": "d8",
@@ -229,7 +229,7 @@
       "stock": 28,
       "abv": 11,
       "salePercent": 0,
-      "createdAt": "2026-01-18T00:11:36.042Z"
+      "createdAt": "2026-01-19T06:22:29.570Z"
     },
     {
       "id": "d9",
@@ -257,7 +257,7 @@
       "stock": 16,
       "abv": 30,
       "salePercent": 0,
-      "createdAt": "2026-02-02T00:11:36.042Z"
+      "createdAt": "2026-02-03T06:22:29.570Z"
     },
     {
       "id": "d10",
@@ -283,7 +283,7 @@
       "stock": 12,
       "abv": 40,
       "salePercent": 0,
-      "createdAt": "2026-02-17T00:11:36.042Z"
+      "createdAt": "2026-02-18T06:22:29.570Z"
     },
     {
       "id": "d11",
@@ -312,7 +312,7 @@
       "stock": 20,
       "abv": 32,
       "salePercent": 0,
-      "createdAt": "2026-03-09T00:11:36.042Z"
+      "createdAt": "2026-03-10T06:22:29.570Z"
     },
     {
       "id": "d12",
@@ -341,7 +341,7 @@
       "stock": 25,
       "abv": 22,
       "salePercent": 25,
-      "createdAt": "2026-03-29T00:11:36.042Z"
+      "createdAt": "2026-03-30T06:22:29.570Z"
     },
     {
       "id": "d13",
@@ -370,7 +370,7 @@
       "stock": 22,
       "abv": 26,
       "salePercent": 0,
-      "createdAt": "2026-04-13T00:11:36.042Z"
+      "createdAt": "2026-04-14T06:22:29.570Z"
     },
     {
       "id": "d14",
@@ -399,7 +399,7 @@
       "stock": 18,
       "abv": 16,
       "salePercent": 0,
-      "createdAt": "2026-05-03T00:11:36.042Z"
+      "createdAt": "2026-05-04T06:22:29.570Z"
     },
     {
       "id": "d15",
@@ -427,7 +427,7 @@
       "stock": 20,
       "abv": 24,
       "salePercent": 0,
-      "createdAt": "2026-05-18T00:11:36.042Z"
+      "createdAt": "2026-05-19T06:22:29.570Z"
     },
     {
       "id": "d16",
@@ -456,7 +456,7 @@
       "stock": 24,
       "abv": 21,
       "salePercent": 0,
-      "createdAt": "2026-06-02T00:11:36.042Z"
+      "createdAt": "2026-06-03T06:22:29.570Z"
     },
     {
       "id": "d17",
@@ -485,7 +485,7 @@
       "stock": 22,
       "abv": 19,
       "salePercent": 30,
-      "createdAt": "2026-06-19T00:11:36.042Z"
+      "createdAt": "2026-06-20T06:22:29.570Z"
     },
     {
       "id": "d18",
@@ -514,7 +514,7 @@
       "stock": 18,
       "abv": 22,
       "salePercent": 0,
-      "createdAt": "2026-07-05T00:11:36.042Z"
+      "createdAt": "2026-07-06T06:22:29.570Z"
     },
     {
       "id": "d19",
@@ -543,7 +543,7 @@
       "stock": 20,
       "abv": 18,
       "salePercent": 0,
-      "createdAt": "2026-10-11T00:11:36.042Z"
+      "createdAt": "2026-10-12T06:22:29.570Z"
     },
     {
       "id": "d20",
@@ -572,7 +572,7 @@
       "stock": 16,
       "abv": 15,
       "salePercent": 0,
-      "createdAt": "2026-07-27T00:11:36.042Z"
+      "createdAt": "2026-07-28T06:22:29.570Z"
     },
     {
       "id": "d21",
@@ -600,7 +600,7 @@
       "stock": 15,
       "abv": 35,
       "salePercent": 0,
-      "createdAt": "2026-08-10T00:11:36.042Z"
+      "createdAt": "2026-08-11T06:22:29.570Z"
     },
     {
       "id": "d22",
@@ -626,7 +626,7 @@
       "stock": 14,
       "abv": 40,
       "salePercent": 0,
-      "createdAt": "2026-10-09T00:11:36.042Z"
+      "createdAt": "2026-10-10T06:22:29.570Z"
     },
     {
       "id": "d23",
@@ -652,7 +652,7 @@
       "stock": 10,
       "abv": 43,
       "salePercent": 0,
-      "createdAt": "2026-08-24T00:11:36.042Z"
+      "createdAt": "2026-08-25T06:22:29.570Z"
     },
     {
       "id": "d24",
@@ -678,7 +678,7 @@
       "stock": 12,
       "abv": 43,
       "salePercent": 35,
-      "createdAt": "2026-08-31T00:11:36.042Z"
+      "createdAt": "2026-09-01T06:22:29.570Z"
     },
     {
       "id": "d25",
@@ -704,7 +704,7 @@
       "stock": 12,
       "abv": 40,
       "salePercent": 0,
-      "createdAt": "2026-04-23T00:11:36.042Z"
+      "createdAt": "2026-04-24T06:22:29.570Z"
     },
     {
       "id": "d26",
@@ -730,7 +730,7 @@
       "stock": 10,
       "abv": 38,
       "salePercent": 0,
-      "createdAt": "2026-06-09T00:11:36.042Z"
+      "createdAt": "2026-06-10T06:22:29.570Z"
     },
     {
       "id": "d27",
@@ -757,7 +757,7 @@
       "stock": 15,
       "abv": 47,
       "salePercent": 0,
-      "createdAt": "2026-10-07T00:11:36.042Z"
+      "createdAt": "2026-10-08T06:22:29.570Z"
     },
     {
       "id": "d28",
@@ -783,7 +783,7 @@
       "stock": 18,
       "abv": 45,
       "salePercent": 0,
-      "createdAt": "2026-07-12T00:11:36.042Z"
+      "createdAt": "2026-07-13T06:22:29.570Z"
     },
     {
       "id": "d29",
@@ -810,7 +810,7 @@
       "stock": 16,
       "abv": 40,
       "salePercent": 0,
-      "createdAt": "2026-10-06T00:11:36.042Z"
+      "createdAt": "2026-10-07T06:22:29.570Z"
     },
     {
       "id": "d30",
@@ -838,7 +838,7 @@
       "stock": 25,
       "abv": 25,
       "salePercent": 15,
-      "createdAt": "2026-09-05T00:11:36.042Z"
+      "createdAt": "2026-09-06T06:22:29.570Z"
     }
   ],
   "orders": [
@@ -862,7 +862,7 @@
       ],
       "total": 250000,
       "status": "completed",
-      "createdAt": "2026-10-09T20:30:00.000Z"
+      "createdAt": "2026-10-10T20:30:00.000Z"
     },
     {
       "id": "o2",
@@ -883,7 +883,7 @@
       ],
       "total": 270000,
       "status": "completed",
-      "createdAt": "2026-10-10T21:30:00.000Z"
+      "createdAt": "2026-10-11T21:30:00.000Z"
     },
     {
       "id": "o3",
@@ -892,7 +892,7 @@
       "phone": "0923334455",
       "email": "",
       "serviceType": "booking",
-      "bookingTime": "2026-10-11T19:30:00.000Z",
+      "bookingTime": "2026-10-12T19:30:00.000Z",
       "guestCount": 4,
       "note": "Bàn lounge gần quầy pha chế",
       "items": [
@@ -913,7 +913,7 @@
       ],
       "total": 500000,
       "status": "completed",
-      "createdAt": "2026-10-11T19:30:00.000Z"
+      "createdAt": "2026-10-12T19:30:00.000Z"
     },
     {
       "id": "o4",
@@ -935,7 +935,7 @@
       ],
       "total": 120000,
       "status": "cancelled",
-      "createdAt": "2026-10-12T22:30:00.000Z"
+      "createdAt": "2026-10-13T22:30:00.000Z"
     },
     {
       "id": "o5",
@@ -963,7 +963,7 @@
       ],
       "total": 335000,
       "status": "completed",
-      "createdAt": "2026-10-13T21:30:00.000Z"
+      "createdAt": "2026-10-14T21:30:00.000Z"
     },
     {
       "id": "o6",
@@ -972,7 +972,7 @@
       "phone": "0956667788",
       "email": "",
       "serviceType": "booking",
-      "bookingTime": "2026-10-14T20:30:00.000Z",
+      "bookingTime": "2026-10-15T20:30:00.000Z",
       "guestCount": 6,
       "note": "Kỷ niệm sinh nhật",
       "items": [
@@ -993,7 +993,7 @@
       ],
       "total": 765000,
       "status": "preparing",
-      "createdAt": "2026-10-14T20:30:00.000Z"
+      "createdAt": "2026-10-15T20:30:00.000Z"
     },
     {
       "id": "o7",
@@ -1015,7 +1015,7 @@
       ],
       "total": 240000,
       "status": "pending",
-      "createdAt": "2026-10-15T19:30:00.000Z"
+      "createdAt": "2026-10-16T19:30:00.000Z"
     },
     {
       "id": "o8",
@@ -1036,7 +1036,7 @@
       ],
       "total": 195000,
       "status": "pending",
-      "createdAt": "2026-10-15T20:30:00.000Z"
+      "createdAt": "2026-10-16T20:30:00.000Z"
     }
   ],
   "staff": [
@@ -2160,13 +2160,13 @@
       "percent": 10,
       "minOrder": 0,
       "maxDiscount": 0,
-      "startDate": "2026-08-16T00:00:00.000Z",
-      "endDate": "2027-08-11T23:59:59.999Z",
+      "startDate": "2026-08-17T00:00:00.000Z",
+      "endDate": "2027-08-12T23:59:59.999Z",
       "usageLimit": 0,
       "usedCount": 7,
       "audience": "new-customer",
       "active": true,
-      "createdAt": "2026-08-16T09:00:00.000Z"
+      "createdAt": "2026-08-17T09:00:00.000Z"
     },
     {
       "id": "v2",
@@ -2176,13 +2176,13 @@
       "percent": 10,
       "minOrder": 200000,
       "maxDiscount": 0,
-      "startDate": "2026-09-15T00:00:00.000Z",
-      "endDate": "2027-04-13T23:59:59.999Z",
+      "startDate": "2026-09-16T00:00:00.000Z",
+      "endDate": "2027-04-14T23:59:59.999Z",
       "usageLimit": 0,
       "usedCount": 18,
       "audience": "all",
       "active": true,
-      "createdAt": "2026-09-15T10:00:00.000Z"
+      "createdAt": "2026-09-16T10:00:00.000Z"
     },
     {
       "id": "v3",
@@ -2192,13 +2192,13 @@
       "percent": 15,
       "minOrder": 400000,
       "maxDiscount": 100000,
-      "startDate": "2026-09-25T00:00:00.000Z",
-      "endDate": "2027-01-13T23:59:59.999Z",
+      "startDate": "2026-09-26T00:00:00.000Z",
+      "endDate": "2027-01-14T23:59:59.999Z",
       "usageLimit": 0,
       "usedCount": 9,
       "audience": "all",
       "active": true,
-      "createdAt": "2026-09-25T11:00:00.000Z"
+      "createdAt": "2026-09-26T11:00:00.000Z"
     },
     {
       "id": "v4",
@@ -2208,13 +2208,13 @@
       "percent": 25,
       "minOrder": 600000,
       "maxDiscount": 200000,
-      "startDate": "2026-10-05T00:00:00.000Z",
-      "endDate": "2026-12-14T23:59:59.999Z",
+      "startDate": "2026-10-06T00:00:00.000Z",
+      "endDate": "2026-12-15T23:59:59.999Z",
       "usageLimit": 50,
       "usedCount": 12,
       "audience": "all",
       "active": true,
-      "createdAt": "2026-10-05T14:00:00.000Z"
+      "createdAt": "2026-10-06T14:00:00.000Z"
     },
     {
       "id": "v5",
@@ -2224,13 +2224,13 @@
       "percent": 30,
       "minOrder": 1000000,
       "maxDiscount": 350000,
-      "startDate": "2026-09-30T00:00:00.000Z",
-      "endDate": "2026-11-29T23:59:59.999Z",
+      "startDate": "2026-10-01T00:00:00.000Z",
+      "endDate": "2026-11-30T23:59:59.999Z",
       "usageLimit": 20,
       "usedCount": 5,
       "audience": "all",
       "active": true,
-      "createdAt": "2026-09-30T15:00:00.000Z"
+      "createdAt": "2026-10-01T15:00:00.000Z"
     },
     {
       "id": "v6",
@@ -2240,13 +2240,13 @@
       "percent": 35,
       "minOrder": 1500000,
       "maxDiscount": 500000,
-      "startDate": "2026-10-10T00:00:00.000Z",
-      "endDate": "2026-11-14T23:59:59.999Z",
+      "startDate": "2026-10-11T00:00:00.000Z",
+      "endDate": "2026-11-15T23:59:59.999Z",
       "usageLimit": 10,
       "usedCount": 3,
       "audience": "all",
       "active": true,
-      "createdAt": "2026-10-10T16:00:00.000Z"
+      "createdAt": "2026-10-11T16:00:00.000Z"
     },
     {
       "id": "v7",
@@ -2256,13 +2256,13 @@
       "percent": 20,
       "minOrder": 300000,
       "maxDiscount": 150000,
-      "startDate": "2026-07-17T00:00:00.000Z",
-      "endDate": "2026-10-05T23:59:59.999Z",
+      "startDate": "2026-07-18T00:00:00.000Z",
+      "endDate": "2026-10-06T23:59:59.999Z",
       "usageLimit": 100,
       "usedCount": 41,
       "audience": "all",
       "active": true,
-      "createdAt": "2026-07-17T12:00:00.000Z"
+      "createdAt": "2026-07-18T12:00:00.000Z"
     }
   ],
   "customers": [
@@ -2270,28 +2270,29 @@
       "id": "c1",
       "name": "Nguyễn Hoàng Anh",
       "phone": "0981234567",
-      "email": "hoanganh.nguyen@gmail.com",
-      "birthday": "1998-10-15",
+      "email": "hoanganh.nguyen@example.com",
+      "birthday": "1998-10-16",
       "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
-      "createdAt": "2026-08-11T20:15:00.000Z"
+      "createdAt": "2026-08-12T20:15:00.000Z"
     },
     {
       "id": "c2",
       "name": "Trần Bảo Ngọc",
       "phone": "0382345678",
-      "email": "baongoc.tran@gmail.com",
-      "birthday": "2000-10-20",
+      "email": "baongoc.tran@example.com",
+      "birthday": "2000-10-21",
       "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
-      "createdAt": "2026-10-06T21:15:00.000Z"
+      "createdAt": "2026-10-07T21:15:00.000Z"
     },
     {
       "id": "c3",
       "name": "Lê Quang Minh",
       "phone": "0773456789",
-      "email": "",
-      "birthday": "1992-03-14",
+      "email": "quangminh.le@example.com",
+      "birthday": "1992-03-15",
       "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
-      "createdAt": "2026-06-17T22:15:00.000Z"
+      "createdAt": "2026-06-18T22:15:00.000Z"
     }
-  ]
+  ],
+  "emails": []
 }

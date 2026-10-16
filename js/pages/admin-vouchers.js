@@ -14,6 +14,7 @@ import {
   getAllVouchers, addVoucher, updateVoucher, deleteVoucher, filterVouchers, generateVoucherCode,
   describeTimeLeft, normalizeCode, Voucher, DISCOUNT_TIERS, VOUCHER_AUDIENCES, VOUCHER_STATUS,
   VOUCHER_CODE_PATTERN, BIRTHDAY_DISCOUNT, WELCOME_DISCOUNT, WELCOME_VALID_DAYS,
+  HOLIDAYS, getActiveHoliday, nextHolidayOccurrence,
 } from "../modules/vouchersService.js";
 import { getAllCustomers, toDateKey, BIRTHDAY_WINDOW_DAYS } from "../modules/customersService.js";
 import { getAllDrinks, isNewDrink, NEW_DRINK_DAYS, NEW_DRINK_DISCOUNT } from "../modules/drinksService.js";
@@ -143,6 +144,22 @@ function renderAutoPrograms() {
              ${BIRTHDAY_WINDOW_DAYS} ngày sau sinh nhật. Mỗi năm mỗi khách 1 mã.`,
       meta: `${birthdayThisYear.length} mã năm ${year} · ${inWindow} khách đang trong tuần sinh nhật`,
       link: { href: "admin-customers.html?group=birthday-soon", text: "Khách sắp sinh nhật" },
+    },
+    {
+      icon: GIFT_ICON(18),
+      percent: Math.max(...HOLIDAYS.map((h) => h.percent)),
+      title: "Quà ngày lễ",
+      desc: HOLIDAYS.map((h) => {
+        const { start, end } = nextHolidayOccurrence(h);
+        return `${h.name}: <strong>${h.prefix}${String(start.getFullYear()).slice(-2)}••••</strong> giảm ${h.percent}%
+          (${formatDate(start).slice(0, 5)} - ${formatDate(end).slice(0, 5)})`;
+      }).join("<br>") + "<br>Thành viên đăng nhập trong dịp lễ tự nhận mã + email; admin gửi hàng loạt ở trang Khách hàng.",
+      meta: (() => {
+        const active = getActiveHoliday();
+        const sent = allVouchers.filter((v) => v.audience === "holiday" && v.holidayYear === year).length;
+        return `${sent} mã ngày lễ năm ${year}${active ? ` · đang diễn ra: ${active.holiday.name}` : ""}`;
+      })(),
+      link: { href: "admin-customers.html", text: "Gửi mã ngày lễ" },
     },
   ];
 

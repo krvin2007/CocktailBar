@@ -351,7 +351,7 @@ export const SEED_CUSTOMERS = [
     id: "c1",
     name: "Nguyễn Hoàng Anh",
     phone: "0981234567",
-    email: "hoanganh.nguyen@gmail.com",
+    email: "hoanganh.nguyen@example.com", // tên miền demo: chỉ lưu hộp thư web, không gửi mail thật
     birthday: seedBirthday(0, 1998),      // sinh nhật HÔM NAY -> demo nhận mã quà sinh nhật
     passwordHash: DEMO_PASSWORD_HASH,
     createdAt: seedDaysAgo(65, 20),
@@ -360,7 +360,7 @@ export const SEED_CUSTOMERS = [
     id: "c2",
     name: "Trần Bảo Ngọc",
     phone: "0382345678",
-    email: "baongoc.tran@gmail.com",
+    email: "baongoc.tran@example.com",
     birthday: seedBirthday(5, 2000),      // còn 5 ngày tới sinh nhật (đã trong cửa sổ ± 7 ngày)
     passwordHash: DEMO_PASSWORD_HASH,
     createdAt: seedDaysAgo(9, 21),        // thành viên mới (≤ 30 ngày)
@@ -369,7 +369,7 @@ export const SEED_CUSTOMERS = [
     id: "c3",
     name: "Lê Quang Minh",
     phone: "0773456789",
-    email: "",
+    email: "quangminh.le@example.com",
     birthday: seedBirthday(150, 1992),    // sinh nhật còn xa
     passwordHash: DEMO_PASSWORD_HASH,
     createdAt: seedDaysAgo(120, 22),
@@ -399,9 +399,11 @@ function nameError(name) {
   return value.length >= 2 && value.length <= 60 ? null : "Họ tên phải từ 2 đến 60 ký tự.";
 }
 
+/** Email BẮT BUỘC: mã chào mừng / sinh nhật / ngày lễ được gửi về địa chỉ này */
 function emailError(email) {
   const value = String(email ?? "").trim();
-  return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? null : "Email không đúng định dạng.";
+  if (!value) return "Vui lòng nhập email để nhận mã giảm giá.";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? null : "Email không đúng định dạng.";
 }
 
 function passwordError(password) {

@@ -10,13 +10,15 @@
    - Sau mỗi lần đăng nhập / đăng ký / đăng xuất, phát sự kiện window
      "customerchange" để navbar và các trang vẽ lại (đổi nút "Thành
      viên", tự điền form đặt món...).
-   - Đăng nhập xong tự kiểm tra quà sinh nhật; đăng ký xong tặng mã
-     chào mừng khách mới. Lỗi phát quà KHÔNG làm hỏng việc đăng nhập.
+   - Đăng nhập xong tự kiểm tra quà sinh nhật + quà ngày lễ; đăng ký xong
+     tặng mã chào mừng khách mới. Mã MỚI được gửi về email của khách
+     (emailService.js). Lỗi phát quà / gửi mail KHÔNG làm hỏng việc đăng nhập.
    ========================================================= */
 
 import { getItem, setItem, removeItem } from "./storage.js";
 import { authenticateCustomer, registerCustomer, getCustomerById, Customer } from "./customersService.js";
-import { issueWelcomeVoucher, ensureBirthdayVoucher } from "./vouchersService.js";
+import { issueWelcomeVoucher, ensureBirthdayVoucher, ensureHolidayVoucher } from "./vouchersService.js";
+import { sendVoucherEmail } from "./emailService.js";
 
 const SESSION_KEY = "customer_session";
 const SESSION_DAYS = 30;
@@ -81,9 +83,44 @@ export async function refreshCurrentCustomer() {
   return profile;
 }
 
+/** Gửi mã về email; lỗi chỉ ghi cảnh báo (mã vẫn nằm trong ví của khách) */
+async function emailVoucher(customer, voucher, kind) {
+  if (!voucher) return null;
+  try {
+    return (await sendVoucherEmail(customer, voucher, kind)).status;
+  } catch (err) {
+    console.warn(`[customerAuth] Chưa gửi được email mã ${voucher.code}:`, err.message);
+    return null;
+  }
+}
+
+/**
+ * Phát quà theo dịp cho thành viên (gọi khi đăng nhập / mở trang Tài khoản):
+ * mã sinh nhật (± 7 ngày quanh sinh nhật) và mã ngày lễ (đang trong dịp lễ).
+ * Mã nào MỚI thì gửi email - gọi lại nhiều lần không phát trùng, không gửi trùng.
+ * @returns {Promise<{ birthdayVoucher: object|null, holidayVoucher: object|null }>}
+ */
+export async function claimOccasionGifts(customer, now = new Date()) {
+  let birthdayVoucher = null;
+  let holidayVoucher = null;
+  try {
+    birthdayVoucher = await ensureBirthdayVoucher(customer, now);
+  } catch (err) {
+    console.warn("[customerAuth] Chưa phát được mã sinh nhật:", err.message);
+  }
+  try {
+    holidayVoucher = await ensureHolidayVoucher(customer, now);
+  } catch (err) {
+    console.warn("[customerAuth] Chưa phát được mã ngày lễ:", err.message);
+  }
+  await emailVoucher(customer, birthdayVoucher, "birthday");
+  await emailVoucher(customer, holidayVoucher, "holiday");
+  return { birthdayVoucher, holidayVoucher };
+}
+
 /**
  * Đăng nhập bằng số điện thoại + mật khẩu.
- * @returns {Promise<{ success: boolean, message: string, customer?: object, birthdayVoucher?: object|null }>}
+ * @returns {Promise<{ success: boolean, message: string, customer?: object, birthdayVoucher?: object|null, holidayVoucher?: object|null }>}
  */
 export async function loginCustomer(phone, password) {
   if (!String(phone ?? "").trim() || !password) {
@@ -102,25 +139,24 @@ export async function loginCustomer(phone, password) {
 
   const profile = saveSession(customer);
 
-  // Đang trong dịp sinh nhật -> phát (hoặc lấy lại) mã quà sinh nhật
-  let birthdayVoucher = null;
-  try {
-    birthdayVoucher = await ensureBirthdayVoucher(customer);
-  } catch (err) {
-    console.warn("[customerAuth] Chưa phát được mã sinh nhật:", err.message);
-  }
+  // Đang trong dịp sinh nhật / ngày lễ -> phát (hoặc lấy lại) mã quà + gửi email
+  const { birthdayVoucher, holidayVoucher } = await claimOccasionGifts(customer);
 
   emitChange(profile);
-  const message = birthdayVoucher
-    ? `Chúc mừng sinh nhật ${customer.name}! Quán tặng bạn mã ${birthdayVoucher.code} giảm ${birthdayVoucher.percent}%.`
+  const gifts = [
+    birthdayVoucher && `Chúc mừng sinh nhật! Quán tặng bạn mã ${birthdayVoucher.code} giảm ${birthdayVoucher.percent}%.`,
+    holidayVoucher && `Quà ${holidayVoucher.name}: mã ${holidayVoucher.code} giảm ${holidayVoucher.percent}%.`,
+  ].filter(Boolean);
+  const message = gifts.length
+    ? `${gifts.join(" ")} Mã đã được gửi về email của bạn.`
     : `Chào mừng ${customer.name} quay lại Quán Bar Đêm!`;
-  return { success: true, message, customer: profile, birthdayVoucher };
+  return { success: true, message, customer: profile, birthdayVoucher, holidayVoucher };
 }
 
 /**
  * Đăng ký thành viên rồi đăng nhập luôn, tặng mã chào mừng (+ mã sinh nhật nếu đúng dịp).
  * @param {{ name, phone, email, birthday, password }} data
- * @returns {Promise<{ success: boolean, message: string, customer?: object, welcomeVoucher?: object|null, birthdayVoucher?: object|null }>}
+ * @returns {Promise<{ success: boolean, message: string, customer?: object, welcomeVoucher?: object|null, birthdayVoucher?: object|null, holidayVoucher?: object|null }>}
  */
 export async function registerAndLogin(data = {}) {
   let customer;
@@ -133,27 +169,24 @@ export async function registerAndLogin(data = {}) {
   const profile = saveSession(customer);
 
   let welcomeVoucher = null;
-  let birthdayVoucher = null;
   try {
     welcomeVoucher = await issueWelcomeVoucher(customer);
   } catch (err) {
     console.warn("[customerAuth] Chưa tặng được mã chào mừng:", err.message);
   }
-  try {
-    birthdayVoucher = await ensureBirthdayVoucher(customer);
-  } catch (err) {
-    console.warn("[customerAuth] Chưa phát được mã sinh nhật:", err.message);
-  }
+  await emailVoucher(customer, welcomeVoucher, "welcome");
+  const { birthdayVoucher, holidayVoucher } = await claimOccasionGifts(customer);
 
   emitChange(profile);
   const gifts = [
     welcomeVoucher && `mã ${welcomeVoucher.code} giảm ${welcomeVoucher.percent}% cho đơn đầu tiên`,
     birthdayVoucher && `mã sinh nhật ${birthdayVoucher.code} giảm ${birthdayVoucher.percent}%`,
+    holidayVoucher && `mã ${holidayVoucher.name} ${holidayVoucher.code} giảm ${holidayVoucher.percent}%`,
   ].filter(Boolean);
   const message = gifts.length
-    ? `Đăng ký thành công! Quà tặng của bạn: ${gifts.join(" và ")}.`
+    ? `Đăng ký thành công! Quà tặng của bạn: ${gifts.join(", ")} - đã gửi về email ${customer.email}.`
     : "Đăng ký thành viên thành công!";
-  return { success: true, message, customer: profile, welcomeVoucher, birthdayVoucher };
+  return { success: true, message, customer: profile, welcomeVoucher, birthdayVoucher, holidayVoucher };
 }
 
 /** Đăng xuất khách hàng */

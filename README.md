@@ -67,6 +67,25 @@ Muốn những câu khó được trả lời bằng Gemini:
 - Không có khoá / mất mạng / Gemini quá tải (Google báo 503) → khung chat tự dùng câu trả lời offline.
 - Có thể dùng biến môi trường thay file: `GEMINI_API_KEY=... npm start` (PowerShell: `$env:GEMINI_API_KEY="..."; npm start`).
 
+### Bật gửi mã giảm giá về email thật bằng EmailJS (không bắt buộc)
+
+Mỗi mã cá nhân (khách mới, sinh nhật, ngày lễ) **luôn** được lưu vào **"Hộp thư ưu đãi"** trong trang Tài khoản.
+Muốn gửi thêm **email thật** tới hộp thư của khách, dùng [EmailJS](https://www.emailjs.com) — thư viện JavaScript chạy
+ngay trên trình duyệt (nạp qua CDN, không cần máy chủ riêng), gói miễn phí khoảng 200 mail/tháng:
+
+1. Đăng ký emailjs.com → **Email Services** → *Add New Service* (VD Gmail) → chép **Service ID**.
+2. **Email Templates** → *Create New Template*:
+   - *To Email*: `{{to_email}}` · *Subject*: `{{subject}}`
+   - *Content*: dùng các biến `{{to_name}}`, `{{voucher_code}}`, `{{discount}}`, `{{valid_until}}`, `{{occasion}}`,
+     hoặc đơn giản là `{{message}}` (toàn bộ nội dung thư đã soạn sẵn) → chép **Template ID**.
+3. **Account → General** → chép **Public Key** (khoá công khai, được phép nằm trong mã trình duyệt; nên bật
+   giới hạn tên miền ở *Account → Security*).
+4. Dán 3 giá trị vào `js/modules/emailConfig.js`, tải lại trang.
+
+- Để trống `emailConfig.js` → chỉ lưu vào Hộp thư ưu đãi (demo vẫn đầy đủ, không cần mạng).
+- Địa chỉ dạng `@example.com` (3 tài khoản demo) **không bao giờ** được gửi thật — chỉ lưu hộp thư.
+- Mỗi mã chỉ gửi **1 lần** cho 1 khách; gửi lỗi thì thư vẫn được lưu với trạng thái "Gửi email lỗi".
+
 ### Cách 2 — đúng y các bước trong tài liệu hướng dẫn bài giảng
 
 ```bash
@@ -116,6 +135,9 @@ Phiên quản trị lưu ở `sessionStorage`, tự mất khi đóng tab.
 | `0981234567` | `123456` | **Sinh nhật hôm nay** (ngày chạy `npm run seed`) → đăng nhập là nhận mã giảm 25% |
 | `0382345678` | `123456` | Sinh nhật 5 ngày tới (đang trong tuần sinh nhật), thành viên mới |
 | `0773456789` | `123456` | Thành viên lâu năm, sinh nhật còn xa |
+
+Email của 3 tài khoản demo dùng tên miền `example.com` → thư chỉ được lưu vào Hộp thư ưu đãi, không gửi ra ngoài.
+Đăng ký tài khoản mới bằng email thật của bạn để thử nhận mail (sau khi cấu hình EmailJS).
 
 Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu tiên), `HAPPY10`, `SALE15`,
 `CUOITUAN25`, `VIP30`, `DEMNAY35`, và `HETHAN20` (đã hết hạn — để demo thông báo lỗi).
@@ -185,6 +207,13 @@ Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu ti�
   7 ngày sau sinh nhật** tự nhận mã cá nhân `SNyy****` giảm **25%** (mỗi năm 1 mã, hạn tới sinh nhật + 7 ngày,
   xử lý cả sinh nhật vắt qua năm mới và người sinh 29/02). Admin có nút **"Phát mã sinh nhật"** trong
   trang `admin-customers.html`.
+- **Quà ngày lễ** (đợt bổ sung): mã cá nhân, mỗi dịp mỗi năm 1 mã, dùng 1 lần —
+  **Giáng sinh −25%** (`NOELyy****`, dùng 20/12–26/12), **Lễ 30/4 – 1/5 −30%** (`TNyy****`, dùng 27/4–3/5),
+  **Quốc khánh 2/9 −20%** (`QKyy****`, dùng 30/8–4/9). Thành viên **đăng nhập trong dịp lễ tự nhận mã**; admin có khối
+  **"Gửi mã ngày lễ cho tất cả thành viên"** ở trang Khách hàng (gửi trước được — mã chỉ dùng được trong dịp lễ).
+- **Mã giảm giá tự gửi về email** (đợt bổ sung, `emailService.js`): mã chào mừng (ngay khi **tạo tài khoản**), mã sinh nhật,
+  mã ngày lễ được gửi về **email bắt buộc khai khi đăng ký** — gửi thật qua **EmailJS** (nếu cấu hình) và luôn lưu bản sao
+  vào **"Hộp thư ưu đãi"** trong trang Tài khoản (đánh dấu đã đọc, sao chép mã, "Dùng ngay"). Không gửi trùng.
 - **Khách hàng thành viên** (bảng `customers`): đăng ký/đăng nhập bằng SĐT ở `account.html`;
   **mật khẩu băm SHA-256** (Web Crypto), chặn trùng SĐT và **người dưới 18 tuổi** (quán bar);
   hồ sơ, đếm ngược sinh nhật, **ví mã giảm giá** (sao chép, "Dùng ngay"). Trang quản trị khách hàng:
@@ -220,7 +249,7 @@ Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu ti�
 - Thanh điều hướng thêm **Khuyến mãi** và nút **Thành viên** (hiện tên khi đã đăng nhập); sidebar quản trị
   thêm **Banner quảng cáo**, **Mã giảm giá & Sale**, **Khách hàng thành viên**; footer thêm liên kết mới.
 - Bố cục thanh menu tự co theo độ rộng màn hình (gọn 1 dòng trên laptop, menu xổ xuống trên tablet/di động).
-- `npm run seed` sinh thêm 3 bảng mới; `npm test` chạy thêm 119 phép kiểm tra mới.
+- `npm run seed` sinh thêm 4 bảng mới (`banners`, `vouchers`, `customers`, `emails`); `npm test` chạy thêm 148 phép kiểm tra mới.
 
 ---
 
@@ -234,6 +263,7 @@ Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu ti�
 | Sale: người dùng mới | `BANMOI10` (đơn đầu theo SĐT) + mã chào mừng 15% khi đăng ký | `vouchersService.js`, `account.html` |
 | Sale loại 10, 15, 25, 30, 35… | Mức sale theo món + mức giảm của mã | `SALE_TIERS`, `DISCOUNT_TIERS`, `admin-menu.html`, `admin-vouchers.html` |
 | Khách hàng tới sinh nhật nhận mã giảm giá | Tự phát mã 25% trong tuần sinh nhật + admin phát tay | `ensureBirthdayVoucher`, `customerAuth.js`, `admin-customers.html` |
+| *(bổ sung)* Mã giảm tự gửi về mail: khách mới, sinh nhật, Giáng sinh, 2/9, 30/4 – 1/5 | Gửi khi tạo tài khoản / đăng nhập đúng dịp / admin gửi hàng loạt; EmailJS + Hộp thư ưu đãi | `emailService.js`, `emailConfig.js`, `ensureHolidayVoucher`, `account.html`, `admin-customers.html` |
 | AI tích hợp | Khung chat AI (offline trước, Gemini khi cần; chỉ trả lời nội dung website) gợi ý món, thêm giỏ, giải đáp khuyến mãi | `chatWidget.js`, `aiAssistant.js`, `tools/ai-middleware.cjs` |
 
 ---
@@ -263,6 +293,7 @@ Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu ti�
 | **`/banners`** | GET | POST | PATCH | DELETE | Slider trang chủ, quản lý banner |
 | **`/vouchers`** | GET | POST | PATCH | DELETE | Mã giảm giá, áp mã khi đặt, ví mã của khách |
 | **`/customers`** | GET | POST | PATCH | DELETE | Đăng ký/đăng nhập thành viên, sinh nhật, quản lý khách hàng |
+| **`/emails`** | GET | POST | PATCH | | Thư tặng mã đã gửi về email khách → "Hộp thư ưu đãi" (đánh dấu đã đọc) |
 | `/spirits`, `/bartenders`, `/collectors` | GET | | | | Trang Hầm rượu, Master Bartenders, Nhà sưu tầm |
 
 Trường mới trên bảng cũ: `drinks.salePercent`; `orders.subtotal`, `orders.discount`, `orders.voucherCode`,
@@ -309,7 +340,9 @@ CocktailBar/
 │   │   ├── ordersService.js     Giỏ hàng + CRUD đơn + hoàn/trừ tồn kho + ÁP MÃ / HOÀN LƯỢT MÃ
 │   │   ├── bannersService.js    (MỚI) class Banner, CRUD bảng banner, kiểm tra ảnh an toàn
 │   │   ├── bannerSlider.js      (MỚI) Slider banner trang chủ
-│   │   ├── vouchersService.js   (MỚI) class Voucher, CRUD, kiểm tra mã, mã chào mừng, mã sinh nhật
+│   │   ├── vouchersService.js   (MỚI) class Voucher, CRUD, kiểm tra mã, mã chào mừng, mã sinh nhật, mã ngày lễ
+│   │   ├── emailService.js      (MỚI) Soạn & gửi thư tặng mã (EmailJS) + lưu Hộp thư ưu đãi, chống gửi trùng
+│   │   ├── emailConfig.js       (MỚI) 3 giá trị cấu hình EmailJS (để trống = chỉ lưu hộp thư)
 │   │   ├── customersService.js  (MỚI) class Customer, đăng ký, băm SHA-256, tính sinh nhật/tuổi
 │   │   ├── customerAuth.js      (MỚI) Phiên đăng nhập khách thành viên
 │   │   ├── aiAssistant.js       (MỚI) Gọi trợ lý AI máy chủ, engine trợ lý offline
@@ -325,7 +358,7 @@ CocktailBar/
     ├── tao-db.js                Sinh db.json từ dữ liệu mẫu (npm run seed)
     ├── ai-middleware.cjs        (MỚI) Middleware json-server: /ai/status, /ai/chat -> Google Gemini
     ├── kiem-tra-ton-kho.js      53 phép kiểm tra nghiệp vụ tồn kho / đơn hàng / class
-    ├── kiem-tra-khuyen-mai.js   (MỚI) 119 phép kiểm tra banner / sale / mã giảm giá / sinh nhật / AI
+    ├── kiem-tra-khuyen-mai.js   (MỚI) 148 phép kiểm tra banner / sale / mã giảm giá / sinh nhật / ngày lễ / email / AI
     ├── kiem-tra-module.js       Kiểm tra import/export giữa các module (npm run check)
     ├── tao-anh.js               Sinh hình minh hoạ SVG (npm run images)
     └── server.js                Máy chủ tĩnh thay thế (npm run web)
@@ -355,6 +388,11 @@ CocktailBar/
 - Mã chào mừng: `CHAO****`, 15%, 1 lần, hạn 30 ngày, chỉ chủ tài khoản dùng được, cho đơn đầu tiên.
 - Mã sinh nhật: tự phát khi thành viên đăng nhập / mở trang tài khoản trong **±7 ngày quanh sinh nhật**;
   `SNyy****`, 25%, 1 lần, hạn đến sinh nhật + 7 ngày (23:59); mỗi khách mỗi năm 1 mã.
+- Mã ngày lễ: Giáng sinh 25% (20/12–26/12), 30/4 – 1/5 30% (27/4–3/5), 2/9 20% (30/8–4/9); tự phát khi đăng nhập
+  trong dịp lễ hoặc admin gửi hàng loạt; mỗi khách mỗi dịp mỗi năm 1 mã; chỉ dùng trong khoảng ngày lễ.
+  Sinh nhật trùng dịp lễ → nhận cả 2 mã (mỗi đơn vẫn chỉ dùng 1 mã).
+- Email: **bắt buộc** khi đăng ký. Mỗi mã cá nhân mới → 1 thư (gửi thật qua EmailJS nếu cấu hình + lưu Hộp thư ưu đãi);
+  gọi lại nhiều lần không gửi trùng; gửi lỗi không làm mất mã (mã vẫn nằm trong ví).
 
 **Đơn hàng / tồn kho (giữ nguyên từ giai đoạn 1)**
 - Đặt hàng trừ kho; huỷ hoặc xoá đơn chưa phục vụ hoàn kho; tồn kho = 0 → tự "Hết hàng".
@@ -390,15 +428,15 @@ CocktailBar/
 ## 9. Kiểm thử & chất lượng mã
 
 ```bash
-npm test         # 53 + 119 = 172 phép kiểm tra nghiệp vụ trên API giả lập (không cần bật server)
+npm test         # 53 + 148 = 201 phép kiểm tra nghiệp vụ trên API giả lập (không cần bật server)
 npm run check    # mọi import đều khớp export (bắt lỗi khiến trình duyệt dừng nạp module)
 npm run lint     # ESLint - 0 lỗi
 ```
 
-`tools/kiem-tra-khuyen-mai.js` (119 phép) kiểm tra: CRUD banner & chặn ảnh `javascript:`; giá sale/món mới/
+`tools/kiem-tra-khuyen-mai.js` (148 phép) kiểm tra: CRUD banner & chặn ảnh `javascript:`; giá sale/món mới/
 không cộng dồn; xếp hạng bán chạy (bỏ đơn huỷ, bỏ món đã xoá) và món mới nhất; tính tiền giảm, giảm tối đa,
 mọi lý do từ chối mã; khách mới theo SĐT; đăng ký (băm mật khẩu, chặn trùng SĐT, chặn dưới 18 tuổi), mã chào
-mừng, mã cá nhân; cửa sổ sinh nhật vắt qua năm, 29/02, mỗi năm 1 mã, hết hạn; đặt hàng có mã (giỏ theo giá sale,
+mừng, mã cá nhân; cửa sổ sinh nhật vắt qua năm, 29/02, mỗi năm 1 mã, hết hạn; **mã ngày lễ** (đúng mức %, đúng khoảng ngày, mỗi dịp 1 mã, gửi trước cho năm sau, sinh nhật trùng Noel nhận cả 2 mã); **gửi email** (nội dung thư, không gửi trùng, khách không có email, tạo tài khoản là có thư chào mừng, email bắt buộc khi đăng ký); đặt hàng có mã (giỏ theo giá sale,
 mã sai không tạo đơn, hoàn/trừ lượt khi huỷ/phục hồi/xoá); trợ lý AI offline (có/không dấu, ngân sách, chỉ món
 còn hàng); **trợ lý chỉ trả lời nội dung website** (12 câu ngoài lề bị từ chối, hỏi dữ liệu khách / mật khẩu bị từ
 chối, món không có như bia/đồ ăn, wifi, giao hàng được trả lời "website chưa có", không bịa thông tin); middleware AI

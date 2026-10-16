@@ -85,6 +85,7 @@ const customers = await import(mod("customersService.js"));
 const auth = await import(mod("customerAuth.js"));
 const banners = await import(mod("bannersService.js"));
 const ai = await import(mod("aiAssistant.js"));
+const mail = await import(mod("emailService.js"));
 const aiMiddleware = createRequire(import.meta.url)("./ai-middleware.cjs");
 
 const plain = (data) => JSON.parse(JSON.stringify(data));
@@ -95,6 +96,7 @@ function resetDb() {
   fakeDb.vouchers = plain(vouchers.SEED_VOUCHERS);
   fakeDb.customers = plain(customers.SEED_CUSTOMERS);
   fakeDb.banners = plain(banners.SEED_BANNERS);
+  fakeDb.emails = [];
   fakeDb.staff = [];
   fakeDb.messages = [];
   localStorage.clear();
@@ -214,12 +216,15 @@ check("Mật khẩu KHÔNG lưu dạng thô", JSON.stringify(savedCustomer).incl
 check("Phiên đăng nhập không chứa mật khẩu băm", JSON.stringify(auth.getCurrentCustomer()).includes("passwordHash"), false);
 check("Phát sự kiện customerchange", firedEvents.includes("customerchange"), true);
 let dupPhone = null;
-try { await customers.registerCustomer({ name: "X", phone: "0911222333", birthday: "1990-01-01", password: "123456" }); } catch (err) { dupPhone = err; }
-check("Không cho đăng ký trùng SĐT", dupPhone instanceof Error, true);
+try { await customers.registerCustomer({ name: "Người Trùng Số", phone: "0911222333", email: "x@example.com", birthday: "1990-01-01", password: "123456" }); } catch (err) { dupPhone = err; }
+check("Không cho đăng ký trùng SĐT", /đã được đăng ký/.test(dupPhone?.message || ""), true);
 let underAge = null;
 const kidBirthday = new Date(NOW - 16 * 365 * DAY).toISOString().slice(0, 10);
-try { await customers.registerCustomer({ name: "Y", phone: "0911000001", birthday: kidBirthday, password: "123456" }); } catch (err) { underAge = err; }
-check("Không cho người dưới 18 tuổi đăng ký (quán bar)", underAge instanceof Error, true);
+try { await customers.registerCustomer({ name: "Khách Nhỏ Tuổi", phone: "0911000001", email: "y@example.com", birthday: kidBirthday, password: "123456" }); } catch (err) { underAge = err; }
+check("Không cho người dưới 18 tuổi đăng ký (quán bar)", /18/.test(underAge?.message || ""), true);
+let noEmail = null;
+try { await customers.registerCustomer({ name: "Không Email", phone: "0911000002", birthday: "1995-05-05", password: "123456" }); } catch (err) { noEmail = err; }
+check("Email BẮT BUỘC khi đăng ký (để gửi mã giảm giá)", /email/i.test(noEmail?.message || ""), true);
 check("Mã cá nhân: người khác không dùng được",
   (await vouchers.validateVoucher(reg.welcomeVoucher.code, { subtotal: 300000, phone: "0911222333", customerId: "c3" })).valid, false);
 check("Mã cá nhân: đúng chủ thì dùng được",
@@ -252,6 +257,69 @@ check("Mã sinh nhật dùng được trong hạn",
   (await vouchers.validateVoucher(bv1.code, { subtotal: 200000, customerId: "cb", now: inWindow })).valid, true);
 check("Mã sinh nhật hết hạn sau sinh nhật + 7 ngày",
   (await vouchers.validateVoucher(bv1.code, { subtotal: 200000, customerId: "cb", now: new Date(2026, 5, 20) })).valid, false);
+
+section("[7b] Mã ngày lễ: Giáng sinh, 30/4 - 1/5, 2/9");
+check("Mức giảm: Giáng sinh 25%, 30/4 - 1/5 30%, 2/9 20%",
+  vouchers.HOLIDAYS.map((h) => [h.key, h.percent]), [["christmas", 25], ["reunification", 30], ["national-day", 20]]);
+check("24/12 -> đang trong dịp Giáng sinh", vouchers.getActiveHoliday(new Date(2026, 11, 24, 21))?.holiday.key, "christmas");
+check("01/05 -> đang trong dịp 30/4 - 1/5", vouchers.getActiveHoliday(new Date(2026, 4, 1, 20))?.holiday.key, "reunification");
+check("03/05 23:00 vẫn trong dịp (hết ngày cuối)", vouchers.getActiveHoliday(new Date(2026, 4, 3, 23))?.holiday.key, "reunification");
+check("02/09 -> đang trong dịp Quốc khánh", vouchers.getActiveHoliday(new Date(2026, 8, 2, 19))?.holiday.key, "national-day");
+check("15/10 -> không có dịp lễ", vouchers.getActiveHoliday(new Date(2026, 9, 15)), null);
+const xmas = vouchers.holidayWindow(vouchers.getHoliday("christmas"), 2026);
+check("Mã Giáng sinh dùng từ 20/12 00:00 đến 26/12 23:59:59",
+  [xmas.start.getDate(), xmas.start.getHours(), xmas.end.getDate(), xmas.end.getHours(), xmas.end.getMinutes()], [20, 0, 26, 23, 59]);
+const holidayMember = customers.Customer.from({
+  id: "ch", name: "Khách Ngày Lễ", phone: "0966000111", email: "ngayle@example.com",
+  birthday: "1995-03-10", passwordHash: "x", createdAt: new Date(2026, 0, 1).toISOString(),
+});
+fakeDb.customers.push(plain(holidayMember.toJSON()));
+const xmasDay = new Date(2026, 11, 24, 20);
+const hv1 = await vouchers.ensureHolidayVoucher(holidayMember, xmasDay);
+check("Trong dịp Giáng sinh -> phát mã NOEL26.... giảm 25%", [/^NOEL26/.test(hv1?.code || ""), hv1?.percent, hv1?.audience], [true, 25, "holiday"]);
+const hv2 = await vouchers.ensureHolidayVoucher(holidayMember, new Date(2026, 11, 25, 22));
+check("Gọi lại trong cùng dịp -> KHÔNG phát mã thứ hai", [hv2?.code, fakeDb.vouchers.filter((v) => v.audience === "holiday").length], [hv1?.code, 1]);
+check("Ngoài dịp lễ -> không phát mã", await vouchers.ensureHolidayVoucher(holidayMember, new Date(2026, 9, 15)), null);
+check("Mã Giáng sinh dùng được ngày 25/12",
+  (await vouchers.validateVoucher(hv1.code, { subtotal: 200000, customerId: "ch", now: new Date(2026, 11, 25, 20) })).valid, true);
+check("Mã Giáng sinh hết hạn ngày 27/12",
+  (await vouchers.validateVoucher(hv1.code, { subtotal: 200000, customerId: "ch", now: new Date(2026, 11, 27, 20) })).valid, false);
+check("Mã ngày lễ là mã cá nhân - người khác không dùng được",
+  (await vouchers.validateVoucher(hv1.code, { subtotal: 200000, customerId: "c3", now: new Date(2026, 11, 25, 20) })).valid, false);
+const early = await vouchers.ensureHolidayVoucher(holidayMember, new Date(2026, 9, 16), { holidayKey: "national-day" });
+check("Admin gửi trước mã 2/9 khi dịp năm nay đã qua -> mã cho năm sau, chỉ dùng trong dịp lễ",
+  [early?.holidayYear, /^QK27/.test(early?.code || ""), new Date(early?.startDate).getMonth() + 1, new Date(early?.startDate).getDate()], [2027, true, 8, 30]);
+check("Mã gửi trước chưa dùng được khi chưa tới dịp lễ",
+  (await vouchers.validateVoucher(early.code, { subtotal: 200000, customerId: "ch", now: new Date(2026, 9, 16) })).valid, false);
+
+section("[7c] Gửi mã giảm giá về email (+ hộp thư web)");
+const sent1 = await mail.sendVoucherEmail(holidayMember, hv1, "holiday");
+check("Gửi mã ngày lễ -> lưu thư (chưa cấu hình EmailJS nên trạng thái 'saved')", sent1.status, "saved");
+check("Thư có đúng người nhận, mã và tiêu đề", [sent1.email?.to, sent1.email?.voucherCode, /NOEL26/.test(sent1.email?.subject || "")], ["ngayle@example.com", hv1.code, true]);
+check("Nội dung thư có mức giảm và hạn dùng", /25%/.test(sent1.email?.body || "") && /26\/12\/2026/.test(sent1.email?.body || ""), true);
+const sent2 = await mail.sendVoucherEmail(holidayMember, hv1, "holiday");
+check("Gửi lại cùng mã -> KHÔNG gửi trùng", [sent2.status, fakeDb.emails.filter((m) => m.customerId === "ch").length], ["duplicate", 1]);
+check("Khách không có email -> không gửi", (await mail.sendVoucherEmail({ id: "zz", name: "A", email: "" }, hv1, "holiday")).status, "no-email");
+check("Hộp thư của khách đọc được thư vừa gửi", (await mail.getCustomerEmails("ch")).length, 1);
+const regMail = await auth.registerAndLogin({
+  name: "Đỗ Thu Hà", phone: "0912345670", email: "thuha@example.com", birthday: "1999-07-07", password: "matkhau9",
+});
+const regMails = fakeDb.emails.filter((m) => m.customerId === regMail.customer?.id);
+check("Tạo tài khoản -> mã chào mừng 15% được gửi về email ngay", [regMails.length >= 1, regMails[0]?.voucherCode, regMails[0]?.kind],
+  [true, regMail.welcomeVoucher?.code, "welcome"]);
+const gifts = await auth.claimOccasionGifts(holidayMember, new Date(2026, 11, 24, 20));
+check("Đăng nhập trong dịp lễ -> claimOccasionGifts trả mã ngày lễ (không phát trùng, không gửi trùng)",
+  [gifts.holidayVoucher?.code, fakeDb.emails.filter((m) => m.customerId === "ch").length], [hv1.code, 1]);
+auth.logoutCustomer();
+const birthdayGuest = customers.Customer.from({
+  id: "cbd", name: "Sinh Nhật Mùa Noel", phone: "0966000222", email: "noel@example.com",
+  birthday: "1990-12-25", passwordHash: "x", createdAt: new Date(2025, 0, 1).toISOString(),
+});
+fakeDb.customers.push(plain(birthdayGuest.toJSON()));
+const both = await auth.claimOccasionGifts(birthdayGuest, new Date(2026, 11, 24, 20));
+check("Sinh nhật trùng Giáng sinh -> nhận CẢ mã sinh nhật lẫn mã ngày lễ, mỗi mã 1 email",
+  [Boolean(both.birthdayVoucher), Boolean(both.holidayVoucher), fakeDb.emails.filter((m) => m.customerId === "cbd").map((m) => m.kind).sort()],
+  [true, true, ["birthday", "holiday"]]);
 
 section("[8] Đặt hàng: giỏ theo giá sale + áp mã + hoàn lượt khi huỷ");
 resetDb();
@@ -322,6 +390,9 @@ check("'bìa' (menu bìa da) KHÔNG bị nhầm thành 'bia'", answer("quyển m
 check("Gợi ý đồ uống theo tâm trạng vẫn được trả lời", answer("món nào hợp để uống khi thất tình").drinkIds.length > 0, true);
 check("'mã code giảm giá' vẫn hiểu là mã giảm giá", answer("có mã code giảm giá nào không").intent, "vouchers");
 check("'không cồn' có dấu được hiểu đúng", answer("có món không cồn không").intent, "non-alcoholic");
+check("Hỏi ưu đãi Giáng sinh -> trả lời chương trình ngày lễ", answer("giáng sinh có giảm giá không").intent, "holiday");
+check("Hỏi lễ 30/4 -> có mức 30%", /30%/.test(answer("lễ 30/4 có ưu đãi gì").text), true);
+check("Hỏi mã có gửi về email không -> giải thích gửi mail", answer("mã giảm giá có gửi về email không").intent, "email-gift");
 const allOfflineText = [
   "quán ở đâu", "hotline quán", "thanh toán thế nào", "tuổi tối thiểu là bao nhiêu", "uống xong lái xe được không",
 ].map((q) => answer(q).text).join(" ");
@@ -344,6 +415,8 @@ check("Prompt KHÔNG có SĐT / tên khách hàng", prompt.includes("0981234567"
 check("Prompt KHÔNG có thông tin nhân viên", prompt.includes("matkhau-staff") || prompt.includes("Nhân Viên Bí Mật"), false);
 check("Prompt KHÔNG có mã hết hạn", prompt.includes("HETHAN20"), false);
 check("Prompt có mục PHẠM VI TRẢ LỜI (chỉ dùng dữ liệu website)", prompt.includes("PHẠM VI TRẢ LỜI"), true);
+check("Prompt Gemini ghi đúng mức giảm ngày lễ (khớp HOLIDAYS)",
+  vouchers.HOLIDAYS.every((h) => prompt.includes(`${h.name} giảm ${h.percent}%`)), true);
 check("Prompt có tên trang tư liệu (Hầm Rượu, Bartenders, Nhà Sưu Tầm)", prompt.includes("spirits.html") && prompt.includes("bartenders.html") && prompt.includes("collectors.html"), true);
 check("Prompt không nhắc hình thức 'Mang đi' / 'tiền mặt' (website không có)", /Mang đi|tiền mặt hoặc/.test(prompt), false);
 check("Schema bắt buộc trường outOfScope (máy chủ chặn cứng câu ngoài lề)", aiMiddleware.REPLY_SCHEMA.required.includes("outOfScope"), true);

@@ -172,8 +172,14 @@
 
 .program-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 20px;
+}
+
+@media (max-width: 1360px) {
+  .program-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .program-card {
@@ -2017,5 +2023,139 @@
   .coupon:hover,
   .program-card:hover {
     transform: none;
+  }
+}
+
+/* =========================================================
+   HỘP THƯ ƯU ĐÃI (thư tặng mã đã gửi về email)
+   ========================================================= */
+.inbox-panel {
+  margin-top: 24px;
+}
+
+.inbox-item {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.25);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.inbox-item summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.inbox-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.inbox-item summary:hover {
+  background: rgba(197, 152, 67, 0.06);
+}
+
+.inbox-dot {
+  flex: 0 0 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.inbox-item.is-unread .inbox-dot {
+  background: var(--amber);
+  box-shadow: 0 0 8px rgba(212, 163, 89, 0.6);
+}
+
+.inbox-subject {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbox-item.is-unread .inbox-subject {
+  color: var(--cream);
+  font-weight: 600;
+}
+
+.inbox-meta {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.inbox-body {
+  padding: 4px 16px 16px 32px;
+  border-top: 1px dashed var(--border-soft);
+}
+
+.inbox-to {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.inbox-delivery {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+}
+
+.inbox-delivery.is-sent {
+  color: #8fd19e;
+  border-color: rgba(143, 209, 158, 0.4);
+}
+
+.inbox-delivery.is-saved {
+  color: var(--amber-soft);
+  border-color: rgba(212, 163, 89, 0.4);
+}
+
+.inbox-delivery.is-failed {
+  color: #f2a097;
+  border-color: rgba(242, 160, 151, 0.4);
+}
+
+.inbox-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-main);
+  margin: 0 0 12px;
+}
+
+.inbox-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inbox-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .inbox-body {
+    padding-left: 16px;
+  }
+
+  .inbox-meta {
+    display: none;
   }
 }

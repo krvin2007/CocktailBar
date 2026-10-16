@@ -35,6 +35,19 @@
         Mật khẩu thành viên chỉ lưu dạng băm SHA-256, không hiển thị ở đây.</span>
     </p>
 
+    <!-- Gửi mã ngày lễ hàng loạt (Giáng sinh, 30/4 - 1/5, 2/9) về email mọi thành viên -->
+    <section class="holiday-send" aria-labelledby="holiday-send-title">
+      <div>
+        <h3 id="holiday-send-title">Gửi mã ngày lễ cho tất cả thành viên</h3>
+        <p class="text-muted text-sm">Mỗi thành viên nhận 1 mã cá nhân / dịp / năm, gửi về email (và lưu vào Hộp thư ưu đãi trong trang Tài khoản).
+          Thành viên đăng nhập trong dịp lễ cũng tự nhận mã. Mã chỉ dùng được trong khoảng ngày lễ.</p>
+      </div>
+      <div class="holiday-send-actions">
+        <select id="holiday-select" aria-label="Chọn dịp lễ"></select>
+        <button type="button" class="btn btn-primary" id="holiday-send-btn">Gửi mã ngày lễ</button>
+      </div>
+    </section>
+
     <div class="table-wrap">
       <div class="table-toolbar promo-toolbar">
         <div class="filters">

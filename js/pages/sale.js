@@ -25,7 +25,7 @@ import {
   getAllDrinks, getDrinkPricing, isNewDrink, NEW_DRINK_DISCOUNT, NEW_DRINK_DAYS, SALE_TIERS,
 } from "../modules/drinksService.js";
 import { drinkCardHtml } from "../modules/drinkCard.js";
-import { getPublicVouchers, VOUCHER_AUDIENCES, BIRTHDAY_DISCOUNT, WELCOME_DISCOUNT } from "../modules/vouchersService.js";
+import { getPublicVouchers, VOUCHER_AUDIENCES, BIRTHDAY_DISCOUNT, WELCOME_DISCOUNT, HOLIDAYS } from "../modules/vouchersService.js";
 import { getCurrentCustomer } from "../modules/customerAuth.js";
 import { Customer } from "../modules/customersService.js";
 import { toast, loadingHtml, errorHtml } from "../modules/ui.js";
@@ -358,6 +358,16 @@ function renderPrograms() {
       title: "Quà sinh nhật",
       desc: `Thành viên tự nhận mã giảm ${BIRTHDAY_DISCOUNT}% trong khoảng ${BIRTHDAY_WINDOW} ngày trước và sau sinh nhật.`,
       link: "Xem cách nhận",
+    },
+    {
+      href: "account.html",
+      num: "05",
+      icon: ICON_GIFT(22),
+      value: `-${Math.min(...HOLIDAYS.map((h) => h.percent))}–${Math.max(...HOLIDAYS.map((h) => h.percent))}%`,
+      title: "Quà ngày lễ",
+      desc: HOLIDAYS.map((h) => `${h.name} -${h.percent}%`).join(" · ")
+        + ". Thành viên nhận mã riêng gửi về email trong dịp lễ.",
+      link: "Đăng nhập nhận quà",
     },
   ];
 

@@ -758,3 +758,40 @@
     transform: none;
   }
 }
+
+/* ---------------- Gửi mã ngày lễ hàng loạt ---------------- */
+.holiday-send {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+}
+
+.holiday-send h3 {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  color: var(--cream);
+  margin-bottom: 4px;
+}
+
+.holiday-send p {
+  max-width: 640px;
+  line-height: 1.6;
+}
+
+.holiday-send-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.holiday-send-actions select {
+  min-width: 0;
+  max-width: 100%;
+}

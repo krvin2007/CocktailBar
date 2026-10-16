@@ -16,8 +16,10 @@
       - Thẻ hồ sơ: tên, SĐT, email, sinh nhật, tuổi, ngày tham gia,
         nhãn "Thành viên mới" (đăng ký trong 30 ngày gần nhất).
       - Khối "Sinh nhật": đếm ngược số ngày / lời chúc + mã quà. Mỗi
-        lần tải trang gọi ensureBirthdayVoucher: đang trong cửa sổ
-        ± 7 ngày mà chưa có mã của năm nay thì máy chủ phát mã mới.
+        lần tải trang gọi claimOccasionGifts: đang trong cửa sổ ± 7 ngày
+        quanh sinh nhật / đang trong dịp lễ (Giáng sinh, 30/4 - 1/5, 2/9)
+        mà chưa có mã thì phát mã mới và gửi về email.
+      - "Hộp thư ưu đãi": các thư tặng mã đã gửi về email (bản lưu).
       - "Ví mã giảm giá của tôi": mã cá nhân + mã công khai còn dùng
         được; mỗi mã có nút Sao chép và "Dùng ngay" (sang order.html
         kèm ?voucher=MÃ để trang đặt món tự điền mã).
@@ -28,10 +30,11 @@
    ========================================================= */
 
 import "../modules/navbar.js";
-import { getCurrentCustomer, loginCustomer, registerAndLogin, logoutCustomer } from "../modules/customerAuth.js";
+import { getCurrentCustomer, loginCustomer, registerAndLogin, logoutCustomer, claimOccasionGifts } from "../modules/customerAuth.js";
+import { getCustomerEmails, markEmailRead, DELIVERY_LABELS, isRealEmailEnabled } from "../modules/emailService.js";
 import { Customer, birthdayInYear } from "../modules/customersService.js";
 import {
-  getPublicVouchers, getCustomerVouchers, ensureBirthdayVoucher,
+  getPublicVouchers, getCustomerVouchers,
   VOUCHER_AUDIENCES, BIRTHDAY_DISCOUNT, WELCOME_DISCOUNT,
 } from "../modules/vouchersService.js";
 import { validateForm, setFieldError, clearFormErrors } from "../modules/validation.js";
@@ -83,8 +86,8 @@ let renderToken = 0;
 let renderedCustomerId = null;
 /** Đang đăng nhập/đăng ký/đăng xuất: bỏ qua sự kiện "customerchange" do chính trang này gây ra */
 let authBusy = false;
-/** Gộp các lần gọi ensureBirthdayVoucher cho cùng một khách -> không bao giờ tạo trùng 2 mã */
-const birthdayRequests = new Map();
+/** Gộp các lần phát quà theo dịp (sinh nhật + ngày lễ) cho cùng một khách -> không bao giờ tạo trùng mã / gửi trùng mail */
+const giftRequests = new Map();
 
 /* =========================================================
    TIỆN ÍCH NGÀY THÁNG (theo lịch địa phương, bỏ phần giờ)
@@ -507,7 +510,7 @@ async function handleRegister(e) {
     const customer = result.customer || safeCurrentCustomer();
     toast(`Đăng ký thành công! Chào mừng ${escapeHtml(shortName(customer?.name || data.name))} đến với Quán Bar Đêm.`, "success");
     renderAccount();
-    showWelcomeModal(customer || { name: data.name }, result.welcomeVoucher, result.birthdayVoucher);
+    showWelcomeModal(customer || { name: data.name, email: data.email }, result.welcomeVoucher, result.birthdayVoucher, result.holidayVoucher);
   } catch (err) {
     const message = err?.message || "Đăng ký không thành công, vui lòng thử lại.";
     showAlert(els.registerAlert, message);
@@ -519,7 +522,7 @@ async function handleRegister(e) {
 }
 
 /** Modal chúc mừng: hiển thị mã chào mừng (và mã sinh nhật nếu đăng ký đúng dịp) */
-function showWelcomeModal(customer, welcomeVoucher, birthdayVoucher) {
+function showWelcomeModal(customer, welcomeVoucher, birthdayVoucher, holidayVoucher = null) {
   const code = welcomeVoucher?.code ? String(welcomeVoucher.code) : "";
   const percent = Number(welcomeVoucher?.percent) || WELCOME_DISCOUNT;
   const safeCode = escapeHtml(code);
@@ -543,6 +546,14 @@ function showWelcomeModal(customer, welcomeVoucher, birthdayVoucher) {
     ? `<p class="welcome-bday">${ICON_GIFT(18)}<span>Thật đúng dịp sinh nhật! Ví của bạn có thêm mã
         <strong>${escapeHtml(birthdayVoucher.code)}</strong> giảm ${Number(birthdayVoucher.percent) || BIRTHDAY_DISCOUNT}%.</span></p>`
     : "";
+  const holidayBlock = holidayVoucher?.code
+    ? `<p class="welcome-bday">${ICON_GIFT(18)}<span>${escapeHtml(holidayVoucher.name)}: ví của bạn có thêm mã
+        <strong>${escapeHtml(holidayVoucher.code)}</strong> giảm ${Number(holidayVoucher.percent)}%.</span></p>`
+    : "";
+  const mailNote = code && customer?.email
+    ? `<p class="welcome-bday">${ICONS.mail(18)}<span>Mã đã được gửi về email <strong>${escapeHtml(customer.email)}</strong>
+        (xem lại trong "Hộp thư ưu đãi").</span></p>`
+    : "";
 
   els.welcomeBody.innerHTML = `
     <div class="welcome-head">
@@ -553,6 +564,8 @@ function showWelcomeModal(customer, welcomeVoucher, birthdayVoucher) {
     </div>
     ${codeBlock}
     ${birthdayBlock}
+    ${holidayBlock}
+    ${mailNote}
     <div class="welcome-actions">
       ${code ? `
         <button type="button" class="btn btn-ghost" data-copy-code="${safeCode}">${ICON_COPY(16)} <span>Sao chép mã</span></button>
@@ -583,6 +596,13 @@ function announceBirthday(customer, birthdayVoucher) {
   }
 }
 
+/** Toast quà ngày lễ (Giáng sinh, 30/4 - 1/5, 2/9) khi đăng nhập trong dịp lễ */
+function announceHoliday(holidayVoucher) {
+  if (!holidayVoucher?.code || voucherState(holidayVoucher) !== "usable") return;
+  toast(`${escapeHtml(holidayVoucher.name)}: quán tặng bạn mã <strong>${escapeHtml(holidayVoucher.code)}</strong> `
+    + `giảm ${Number(holidayVoucher.percent)}% - đã gửi về email của bạn.`, "success");
+}
+
 async function handleLogin(e) {
   e.preventDefault();
   hideAlert(els.loginAlert);
@@ -608,6 +628,7 @@ async function handleLogin(e) {
     const customer = result.customer || safeCurrentCustomer();
     toast(`Chào mừng trở lại, ${escapeHtml(shortName(customer?.name))}!`, "success");
     announceBirthday(customer, result.birthdayVoucher);
+    announceHoliday(result.holidayVoucher);
     renderAccount();
 
     // Được gửi sang từ trang khác (VD account.html?next=order.html) -> đưa khách quay lại
@@ -890,18 +911,18 @@ function renderWallet(personalResult, publicResult) {
   ].join("");
 }
 
-/** Gọi ensureBirthdayVoucher tối đa 1 lần đồng thời cho mỗi khách (chống tạo trùng mã) */
-function ensureBirthdayOnce(customer, { fresh = false } = {}) {
+/** Phát quà theo dịp (sinh nhật + ngày lễ, kèm gửi email) tối đa 1 lần đồng thời cho mỗi khách */
+function claimGiftsOnce(customer, { fresh = false } = {}) {
   const key = String(customer.id);
-  if (fresh) birthdayRequests.delete(key);
-  if (!birthdayRequests.has(key)) {
-    const request = Promise.resolve(ensureBirthdayVoucher(customer)).catch((err) => {
-      birthdayRequests.delete(key); // lỗi -> lần sau được thử lại
+  if (fresh) giftRequests.delete(key);
+  if (!giftRequests.has(key)) {
+    const request = Promise.resolve(claimOccasionGifts(customer)).catch((err) => {
+      giftRequests.delete(key); // lỗi -> lần sau được thử lại
       throw err;
     });
-    birthdayRequests.set(key, request);
+    giftRequests.set(key, request);
   }
-  return birthdayRequests.get(key);
+  return giftRequests.get(key);
 }
 
 async function loadBirthday(customer, member, token, { fresh = false } = {}) {
@@ -911,7 +932,7 @@ async function loadBirthday(customer, member, token, { fresh = false } = {}) {
   let state = "ready";
   let voucher = null;
   try {
-    voucher = await ensureBirthdayOnce(customer, { fresh });
+    voucher = (await claimGiftsOnce(customer, { fresh })).birthdayVoucher;
   } catch (err) {
     state = "error";
     console.warn("[account] Không phát/đọc được mã sinh nhật:", err);
@@ -934,6 +955,55 @@ async function loadWallet(customer, token) {
   renderWallet(personalResult, publicResult);
 }
 
+/* ---------------- Hộp thư ưu đãi (mã đã gửi về email) ---------------- */
+
+function inboxItemHtml(mail) {
+  const unread = !mail.read;
+  const deliveryClass = mail.delivery === "sent" ? "is-sent" : (mail.delivery === "failed" ? "is-failed" : "is-saved");
+  return `
+    <details class="inbox-item ${unread ? "is-unread" : ""}" data-email-id="${escapeHtml(mail.id)}">
+      <summary>
+        <span class="inbox-dot" aria-hidden="true"></span>
+        <span class="inbox-subject">${escapeHtml(mail.subject)}</span>
+        <span class="inbox-meta">${escapeHtml(formatDate(mail.createdAt))}</span>
+      </summary>
+      <div class="inbox-body">
+        <p class="inbox-to">Gửi tới: <strong>${escapeHtml(mail.to)}</strong>
+          <span class="inbox-delivery ${deliveryClass}">${escapeHtml(DELIVERY_LABELS[mail.delivery] || mail.delivery)}</span></p>
+        <pre class="inbox-text">${escapeHtml(mail.body)}</pre>
+        ${mail.voucherCode ? `
+          <div class="inbox-actions">
+            <button type="button" class="btn btn-ghost btn-sm" data-copy-code="${escapeHtml(mail.voucherCode)}">${ICON_COPY()} Sao chép mã</button>
+            <a class="btn btn-primary btn-sm" href="${orderLink(mail.voucherCode)}">Dùng ngay</a>
+          </div>` : ""}
+      </div>
+    </details>`;
+}
+
+async function loadInbox(customer, token) {
+  const body = document.getElementById("inbox-body");
+  if (!body) return;
+  body.innerHTML = loadingHtml("Đang mở hộp thư...");
+  let mails;
+  try {
+    mails = await getCustomerEmails(customer.id);
+  } catch (err) {
+    if (token === renderToken) body.innerHTML = errorHtml(`Chưa mở được hộp thư: ${err.message}`);
+    return;
+  }
+  if (token !== renderToken) return;
+  const unread = mails.filter((m) => !m.read).length;
+  const count = document.getElementById("inbox-count");
+  if (count) {
+    count.hidden = unread === 0;
+    count.textContent = `${unread} thư mới`;
+  }
+  body.innerHTML = mails.length
+    ? mails.map(inboxItemHtml).join("")
+    : `<p class="inbox-empty">Chưa có thư nào. Mã chào mừng, quà sinh nhật và quà ngày lễ (Giáng sinh, 30/4 - 1/5, 2/9) sẽ được gửi về
+        <strong>${escapeHtml(customer.email || "email của bạn")}</strong> và lưu tại đây.</p>`;
+}
+
 /**
  * Tải phần cần gọi API của trang thành viên.
  * Mã sinh nhật phải phát XONG trước khi đọc ví - để mã vừa tạo xuất hiện ngay trong ví.
@@ -942,6 +1012,8 @@ async function loadMemberExtras(customer, member, token) {
   await loadBirthday(customer, member, token);
   if (token !== renderToken) return;
   await loadWallet(customer, token);
+  if (token !== renderToken) return;
+  await loadInbox(customer, token);
 }
 
 function showMember(customer, token) {
@@ -967,6 +1039,20 @@ function showMember(customer, token) {
           <div id="wallet-body" aria-live="polite">${loadingHtml("Đang mở ví mã giảm giá...")}</div>
           <p class="wallet-note">${ICONS.info(14)} <span>Mỗi đơn áp dụng 1 mã. Mức giảm tính trên tạm tính
             (giá món đã trừ sale theo món); mã có "Giảm tối đa" sẽ không vượt quá số tiền đó.</span></p>
+        </section>
+
+        <section class="member-panel inbox-panel" id="inbox" aria-labelledby="inbox-title">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">MAILBOX</span>
+              <h3 id="inbox-title">Hộp thư ưu đãi</h3>
+            </div>
+            <span class="wallet-count" id="inbox-count" hidden></span>
+          </div>
+          <div id="inbox-body" aria-live="polite">${loadingHtml("Đang mở hộp thư...")}</div>
+          <p class="wallet-note">${ICONS.mail(14)} <span>${isRealEmailEnabled()
+            ? `Mã mới được gửi tới <strong>${escapeHtml(customer.email || "")}</strong> và lưu bản sao tại đây.`
+            : "Bản demo chưa bật gửi email thật (EmailJS) - thư được lưu tại đây để bạn xem nội dung."}</span></p>
         </section>
       </div>
     </div>`;
@@ -1020,7 +1106,7 @@ async function handleLogout() {
   } finally {
     authBusy = false;
   }
-  birthdayRequests.clear();
+  giftRequests.clear();
   toast("Bạn đã đăng xuất. Hẹn gặp lại tại Quán Bar Đêm!", "info");
   switchTab("login");
   renderAccount();
@@ -1029,6 +1115,20 @@ async function handleLogout() {
 
 /** Sự kiện dùng chung cho toàn trang (gắn 1 lần, nội dung vẽ lại vẫn nhận được) */
 function setupDelegatedEvents() {
+  // Mở một thư lần đầu -> đánh dấu đã đọc ("toggle" không nổi bọt nên bắt ở pha capture)
+  document.addEventListener("toggle", (e) => {
+    const item = e.target.closest?.(".inbox-item");
+    if (!item || !item.open || !item.classList.contains("is-unread")) return;
+    item.classList.remove("is-unread");
+    markEmailRead(item.dataset.emailId).catch(() => {});
+    const count = document.getElementById("inbox-count");
+    const left = document.querySelectorAll(".inbox-item.is-unread").length;
+    if (count) {
+      count.hidden = left === 0;
+      count.textContent = `${left} thư mới`;
+    }
+  }, true);
+
   document.addEventListener("click", (e) => {
     const copyBtn = e.target.closest("[data-copy-code]");
     if (copyBtn) {
