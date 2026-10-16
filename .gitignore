@@ -3,3 +3,6 @@ node_modules/
 Thumbs.db
 *.log
 npm-debug.log*
+
+# Khoá API Gemini của riêng máy bạn - KHÔNG đẩy lên git
+ai-key.local.json

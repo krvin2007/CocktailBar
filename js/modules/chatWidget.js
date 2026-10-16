@@ -3,8 +3,9 @@
 
    Tự khởi tạo khi được import (navbar.js import module này nên mọi
    trang khách đều có): nút tròn nổi góc phải dưới -> bấm mở khung chat.
-   - Gửi câu hỏi cho aiAssistant.js (Claude trên máy chủ, lỗi thì tự
-     chuyển sang trợ lý offline) và hiển thị nhãn nguồn trả lời.
+   - Gửi câu hỏi cho aiAssistant.js (trợ lý offline trả lời trước, câu
+     offline không hiểu mới hỏi Gemini trên máy chủ) và hiển thị nhãn
+     nguồn trả lời của từng tin.
    - Chip gợi ý nhanh, hiệu ứng "đang gõ…", thẻ món có nút "Thêm vào giỏ".
    - Lịch sử lưu sessionStorage (tối đa 30 tin, mất khi đóng tab).
    - Mọi nội dung đều qua escapeHtml trước khi chèn; chỉ sau đó mới đổi
@@ -40,7 +41,7 @@ const WELCOME_TEXT = "Chào bạn! Mình là **Trợ lý AI của Quán Bar Đê
 
 const SOURCE_LABELS = {
   checking: "Đang kết nối…",
-  online: "Claude AI",
+  online: "Gemini AI",
   offline: "Trợ lý offline",
 };
 
@@ -75,7 +76,7 @@ function loadHistory() {
       role: m.role,
       content: m.content.slice(0, 4000),
       drinkIds: Array.isArray(m.drinkIds) ? m.drinkIds.map(String).slice(0, 4) : [],
-      source: m.source === "claude" ? "claude" : "offline",
+      source: m.source === "gemini" ? "gemini" : "offline",
     }))
     .slice(-MAX_STORED);
 }
@@ -164,7 +165,7 @@ function initChatWidget() {
   let typingEl = null;
   const cardDrinks = new Map(); // id -> object món đang hiển thị trên thẻ (để thêm vào giỏ)
 
-  /* ----- Nhãn nguồn trả lời: Claude AI / Trợ lý offline ----- */
+  /* ----- Nhãn trạng thái máy chủ: Gemini AI / Trợ lý offline ----- */
   const setSource = (state) => {
     sourceEl.dataset.state = state;
     fabDot.dataset.state = state;
@@ -229,7 +230,7 @@ function initChatWidget() {
     const el = document.createElement("div");
     el.className = `bar-chat-msg bar-chat-msg--${msg.role === "user" ? "user" : "bot"}`;
     const meta = msg.role === "assistant" && msg.source
-      ? `<span class="bar-chat-meta">${msg.source === "claude" ? "Claude AI" : "Trợ lý offline"}</span>`
+      ? `<span class="bar-chat-meta">${msg.source === "gemini" ? "Gemini AI" : "Trợ lý offline"}</span>`
       : "";
     el.innerHTML = `<div class="bar-chat-bubble">${formatMessageHtml(msg.content)}</div>${meta}`;
     if (msg.role === "assistant" && Array.isArray(msg.drinkIds) && msg.drinkIds.length) {
@@ -303,7 +304,8 @@ function initChatWidget() {
       const answer = await askAssistant(prior, content);
       hideTyping();
       pushMessage({ role: "assistant", content: answer.text, drinkIds: answer.drinkIds || [], source: answer.source });
-      setSource(answer.source === "claude" ? "online" : "offline");
+      // Nhãn đầu khung chat chỉ phản ánh máy chủ AI; câu trả lời offline là bình thường (tiết kiệm token)
+      if (answer.source === "gemini") setSource("online");
     } catch (err) {
       console.error("[chat] Trợ lý gặp lỗi:", err);
       hideTyping();

@@ -1,14 +1,15 @@
 /* =========================================================
    AI-ASSISTANT.JS - Bộ não của Trợ lý AI (khung chat)
 
-   Hai tầng trả lời:
-   1. Claude AI (trực tuyến): gửi lịch sử chat lên POST /ai/chat của
-      json-server (middleware tools/ai-middleware.cjs). Máy chủ giữ khoá
-      API bí mật và tự dựng ngữ cảnh thực đơn / mã giảm giá từ db.json.
-   2. Trợ lý OFFLINE (dự phòng): khi máy chủ không có khoá API, chưa cài
-      SDK, mất mạng hay Claude từ chối, module tự trả lời bằng bộ luật +
-      chấm điểm từ khoá trên DỮ LIỆU THẬT của quán (thực đơn, giá sau sale,
-      món bán chạy, món mới, mã giảm giá công khai).
+   Hai tầng trả lời - OFFLINE TRƯỚC để tiết kiệm token:
+   1. Trợ lý OFFLINE (0 token): bộ luật + chấm điểm từ khoá trên DỮ LIỆU
+      THẬT của quán (thực đơn, giá sau sale, món bán chạy, món mới, mã giảm
+      giá công khai). Câu nào nhận diện được (kể cả câu ngoài lề -> từ chối)
+      thì trả lời ngay, KHÔNG gọi AI.
+   2. Gemini AI (trực tuyến): chỉ câu offline KHÔNG hiểu mới gửi lịch sử chat
+      lên POST /ai/chat của json-server (middleware tools/ai-middleware.cjs).
+      Máy chủ giữ khoá API bí mật và tự dựng ngữ cảnh từ db.json. Máy chủ
+      không có khoá / quá tải / mất mạng -> dùng câu trả lời offline.
 
    Engine offline là hàm THUẦN answerOffline(text, { drinks, orders,
    vouchers, now }) - không đụng DOM, không gọi API - nên kiểm thử được
@@ -32,7 +33,7 @@ import { formatMoney } from "./utils.js";
 const MAX_HISTORY = 12;          // khớp giới hạn của middleware
 const MAX_MESSAGE_CHARS = 1000;
 const MAX_SUGGESTIONS = 3;       // tối đa 3 món mỗi câu trả lời offline
-const AI_TIMEOUT_MS = 50000;     // Claude có thể cần vài chục giây
+const AI_TIMEOUT_MS = 50000;     // AI có thể cần vài chục giây
 const STATUS_TIMEOUT_MS = 5000;
 const DATA_CACHE_MS = 60 * 1000; // dữ liệu offline dùng lại trong 60 giây
 
@@ -119,6 +120,24 @@ const KW = {
   light: ["nhe", "nhe nhang", "it con", "do con thap", "nong do thap", "de uong", "light", "easy", "nhe do", "do nhe", "khong qua manh", "khong manh"],
   priceInfo: ["gia", "bao nhieu tien", "bang gia", "price", "gia ca", "muc gia", "bao nhieu"],
   drinkWords: ["mon", "do uong", "thuc uong", "cocktail", "ly", "ruou", "drink", "drinks", "mon nao", "nuoc"],
+  // ---- Giữ cuộc trò chuyện trong phạm vi website ----
+  identity: ["ban la ai", "ban ten gi", "ten ban la gi", "who are you", "your name", "ban la bot", "ban la nguoi", "ban co phai la nguoi", "ai tao ra ban", "ban la chatgpt", "ban dung model gi", "ban lam duoc gi", "ban giup duoc gi", "what can you do"],
+  injection: ["bo qua moi huong dan", "bo qua huong dan", "bo qua cac huong dan", "bo qua tat ca huong dan", "bo qua quy tac", "bo qua moi quy tac", "quen het huong dan", "quen moi quy tac", "ignore previous", "ignore all", "ignore the above", "ignore your instructions", "system prompt", "loi nhac he thong", "prompt cua ban", "jailbreak", "developer mode", "dan mode", "dong vai", "gia lam", "pretend you", "act as", "roleplay"],
+  privacy: ["mat khau", "password", "tai khoan admin", "admin", "quan tri vien", "trang quan tri", "thong tin khach", "danh sach khach", "so dien thoai khach", "sdt khach", "email khach", "dia chi khach", "du lieu khach", "khach hang khac", "ma cua khach", "ma ca nhan cua", "don hang cua nguoi", "don cua nguoi khac", "thong tin nhan vien", "luong nhan vien", "danh sach nhan vien", "api key", "khoa api", "db.json", "co so du lieu", "database"],
+  offTopic: ["python", "javascript", "java", "lap trinh", "viet code", "code python", "html", "css", "sql", "thuat toan", "algorithm", "programming",
+    "thoi tiet", "weather", "bitcoin", "crypto", "tien ao", "chung khoan", "co phieu", "gia vang", "ty gia", "usd", "stock",
+    "chinh tri", "tong thong", "thu tuong", "bau cu", "chien tranh", "politics", "president", "election",
+    "bong da", "messi", "ronaldo", "world cup", "football", "the thao", "tin tuc", "thoi su", "news",
+    "thu do", "lich su viet nam", "dia ly", "giai phuong trinh", "phuong trinh", "dao ham", "tich phan", "vat ly", "hoa hoc", "math",
+    "bai tap", "homework", "ielts", "toefl", "dich sang", "dich giup", "dich cau", "translate", "viet bai", "viet van", "bai van", "essay", "lam tho", "bai tho", "poem",
+    "ke chuyen", "chuyen cuoi", "joke", "nau an", "cach nau", "cong thuc nau", "nau pho", "recipe for", "benh", "bac si", "covid", "doctor",
+    "tu vi", "horoscope", "boi bai", "xem boi", "cung hoang dao", "phim", "movie", "game", "chatgpt", "openai", "gemini", "tinh yeu", "that tinh"],
+  // Có các từ này thì câu hỏi vẫn thuộc phạm vi quán dù lẫn từ khoá ngoài lề
+  onTopicAnchors: ["cocktail", "thuc don", "menu", "ma giam", "voucher", "dat ban", "do uong", "thuc uong", "ruou", "khuyen mai", "uu dai", "quan bar", "bartender", "uong", "mon nao", "goi y"],
+  menuBook: ["menu bia da", "quyen menu", "menu 3d", "menu lat", "lat trang", "so menu"],
+  facilities: ["wifi", "wi-fi", "dau xe", "gui xe", "bai xe", "cho de xe", "parking", "may lanh", "dieu hoa", "hut thuoc", "thuoc la", "smoking", "thu cung", "pet", "dress code", "trang phuc", "the tin dung", "quet the", "credit card", "nha ve sinh", "toilet", "tre em", "phong rieng", "karaoke"],
+  delivery: ["giao hang", "ship", "mang di", "mang ve", "takeaway", "take away", "delivery", "grab food", "shopee food", "giao tan noi"],
+  heritage: ["ham ruou", "ham ruou di san", "master bartender", "master bartenders", "huyen thoai", "nha suu tam", "suu tam", "collector", "collectors", "di san"],
   lookupWords: ["la gi", "the nao", "ra sao", "gom gi", "co gi", "mo ta", "thong tin", "gia", "bao nhieu", "con khong", "con hang", "nhu nao", "what is", "how much", "vi gi"],
 };
 
@@ -491,9 +510,9 @@ function hoursAnswer(nowMs) {
   return `Quán mở cửa **${BAR.hours}**. ${open ? "Hiện quán **đang mở cửa** – mời bạn ghé nhé!" : "Hiện quán **đang đóng cửa**, sẽ mở lại lúc **18:00**."}`;
 }
 
-const addressAnswer = () => `Địa chỉ quán: **${BAR.address}**. Gần phố đi bộ Nguyễn Huệ – bạn nên đi taxi/xe công nghệ nếu định thưởng thức đồ uống có cồn nhé.`;
+const addressAnswer = () => `Địa chỉ quán: **${BAR.address}**. Nếu định thưởng thức đồ uống có cồn, bạn nên đi taxi/xe công nghệ nhé.`;
 
-const contactAnswer = () => `Hotline của quán: **${BAR.phone}** (nhận cuộc gọi từ 16:00 đến 02:00).`;
+const contactAnswer = () => `Hotline của quán: **${BAR.phone}**. Bạn cũng có thể gửi lời nhắn ở trang **Liên hệ** (contact.html).`;
 
 const bookingAnswer = () => [
   "Cách **đặt bàn** tại quán:",
@@ -506,10 +525,12 @@ const bookingAnswer = () => [
 const orderingAnswer = () => [
   "Gọi món rất đơn giản:",
   "1. Bấm **Thêm vào giỏ** ở thẻ món (ngay trong khung chat này hoặc trang Thực đơn).",
-  "2. Mở **Đặt bàn & Gọi món** (order.html), chọn Uống tại quán / Đặt bàn trước / Mang đi.",
-  "3. Nhập mã giảm giá ở bước thanh toán – mỗi đơn dùng 1 mã.",
-  "Thanh toán bằng tiền mặt hoặc chuyển khoản **VietQR** sau khi đặt đơn.",
+  "2. Mở **Đặt bàn & Gọi món** (order.html), chọn **Tại quầy / bàn** hoặc **Đặt bàn trước**.",
+  "3. Nhập mã giảm giá trong phiếu đặt chỗ – mỗi đơn dùng 1 mã.",
+  "Đặt xong, trang sẽ hiện mã **VietQR** để bạn chuyển khoản; tra cứu đơn bằng mã đơn + số điện thoại.",
 ].join("\n");
+
+const deliveryAnswer = () => "Website hiện nhận 2 hình thức: **Tại quầy / bàn** và **Đặt bàn trước** – chưa có giao hàng hay mang đi. Cần hỗ trợ thêm, bạn gọi hotline **" + BAR.phone + "** nhé.";
 
 const birthdayAnswer = () => [
   `Quà sinh nhật: thành viên đã khai ngày sinh sẽ tự động nhận **mã giảm ${BIRTHDAY_DISCOUNT}%** khi đăng nhập trong khoảng **7 ngày trước đến 7 ngày sau sinh nhật** (mã cá nhân, dùng 1 lần).`,
@@ -548,7 +569,7 @@ function voucherAnswer(publicVouchers, percentFilter) {
 }
 
 function ageAnswer() {
-  return "Quán chỉ phục vụ đồ uống có cồn cho khách **từ 18 tuổi trở lên** và có thể kiểm tra giấy tờ tuỳ thân khi vào quán.";
+  return "Quán chỉ phục vụ đồ uống có cồn cho khách **từ 18 tuổi trở lên**. Thành viên đăng ký trên website cũng phải đủ 18 tuổi.";
 }
 
 function underageAnswer() {
@@ -556,7 +577,7 @@ function underageAnswer() {
 }
 
 function driveAnswer() {
-  return "Vì an toàn của bạn và mọi người: **tuyệt đối không lái xe sau khi uống rượu bia**. Hãy gọi taxi/xe công nghệ hoặc nhờ người không uống đưa về – quán có thể gọi xe giúp bạn.";
+  return "Vì an toàn của bạn và mọi người: **tuyệt đối không lái xe sau khi uống rượu bia**. Hãy gọi taxi/xe công nghệ hoặc nhờ người không uống đưa về .";
 }
 
 const greetingAnswer = () => [
@@ -568,8 +589,54 @@ const thanksAnswer = () => "Rất vui được giúp bạn! Chúc bạn một bu
 
 const byeAnswer = () => "Hẹn gặp lại bạn tại Quán Bar Đêm! Về nhà an toàn và đừng lái xe sau khi uống nhé.";
 
+const SCOPE_TOPICS = "thực đơn & giá, món bán chạy / món mới / món đang sale, mã giảm giá, ưu đãi thành viên & sinh nhật, giờ mở cửa, địa chỉ và cách đặt bàn";
+
+const scopeAnswer = () => [
+  "Xin lỗi, mình là trợ lý của **Quán Bar Đêm** nên chỉ hỗ trợ các nội dung có trên website của quán – " + SCOPE_TOPICS + ".",
+  "Câu hỏi này nằm ngoài phạm vi đó nên mình không trả lời được. Bạn có muốn mình gợi ý một ly cocktail không?",
+].join("\n");
+
+const privacyAnswer = () => "Xin lỗi, mình không cung cấp mật khẩu, thông tin khu quản trị hay dữ liệu của khách hàng / nhân viên. Mã giảm giá cá nhân của bạn xem tại trang **Tài khoản** (account.html) sau khi đăng nhập.";
+
+const identityAnswer = () => [
+  "Mình là **Trợ lý AI của Quán Bar Đêm** – chỉ trả lời dựa trên nội dung website của quán.",
+  "Mình hỗ trợ: " + SCOPE_TOPICS + ". Bạn muốn hỏi gì nào?",
+].join("\n");
+
+const noInfoAnswer = () => `Website của quán hiện **chưa có thông tin** về nội dung này nên mình không dám trả lời đoán. Bạn gọi hotline **${BAR.phone}** để nhân viên hỗ trợ chính xác nhé.`;
+
+const notOnMenuAnswer = (item) => `Thực đơn trên website hiện chỉ gồm **cocktail và rượu mạnh** – quán chưa có **${item}**. Bạn xem toàn bộ tại trang **Thực đơn** (menu.html), hoặc nói khẩu vị để mình gợi ý cocktail nhé!`;
+
+const menuBookAnswer = () => "Quyển **menu bìa da lật trang 3D** nằm ở trang **Thực đơn** (menu.html) – bấm vào bìa để mở, lật từng trang xem món. Muốn tìm nhanh, bạn chuyển sang chế độ **Bộ lọc & Tìm kiếm** ngay trên trang đó nhé.";
+
+const heritageAnswer = () => [
+  "Website có 3 trang tư liệu về văn hoá rượu:",
+  "• **Hầm Rượu** (spirits.html) – các chai rượu di sản và bản đồ hương vị.",
+  "• **Master Bartenders** (bartenders.html) – các huyền thoại pha chế.",
+  "• **Nhà Sưu Tầm** (collectors.html) – những nhà sưu tầm rượu lừng danh.",
+  "Bạn mở trang tương ứng để xem chi tiết nhé!",
+].join("\n");
+
+/** Đồ ăn / đồ uống KHÔNG có trong thực đơn của website (so trên văn bản giữ dấu để không nhầm "bìa" với "bia") */
+const NOT_ON_MENU = [
+  ["bia", /(?:^|[^\p{L}])(bia|beer|heineken|tiger|budweiser|sài gòn special|333)(?=$|[^\p{L}])/u],
+  ["đồ ăn", /(?:^|[^\p{L}])(đồ ăn|món ăn|thức ăn|đồ nhậu|ăn vặt|đồ ăn vặt|snack|khai vị|pizza|burger|bít tết|steak|cơm|mì ý|food)(?=$|[^\p{L}])/u],
+  ["trà sữa / sinh tố / cà phê sữa", /(?:^|[^\p{L}])(trà sữa|sinh tố|cà phê sữa|bạc xỉu|milk tea|smoothie)(?=$|[^\p{L}])/u],
+];
+const NOT_ON_MENU_PLAIN = [["đồ ăn", ["do an", "mon an", "thuc an", "do nhau", "an vat"]], ["trà sữa / sinh tố", ["tra sua", "sinh to"]]];
+
+function detectNotOnMenu(ctx) {
+  const hit = NOT_ON_MENU.find(([, re]) => re.test(ctx.lower));
+  if (hit) return hit[0];
+  if (!ctx.accented) {
+    const plain = NOT_ON_MENU_PLAIN.find(([, words]) => hasAny(ctx.norm, words));
+    if (plain) return plain[0];
+  }
+  return "";
+}
+
 const helpAnswer = () => [
-  "Mình chưa hiểu rõ ý bạn. Bạn có thể hỏi mình như:",
+  "Mình chưa tìm thấy thông tin này trên website của quán. Mình chỉ hỗ trợ " + SCOPE_TOPICS + ". Bạn có thể hỏi như:",
   "• Gợi ý cocktail ngọt nhẹ / chua thanh / có khói",
   "• Món gin dưới 130k, món rẻ nhất",
   "• Món bán chạy, món mới, món đang sale 25%",
@@ -725,9 +792,23 @@ export function answerOffline(text, { drinks = [], orders = [], vouchers = [], n
     return reply(underageAnswer(), [], "underage");
   }
 
+  const has = (key) => mentionsAny(ctx, KW[key]);
+  const named = findNamedDrinks(norm, allDrinks);
+
+  /* ----- 1b. Chỉ trả lời nội dung có trên website ----- */
+  if (has("injection")) return reply(scopeAnswer(), [], "off-topic");
+  if (has("privacy")) return reply(privacyAnswer(), [], "privacy");
+  if (has("identity")) return reply(identityAnswer(), [], "identity");
+  if (has("offTopic") && !named.strong.length && !has("onTopicAnchors")) return reply(scopeAnswer(), [], "off-topic");
+  if (has("delivery")) return reply(deliveryAnswer(), [], "delivery");
+  const notOnMenu = named.strong.length ? "" : detectNotOnMenu(ctx);
+  if (notOnMenu) return reply(notOnMenuAnswer(notOnMenu), [], "not-on-menu");
+  if (has("facilities")) return reply(noInfoAnswer(), [], "no-info");
+  if (has("heritage") && !named.strong.length) return reply(heritageAnswer(), [], "heritage");
+  if (has("menuBook")) return reply(menuBookAnswer(), [], "menu-book");
+
   /* ----- 2. Nhận diện ý định ----- */
   const percentFilter = parsePercent(norm);
-  const has = (key) => mentionsAny(ctx, KW[key]);
   const wantsVoucher = has("voucher");
   const wantsBirthday = has("birthday");
   const wantsNewCustomer = has("newCustomer");
@@ -737,7 +818,9 @@ export function answerOffline(text, { drinks = [], orders = [], vouchers = [], n
   const wantsPromoOverview = has("promo") && !wantsVoucher && !wantsBirthday && !wantsNewCustomer && !wantsSaleDrinks;
   const wantsNewDrink = has("newDrink") && !(wantsNewCustomer && !hasAny(norm, ["mon moi", "do uong moi", "cocktail moi"]));
   const wantsBest = has("bestSeller");
-  const wantsNonAlcoholic = has("nonAlcoholic") && !/khong (co )?con (hang|mon|cho|ban|ve|lai|nua|khong)/.test(norm);
+  // "không cồn" gõ có dấu là rõ nghĩa; gõ không dấu thì loại các câu "không còn hàng/món..."
+  const wantsNonAlcoholic = has("nonAlcoholic")
+    && (hasExact(ctx.lower, "cồn") || !/khong (co )?con (hang|mon|cho|ban|ve|lai|nua|khong)/.test(norm));
 
   const filters = {
     tastes: detectTastes(ctx),
@@ -759,7 +842,6 @@ export function answerOffline(text, { drinks = [], orders = [], vouchers = [], n
   const mark = (name) => { if (!intent) intent = name; };
 
   /* ----- 3. Tra cứu món theo tên ----- */
-  const named = findNamedDrinks(norm, allDrinks);
   const wantsSimilar = has("similar") && named.strong.length === 1;
   if (named.strong.length && !wantsSimilar) {
     mark("lookup");
@@ -936,7 +1018,7 @@ export function answerOffline(text, { drinks = [], orders = [], vouchers = [], n
 }
 
 /* =========================================================
-   GỌI MÁY CHỦ (CLAUDE) + DỰ PHÒNG OFFLINE
+   OFFLINE TRƯỚC + GỌI MÁY CHỦ (GEMINI) KHI CẦN
    ========================================================= */
 
 /** Ngôn ngữ giao diện hiện tại (đọc trực tiếp để module chạy được cả trong Node) */
@@ -950,7 +1032,7 @@ function currentLang() {
 
 /**
  * fetch có giới hạn thời gian. Dùng fetch trực tiếp thay vì api.js vì:
- * Claude cần tới vài chục giây (api.js chỉ chờ 6 giây) và lỗi 503 của
+ * AI cần tới vài chục giây (api.js chỉ chờ 6 giây) và lỗi 503 của
  * trợ lý không có nghĩa là toàn bộ máy chủ dữ liệu bị tắt.
  */
 async function fetchWithTimeout(url, options = {}, timeoutMs = AI_TIMEOUT_MS) {
@@ -966,7 +1048,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = AI_TIMEOUT_MS) {
 let statusPromise = null;
 
 /**
- * Hỏi máy chủ trợ lý Claude có sẵn sàng không (GET /ai/status) - chỉ gọi 1 lần / trang.
+ * Hỏi máy chủ trợ lý Gemini có sẵn sàng không (GET /ai/status) - chỉ gọi 1 lần / trang.
  * @returns {Promise<{ online: boolean, model: string }>}
  */
 export function checkAssistantStatus() {
@@ -1024,10 +1106,10 @@ function sanitizeHistory(history) {
 let serverRetryAt = 0;
 
 /**
- * Hỏi trợ lý: thử Claude trên máy chủ trước, lỗi thì tự chuyển sang engine offline.
+ * Hỏi trợ lý: engine offline trả lời trước (0 token); câu offline không hiểu mới hỏi Gemini trên máy chủ.
  * @param {Array<{role: "user"|"assistant", content: string}>} history - các tin TRƯỚC câu hỏi này
  * @param {string} userText - câu hỏi mới của khách
- * @returns {Promise<{ text: string, drinkIds: string[], source: "claude"|"offline" }>}
+ * @returns {Promise<{ text: string, drinkIds: string[], source: "gemini"|"offline" }>}
  */
 export async function askAssistant(history, userText) {
   const question = String(userText ?? "").trim().slice(0, MAX_MESSAGE_CHARS);
@@ -1035,37 +1117,34 @@ export async function askAssistant(history, userText) {
     return { text: "Bạn muốn hỏi gì về đồ uống, khuyến mãi hay đặt bàn nào?", drinkIds: [], source: "offline" };
   }
 
-  let refusedReply = "";
-  if (Date.now() >= serverRetryAt) {
-    const messages = [...sanitizeHistory(history), { role: "user", content: question }].slice(-MAX_HISTORY);
-    try {
-      const res = await fetchWithTimeout(`${API_BASE}/ai/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ messages, lang: currentLang() }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.refused) {
-          refusedReply = typeof data.reply === "string" ? data.reply : "";
-        } else if (typeof data?.reply === "string" && data.reply.trim()) {
-          const drinkIds = (Array.isArray(data.drinkIds) ? data.drinkIds : []).map(String).slice(0, 4);
-          return { text: data.reply.trim(), drinkIds, source: "claude" };
-        }
-      } else if ([404, 405, 503].includes(res.status)) {
-        // 503: chưa có khoá / SDK; 404-405: json-server chạy thiếu --middlewares
-        serverRetryAt = Date.now() + 60 * 1000;
-      }
-    } catch (err) {
-      // Máy chủ không chạy -> đợi 30 giây mới thử lại; hết giờ chờ (AbortError) thì lần sau vẫn thử
-      if (err?.name !== "AbortError") serverRetryAt = Date.now() + 30 * 1000;
-    }
-  }
-
+  // 1. Offline trước: hiểu được câu hỏi thì trả lời luôn, không tốn token AI
   const data = await loadAssistantData();
-  const answer = answerOffline(question, { ...data, now: Date.now() });
-  if (refusedReply && answer.intent === "unknown") {
-    return { text: refusedReply, drinkIds: [], source: "claude" };
+  const offline = answerOffline(question, { ...data, now: Date.now() });
+  const offlineResult = { text: offline.text, drinkIds: offline.drinkIds, source: "offline" };
+  if (offline.intent !== "unknown") return offlineResult;
+
+  // 2. Câu offline không hiểu -> hỏi Gemini qua máy chủ (nếu đang bật)
+  if (Date.now() < serverRetryAt) return offlineResult;
+  const messages = [...sanitizeHistory(history), { role: "user", content: question }].slice(-MAX_HISTORY);
+  try {
+    const res = await fetchWithTimeout(`${API_BASE}/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ messages, lang: currentLang() }),
+    });
+    if (res.ok) {
+      const body = await res.json();
+      if (typeof body?.reply === "string" && body.reply.trim()) {
+        const drinkIds = (Array.isArray(body.drinkIds) ? body.drinkIds : []).map(String).slice(0, 4);
+        return { text: body.reply.trim(), drinkIds, source: "gemini" };
+      }
+    } else if ([404, 405, 503].includes(res.status)) {
+      // 503: chưa có khoá / Gemini quá tải; 404-405: json-server chạy thiếu --middlewares
+      serverRetryAt = Date.now() + 60 * 1000;
+    }
+  } catch (err) {
+    // Máy chủ không chạy -> đợi 30 giây mới thử lại; hết giờ chờ (AbortError) thì lần sau vẫn thử
+    if (err?.name !== "AbortError") serverRetryAt = Date.now() + 30 * 1000;
   }
-  return { text: answer.text, drinkIds: answer.drinkIds, source: "offline" };
+  return offlineResult;
 }

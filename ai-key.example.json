@@ -1,0 +1,5 @@
+{
+  "_huong_dan": "Chép file này thành ai-key.local.json (đã nằm trong .gitignore) rồi dán khoá Gemini lấy tại https://aistudio.google.com/apikey",
+  "apiKey": "DAN_KHOA_GEMINI_CUA_BAN_VAO_DAY",
+  "model": "gemini-3.5-flash-lite"
+}

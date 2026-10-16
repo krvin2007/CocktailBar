@@ -64,7 +64,7 @@
   transform: rotate(-8deg) scale(0.92);
 }
 
-/* Chấm trạng thái: xanh = Claude AI, vàng = offline, xám nhấp nháy = đang kiểm tra */
+/* Chấm trạng thái: xanh = Gemini AI, vàng = offline, xám nhấp nháy = đang kiểm tra */
 .bar-chat-fab-dot {
   position: absolute;
   top: 4px;

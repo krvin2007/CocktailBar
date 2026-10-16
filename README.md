@@ -11,8 +11,8 @@ Theo đúng hướng dẫn bài giảng (Slide 4 + tài liệu *"hướng dẫn 
 dữ liệu được lưu trong **`db.json`**, **json-server** biến nó thành REST API, và
 trang web gọi API bằng **axios + async/await**.
 
-> json-server, ESLint và SDK Claude (`@anthropic-ai/sdk`) chỉ là công cụ chạy bằng Node
-> phía máy chủ (không nạp vào trình duyệt). axios nạp qua CDN như trong bài giảng; nếu
+> json-server và ESLint chỉ là công cụ chạy bằng Node phía máy chủ (không nạp vào trình duyệt).
+> Trợ lý AI gọi Google Gemini bằng `fetch` thuần (file JavaScript `tools/ai-middleware.cjs`), không cần thư viện nào thêm. axios nạp qua CDN như trong bài giảng; nếu
 > máy không có mạng để tải CDN, website tự chuyển sang `fetch()` thuần — chức năng giữ nguyên.
 
 ---
@@ -39,29 +39,33 @@ trang web gọi API bằng **axios + async/await**.
 ### Cách 1 — khuyến nghị (1 lệnh)
 
 ```bash
-npm install     # chỉ cần chạy 1 lần: json-server 0.17.4, ESLint, SDK Claude
+npm install     # chỉ cần chạy 1 lần: json-server 0.17.4, ESLint
 npm run seed    # tạo db.json mới (nên chạy đúng ngày demo - xem mục 2)
 npm start       # json-server phục vụ CẢ trang web, API lẫn trợ lý AI ở cổng 3000
 ```
 
 Mở trình duyệt: **http://localhost:3000**
 
-### Bật trợ lý AI dùng Claude (không bắt buộc)
+### Bật trợ lý AI dùng Google Gemini (không bắt buộc)
 
-Trợ lý AI **luôn chạy được** ở chế độ offline (dựa trên luật + dữ liệu thực đơn thật).
-Muốn trả lời bằng mô hình Claude của Anthropic, đặt khoá API trước khi chạy:
+Trợ lý AI **luôn chạy được** ở chế độ offline (dựa trên luật + dữ liệu thực đơn thật, **0 token**).
+Muốn những câu khó được trả lời bằng Gemini:
 
-```bash
-# macOS / Linux
-ANTHROPIC_API_KEY=sk-ant-... npm start
-# Windows PowerShell
-$env:ANTHROPIC_API_KEY="sk-ant-..."; npm start
-```
+1. Lấy khoá miễn phí tại **https://aistudio.google.com/apikey**.
+2. Chép file `ai-key.example.json` thành **`ai-key.local.json`** rồi dán khoá vào:
+   ```json
+   { "apiKey": "KHOÁ_GEMINI_CỦA_BẠN", "model": "gemini-3.5-flash-lite" }
+   ```
+   File `ai-key.local.json` đã nằm trong `.gitignore` → **không bị đẩy lên GitHub**.
+3. `npm start` lại. Nhãn đầu khung chat chuyển thành **"Gemini AI"**.
 
-- Mô hình mặc định: `claude-opus-5-5` (đổi bằng biến môi trường `CLAUDE_MODEL`).
-- Khoá API chỉ nằm ở máy chủ Node (`tools/ai-middleware.cjs`), **không bao giờ gửi xuống trình duyệt**.
-- Không có khoá / mất mạng / Claude lỗi → khung chat tự chuyển sang "Trợ lý offline",
-  nhãn trên khung chat cho biết đang dùng nguồn nào.
+- **Tiết kiệm token:** trình duyệt cho trợ lý offline trả lời trước; chỉ câu offline **không hiểu** mới gửi
+  lên Gemini. Mỗi lần gọi chỉ gửi 12 tin gần nhất (≤ 1000 ký tự/tin), câu trả lời ≤ 1024 token, tối đa 20 câu/phút/IP.
+- Model mặc định `gemini-3.5-flash-lite` (bản Lite — rẻ nhất). Đổi bằng dòng `"model"` trong file khoá
+  (VD `gemini-3.8-flash`); xem danh sách model khoá của bạn dùng được trong Google AI Studio.
+- Khoá chỉ nằm ở máy chủ Node (`tools/ai-middleware.cjs`), **không bao giờ gửi xuống trình duyệt**.
+- Không có khoá / mất mạng / Gemini quá tải (Google báo 503) → khung chat tự dùng câu trả lời offline.
+- Có thể dùng biến môi trường thay file: `GEMINI_API_KEY=... npm start` (PowerShell: `$env:GEMINI_API_KEY="..."; npm start`).
 
 ### Cách 2 — đúng y các bước trong tài liệu hướng dẫn bài giảng
 
@@ -79,7 +83,7 @@ nên khung chat dùng chế độ offline — mọi chức năng khác giữ ngu
 | Cách chạy | Kết quả kiểm thử với server thật |
 |---|---|
 | `npm start` (json-server **0.17.4**, không `--watch`, có `--fks _fk`) | ✅ khuyến nghị |
-| `npm i -g json-server` (hiện cài bản **1.0**) + `json-server --watch db.json` | ✅ chạy được (không có AI Claude) |
+| `npm i -g json-server` (hiện cài bản **1.0**) + `json-server --watch db.json` | ✅ chạy được (trợ lý AI chỉ ở chế độ offline) |
 | json-server **0.17** **kèm** `--watch` | ⚠️ **không dùng** — khi có 2 lệnh ghi liên tiếp (VD đặt hàng: trừ tồn kho rồi lưu đơn), bản 0.17 tưởng `db.json` bị sửa tay và tự khởi động lại server giữa chừng |
 | json-server **0.17** **không** có `--fks _fk` | ⚠️ **không dùng** — xem mục 10: mỗi lệnh DELETE sẽ tự xoá các đơn có trường `customerId`/`voucherId` |
 
@@ -196,11 +200,17 @@ Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu ti�
 **4. AI tích hợp — Trợ lý AI Quán Bar Đêm**
 - **Khung chat nổi** trên mọi trang khách (`chatWidget.js`): chip gợi ý nhanh, hiệu ứng "đang gõ…",
   **thẻ món gợi ý có nút "Thêm vào giỏ"**, lưu lịch sử trong phiên, xoá lịch sử, toàn màn hình trên điện thoại.
-- **Chế độ Claude** (`tools/ai-middleware.cjs`, nạp vào json-server): gọi Claude qua **SDK chính thức**
-  `@anthropic-ai/sdk`, đầu ra JSON có cấu trúc `{ reply, drinkIds }`, bật server-side fallback khi
-  bị từ chối. Ngữ cảnh dựng **phía máy chủ** từ `db.json`: thực đơn + giá sau sale + mã **công khai** còn hạn
-  — **không bao giờ** đưa khách hàng, nhân viên, chi tiết đơn hay mã cá nhân vào prompt. Có giới hạn
-  20 câu/phút/IP, kiểm tra và cắt ngắn tin nhắn, chặn vai trò lạ (chống chèn lệnh).
+- **Offline trước, Gemini khi cần** (tiết kiệm token): câu nào trợ lý offline hiểu thì trả lời ngay (0 token);
+  chỉ câu offline không hiểu mới gửi lên **Google Gemini** qua `tools/ai-middleware.cjs` (nạp vào json-server,
+  gọi REST API bằng `fetch`, khoá đọc từ `ai-key.local.json`). Đầu ra JSON có cấu trúc `{ reply, drinkIds, outOfScope }`.
+  Ngữ cảnh dựng **phía máy chủ** từ `db.json`: thực đơn + giá sau sale + mã **công khai** còn hạn + tên các trang
+  tư liệu — **không bao giờ** đưa khách hàng, nhân viên, chi tiết đơn hay mã cá nhân vào prompt. Có giới hạn
+  20 câu/phút/IP, kiểm tra và cắt ngắn tin nhắn, chặn vai trò lạ (chống chèn lệnh), tự thử lại 1 lần khi Gemini quá tải.
+- **Chỉ trả lời nội dung có trên website** (cả 2 chế độ): câu ngoài lề (kiến thức chung, lập trình, bài tập, dịch
+  thuật, thời sự, chính trị, tài chính…) bị từ chối bằng một câu cố định; hỏi dữ liệu khách/mật khẩu bị từ chối;
+  hỏi thứ website không có (wifi, chỗ đậu xe, bia, đồ ăn, giao hàng) thì nói rõ "website chưa có thông tin" và mời
+  gọi hotline — không đoán. Với Gemini còn có **chặn cứng bằng code**: AI phải đánh dấu `outOfScope`, máy chủ
+  thay câu trả lời bằng câu từ chối chuẩn nên AI không thể "lỡ" trả lời lan man.
 - **Chế độ offline** (`aiAssistant.js`, không cần mạng/khoá): hiểu tiếng Việt **có dấu và không dấu**,
   nhận diện ý định (giờ mở cửa, địa chỉ, đặt bàn, mã giảm giá thật, sinh nhật, khách mới, món mới,
   bán chạy, món đang sale theo %), gợi ý theo khẩu vị, rượu nền, độ mạnh, **ngân sách** ("dưới 120k");
@@ -210,7 +220,7 @@ Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu ti�
 - Thanh điều hướng thêm **Khuyến mãi** và nút **Thành viên** (hiện tên khi đã đăng nhập); sidebar quản trị
   thêm **Banner quảng cáo**, **Mã giảm giá & Sale**, **Khách hàng thành viên**; footer thêm liên kết mới.
 - Bố cục thanh menu tự co theo độ rộng màn hình (gọn 1 dòng trên laptop, menu xổ xuống trên tablet/di động).
-- `npm run seed` sinh thêm 3 bảng mới; `npm test` chạy thêm 91 phép kiểm tra mới.
+- `npm run seed` sinh thêm 3 bảng mới; `npm test` chạy thêm 119 phép kiểm tra mới.
 
 ---
 
@@ -224,7 +234,7 @@ Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu ti�
 | Sale: người dùng mới | `BANMOI10` (đơn đầu theo SĐT) + mã chào mừng 15% khi đăng ký | `vouchersService.js`, `account.html` |
 | Sale loại 10, 15, 25, 30, 35… | Mức sale theo món + mức giảm của mã | `SALE_TIERS`, `DISCOUNT_TIERS`, `admin-menu.html`, `admin-vouchers.html` |
 | Khách hàng tới sinh nhật nhận mã giảm giá | Tự phát mã 25% trong tuần sinh nhật + admin phát tay | `ensureBirthdayVoucher`, `customerAuth.js`, `admin-customers.html` |
-| AI tích hợp | Khung chat AI (Claude hoặc offline) gợi ý món, thêm giỏ, giải đáp khuyến mãi | `chatWidget.js`, `aiAssistant.js`, `tools/ai-middleware.cjs` |
+| AI tích hợp | Khung chat AI (offline trước, Gemini khi cần; chỉ trả lời nội dung website) gợi ý món, thêm giỏ, giải đáp khuyến mãi | `chatWidget.js`, `aiAssistant.js`, `tools/ai-middleware.cjs` |
 
 ---
 
@@ -236,9 +246,10 @@ Mã giảm giá công khai có sẵn: `BANMOI10` (khách mới, đơn đầu ti�
                                                                     │
                                                                     └──► localStorage (bản sao đệm)
 
- Khung chat AI ──► aiAssistant.js ──► POST /ai/chat ──► tools/ai-middleware.cjs ──► Claude API (SDK)
-                        │                (json-server --middlewares)   │
-                        └──► trợ lý offline (khi không có AI)          └──► đọc db.json (chỉ dữ liệu công khai)
+ Khung chat AI ──► aiAssistant.js ──► trợ lý offline (trả lời trước, 0 token)
+                        │
+                        └─ câu offline không hiểu ──► POST /ai/chat ──► tools/ai-middleware.cjs ──► Google Gemini (REST)
+                                                     (json-server --middlewares)   └──► đọc db.json (chỉ dữ liệu công khai)
 ```
 
 **json-server (`db.json`)** — dữ liệu chung của quán:
@@ -312,9 +323,9 @@ CocktailBar/
 ├── img/                         Ảnh đồ uống, chai rượu, không gian quán, chân dung minh hoạ
 └── tools/
     ├── tao-db.js                Sinh db.json từ dữ liệu mẫu (npm run seed)
-    ├── ai-middleware.cjs        (MỚI) Middleware json-server: /ai/status, /ai/chat -> Claude
+    ├── ai-middleware.cjs        (MỚI) Middleware json-server: /ai/status, /ai/chat -> Google Gemini
     ├── kiem-tra-ton-kho.js      53 phép kiểm tra nghiệp vụ tồn kho / đơn hàng / class
-    ├── kiem-tra-khuyen-mai.js   (MỚI) 91 phép kiểm tra banner / sale / mã giảm giá / sinh nhật / AI
+    ├── kiem-tra-khuyen-mai.js   (MỚI) 119 phép kiểm tra banner / sale / mã giảm giá / sinh nhật / AI
     ├── kiem-tra-module.js       Kiểm tra import/export giữa các module (npm run check)
     ├── tao-anh.js               Sinh hình minh hoạ SVG (npm run images)
     └── server.js                Máy chủ tĩnh thay thế (npm run web)
@@ -379,17 +390,19 @@ CocktailBar/
 ## 9. Kiểm thử & chất lượng mã
 
 ```bash
-npm test         # 53 + 91 = 144 phép kiểm tra nghiệp vụ trên API giả lập (không cần bật server)
+npm test         # 53 + 119 = 172 phép kiểm tra nghiệp vụ trên API giả lập (không cần bật server)
 npm run check    # mọi import đều khớp export (bắt lỗi khiến trình duyệt dừng nạp module)
 npm run lint     # ESLint - 0 lỗi
 ```
 
-`tools/kiem-tra-khuyen-mai.js` (91 phép) kiểm tra: CRUD banner & chặn ảnh `javascript:`; giá sale/món mới/
+`tools/kiem-tra-khuyen-mai.js` (119 phép) kiểm tra: CRUD banner & chặn ảnh `javascript:`; giá sale/món mới/
 không cộng dồn; xếp hạng bán chạy (bỏ đơn huỷ, bỏ món đã xoá) và món mới nhất; tính tiền giảm, giảm tối đa,
 mọi lý do từ chối mã; khách mới theo SĐT; đăng ký (băm mật khẩu, chặn trùng SĐT, chặn dưới 18 tuổi), mã chào
 mừng, mã cá nhân; cửa sổ sinh nhật vắt qua năm, 29/02, mỗi năm 1 mã, hết hạn; đặt hàng có mã (giỏ theo giá sale,
 mã sai không tạo đơn, hoàn/trừ lượt khi huỷ/phục hồi/xoá); trợ lý AI offline (có/không dấu, ngân sách, chỉ món
-còn hàng); middleware AI **không lộ dữ liệu khách/nhân viên/mã cá nhân** vào prompt, chặn tin vai trò lạ.
+còn hàng); **trợ lý chỉ trả lời nội dung website** (12 câu ngoài lề bị từ chối, hỏi dữ liệu khách / mật khẩu bị từ
+chối, món không có như bia/đồ ăn, wifi, giao hàng được trả lời "website chưa có", không bịa thông tin); middleware AI
+**không lộ dữ liệu khách/nhân viên/mã cá nhân** vào prompt, bắt buộc trường `outOfScope`, chặn tin vai trò lạ.
 
 Ngoài ra đã chạy kiểm thử trên **trình duyệt thật (Chromium)** với json-server: mở 30 trang/khung nhìn
 (khách, quản trị, điện thoại 375px) không có lỗi JavaScript hay tràn ngang, và chạy trọn luồng
@@ -409,8 +422,10 @@ Ngoài ra đã chạy kiểm thử trên **trình duyệt thật (Chromium)** v�
   thay vì lưu thô. Không dùng cấu trúc này cho hệ thống thật.
 - Kiểm tra mã giảm giá và trừ lượt dùng chạy ở trình duyệt → nếu nhiều người đặt cùng lúc có thể vượt nhẹ
   giới hạn lượt; chấp nhận được trong phạm vi đồ án.
-- **Chế độ Claude chưa được chạy thử với khoá API thật** trong quá trình phát triển (không có khoá). Mọi đường lỗi
-  (không khoá, khoá sai, Claude trả lỗi) đã được kiểm thử và đều tự chuyển về trợ lý offline, không làm hỏng trang.
+- **Gemini đã được chạy thử với khoá thật** (model `gemini-3.5-flash-lite`): gợi ý món đúng thực đơn & giá, từ chối câu
+  ngoài lề / xin dữ liệu khách, nói "chưa có thông tin" với câu website không đề cập. Gói miễn phí của Google có giới hạn
+  lượt/phút và đôi khi báo quá tải (503) — khi đó khung chat tự dùng trợ lý offline. Lưu ý gói miễn phí có thể được
+  Google dùng dữ liệu hội thoại để cải thiện sản phẩm — không nhập thông tin nhạy cảm vào khung chat.
 - Ảnh banner tải lên được lưu dạng base64 trong `db.json` (≈ 530KB / ảnh 400KB) — nên dùng đường dẫn ảnh
   trong thư mục `img/` khi có thể.
 - Ngày tháng trong dữ liệu mẫu tính tương đối theo ngày chạy `npm run seed` → chạy seed vào ngày demo.
@@ -440,4 +455,4 @@ scotchwhisky.com, Whisky Auctioneer...).
 ## 12. Hồ sơ nộp
 
 Nén thư mục dự án thành `MSSV_HoTen_TenDeTai.rar`, **bỏ thư mục `node_modules`**
-(người chấm chạy `npm install` để cài lại). **Không** đưa khoá `ANTHROPIC_API_KEY` vào bất kỳ file nào.
+(người chấm chạy `npm install` để cài lại). **Không** nộp kèm file `ai-key.local.json` (chứa khoá Gemini) — chỉ nộp `ai-key.example.json`.
