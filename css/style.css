@@ -4560,26 +4560,11 @@ textarea {
 }
 
 .floating-chatbot-icon {
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   line-height: 1;
-  display: block;
-  transform: translateY(-1px);
-}
-
-.floating-chatbot-badge {
-  position: absolute;
-  bottom: -3px;
-  background: #0f0b08;
-  color: #e5b358;
-  border: 1px solid rgba(197, 152, 67, 0.7);
-  font-size: 0.58rem;
-  font-weight: 800;
-  padding: 0 5px;
-  border-radius: 999px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1.25;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Hiệu ứng sóng lan tỏa cho nút gọi và chatbot */
@@ -4705,12 +4690,7 @@ textarea {
     height: 44px;
   }
   .floating-chatbot-icon {
-    font-size: 1.15rem;
-  }
-  .floating-chatbot-badge {
-    font-size: 0.5rem;
-    padding: 0 4px;
-    bottom: -2px;
+    font-size: 1.25rem;
   }
   .floating-btn-zalo-text {
     font-size: 0.84rem;
