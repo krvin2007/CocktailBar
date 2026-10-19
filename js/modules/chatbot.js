@@ -342,20 +342,56 @@ export async function getBotResponse(userMessage) {
   );
 }
 
-/** Khởi tạo giao diện Chatbot Widget gắn vào trang */
+/** Trạng thái cờ đã gắn sự kiện toàn cục cho Chatbot hay chưa */
+let chatbotEventsBound = false;
+
+/**
+ * Mở hoặc đóng cửa sổ Trợ lý Bartender ảo
+ * @param {boolean} [shouldOpen] - true: mở, false: đóng, undefined: đảo trạng thái
+ */
+export function toggleChatbotWindow(shouldOpen) {
+  const chatWindow = document.getElementById("bar-chatbot-window");
+  const input = document.getElementById("chatbot-input");
+  if (!chatWindow) return;
+
+  const isOpen = !chatWindow.hidden && chatWindow.classList.contains("chat-window-open");
+  const nextOpen = typeof shouldOpen === "boolean" ? shouldOpen : !isOpen;
+
+  const toggleBtns = document.querySelectorAll("#bar-chatbot-toggle-btn, .bar-chatbot-toggle-btn");
+
+  if (nextOpen) {
+    chatWindow.hidden = false;
+    requestAnimationFrame(() => {
+      chatWindow.classList.add("chat-window-open");
+    });
+    toggleBtns.forEach((btn) => btn.classList.add("is-active"));
+    input?.focus();
+    const messagesEl = document.getElementById("chatbot-messages");
+    if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+  } else {
+    chatWindow.classList.remove("chat-window-open");
+    toggleBtns.forEach((btn) => btn.classList.remove("is-active"));
+    setTimeout(() => {
+      if (!chatWindow.classList.contains("chat-window-open")) {
+        chatWindow.hidden = true;
+      }
+    }, 250);
+  }
+}
+
+/** Khởi tạo giao diện Cửa sổ Chatbot Widget gắn vào trang */
 export function renderChatbotWidget() {
   if (typeof document === "undefined" || !document.body) return;
 
-  let container = document.getElementById("bar-chatbot-container");
-  if (container) return;
+  let chatWindow = document.getElementById("bar-chatbot-window");
+  if (!chatWindow) {
+    chatWindow = document.createElement("div");
+    chatWindow.id = "bar-chatbot-window";
+    chatWindow.className = "bar-chatbot-window";
+    chatWindow.hidden = true;
+    chatWindow.setAttribute("aria-label", "Cửa sổ tư vấn của Bartender ảo");
 
-  container = document.createElement("div");
-  container.id = "bar-chatbot-container";
-  container.className = "bar-chatbot-container";
-
-  container.innerHTML = `
-    <!-- Cửa sổ Chatbot -->
-    <div class="bar-chatbot-window" id="bar-chatbot-window" hidden aria-label="Cửa sổ tư vấn của Bartender ảo">
+    chatWindow.innerHTML = `
       <div class="chatbot-header">
         <div class="chatbot-header-info">
           <div class="chatbot-avatar">${BOT_PROFILE.avatarText}</div>
@@ -418,84 +454,108 @@ export function renderChatbotWidget() {
           </svg>
         </button>
       </form>
-    </div>
+    `;
 
-    <!-- Nút bấm nổi mở Chatbot -->
-    <button type="button"
-            class="bar-chatbot-toggle-btn"
-            id="bar-chatbot-toggle-btn"
-            aria-label="Mở trợ lý ảo Bartender Quán Bar Đêm"
-            title="Trò chuyện với Bartender ảo">
-      <span class="chatbot-toggle-icon">🍸</span>
-      <span class="chatbot-toggle-pulse"></span>
-      <span class="chatbot-toggle-badge">AI Bartender</span>
-    </button>
-  `;
+    document.body.appendChild(chatWindow);
+  }
 
-  document.body.appendChild(container);
-  bindChatbotEvents(container);
+  // Trường hợp trang không có thanh nổi contact widget, thêm nút dự phòng
+  if (!document.getElementById("bar-chatbot-toggle-btn")) {
+    const fallbackBtn = document.createElement("button");
+    fallbackBtn.type = "button";
+    fallbackBtn.className = "floating-contact-btn floating-btn-chatbot";
+    fallbackBtn.id = "bar-chatbot-toggle-btn";
+    fallbackBtn.setAttribute("aria-label", "Trò chuyện với Bartender ảo");
+    fallbackBtn.innerHTML = `
+      <span class="floating-btn-pulse"></span>
+      <span class="floating-btn-tooltip">AI Bartender</span>
+      <span class="floating-chatbot-icon">🍸</span>
+      <span class="floating-chatbot-badge">AI</span>
+    `;
+    document.body.appendChild(fallbackBtn);
+  }
+
+  bindChatbotEvents();
 }
 
-/** Gắn sự kiện cho các thành phần của Chatbot */
-function bindChatbotEvents(container) {
-  const toggleBtn = container.querySelector("#bar-chatbot-toggle-btn");
-  const chatWindow = container.querySelector("#bar-chatbot-window");
-  const closeBtn = container.querySelector("#btn-chatbot-close");
-  const clearBtn = container.querySelector("#btn-chatbot-clear");
-  const form = container.querySelector("#chatbot-form");
-  const input = container.querySelector("#chatbot-input");
-  const messagesEl = container.querySelector("#chatbot-messages");
-  const chipsEl = container.querySelector("#chatbot-quick-chips");
+/** Gắn sự kiện cho các thành phần của Chatbot (chỉ gắn 1 lần duy nhất trên document) */
+function bindChatbotEvents() {
+  if (chatbotEventsBound) return;
+  chatbotEventsBound = true;
 
-  // Toggle mở / đóng
-  const toggleChat = () => {
-    const isHidden = chatWindow.hidden;
-    chatWindow.hidden = !isHidden;
-    if (!chatWindow.hidden) {
-      chatWindow.classList.add("chat-window-open");
-      input?.focus();
-      scrollToBottom();
-    } else {
-      chatWindow.classList.remove("chat-window-open");
+  // Lắng nghe click toàn cục cho nút toggle và nút đóng
+  document.addEventListener("click", (e) => {
+    const toggleBtn = e.target.closest("#bar-chatbot-toggle-btn, .bar-chatbot-toggle-btn");
+    if (toggleBtn) {
+      e.preventDefault();
+      toggleChatbotWindow();
+      return;
     }
-  };
 
-  if (toggleBtn) toggleBtn.addEventListener("click", toggleChat);
-  if (closeBtn) closeBtn.addEventListener("click", toggleChat);
+    const closeBtn = e.target.closest("#btn-chatbot-close");
+    if (closeBtn) {
+      e.preventDefault();
+      toggleChatbotWindow(false);
+      return;
+    }
 
-  // Xóa lịch sử
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
+    // Đóng khi click ra ngoài cửa sổ chat
+    const chatWindow = document.getElementById("bar-chatbot-window");
+    if (chatWindow && !chatWindow.hidden && chatWindow.classList.contains("chat-window-open")) {
+      if (!e.target.closest("#bar-chatbot-window") && !e.target.closest("#bar-chatbot-toggle-btn, .bar-chatbot-toggle-btn")) {
+        toggleChatbotWindow(false);
+      }
+    }
+  });
+
+  // Phím ESC đóng chat
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const chatWindow = document.getElementById("bar-chatbot-window");
+      if (chatWindow && !chatWindow.hidden) {
+        toggleChatbotWindow(false);
+      }
+    }
+  });
+
+  // Sự kiện xóa lịch sử chat
+  document.addEventListener("click", (e) => {
+    const clearBtn = e.target.closest("#btn-chatbot-clear");
+    if (!clearBtn) return;
+    const messagesEl = document.getElementById("chatbot-messages");
+    if (messagesEl) {
       messagesEl.innerHTML = `
         <div class="chat-bubble chat-bubble-bot">
           <div class="chat-text">${formatMarkdown(BOT_PROFILE.welcomeMessage)}</div>
           <span class="chat-time">${formatChatTime()}</span>
         </div>`;
-      scrollToBottom();
-    });
-  }
-
-  // Cuộn xuống đáy
-  const scrollToBottom = () => {
-    if (messagesEl) {
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
-  };
+  });
 
-  // Thêm tin nhắn của người dùng
-  const appendUserMessage = (text) => {
-    const bubble = document.createElement("div");
-    bubble.className = "chat-bubble chat-bubble-user";
-    bubble.innerHTML = `
+  // Xử lý gửi tin nhắn
+  const handleSendMessage = async (rawText) => {
+    const text = String(rawText || "").trim();
+    if (!text) return;
+
+    const messagesEl = document.getElementById("chatbot-messages");
+    const input = document.getElementById("chatbot-input");
+    if (!messagesEl) return;
+
+    const scrollToBottom = () => {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    };
+
+    const userBubble = document.createElement("div");
+    userBubble.className = "chat-bubble chat-bubble-user";
+    userBubble.innerHTML = `
       <div class="chat-text">${escapeHtml(text)}</div>
       <span class="chat-time">${formatChatTime()}</span>
     `;
-    messagesEl.appendChild(bubble);
+    messagesEl.appendChild(userBubble);
+    if (input) input.value = "";
     scrollToBottom();
-  };
 
-  // Thêm tin nhắn chờ (typing indicator)
-  const showTypingIndicator = () => {
     const typing = document.createElement("div");
     typing.className = "chat-bubble chat-bubble-bot typing-indicator-bubble";
     typing.id = "chatbot-typing";
@@ -506,57 +566,51 @@ function bindChatbotEvents(container) {
     `;
     messagesEl.appendChild(typing);
     scrollToBottom();
-    return typing;
-  };
 
-  // Thêm tin nhắn phản hồi của Bot
-  const appendBotMessage = (markdownText) => {
-    const bubble = document.createElement("div");
-    bubble.className = "chat-bubble chat-bubble-bot";
-    bubble.innerHTML = `
-      <div class="chat-text">${formatMarkdown(markdownText)}</div>
-      <span class="chat-time">${formatChatTime()}</span>
-    `;
-    messagesEl.appendChild(bubble);
-    scrollToBottom();
-  };
-
-  // Xử lý gửi tin
-  const handleSend = async (messageText) => {
-    const text = String(messageText || "").trim();
-    if (!text) return;
-
-    appendUserMessage(text);
-    if (input) input.value = "";
-
-    const typingEl = showTypingIndicator();
-
-    // Giả lập thời gian pha chế & suy nghĩ 400ms - 700ms cho tự nhiên
-    const delay = Math.min(800, Math.max(350, text.length * 15));
+    // Giả lập độ trễ pha chế & phản hồi tự nhiên (300ms - 650ms)
+    const delay = Math.min(650, Math.max(300, text.length * 15));
     await new Promise((resolve) => setTimeout(resolve, delay));
 
-    typingEl.remove();
-
-    const response = await getBotResponse(text);
-    appendBotMessage(response);
+    try {
+      const botReply = await getBotResponse(text);
+      typing.remove();
+      const botBubble = document.createElement("div");
+      botBubble.className = "chat-bubble chat-bubble-bot";
+      botBubble.innerHTML = `
+        <div class="chat-text">${formatMarkdown(botReply)}</div>
+        <span class="chat-time">${formatChatTime()}</span>
+      `;
+      messagesEl.appendChild(botBubble);
+      scrollToBottom();
+    } catch {
+      typing.remove();
+      const errBubble = document.createElement("div");
+      errBubble.className = "chat-bubble chat-bubble-bot";
+      errBubble.innerHTML = `
+        <div class="chat-text">Dạ em thành thật xin lỗi, hệ thống đang bận một chút. Quý khách vui lòng thử lại hoặc gọi Hotline **0397 062 429** để được hỗ trợ ngay ạ!</div>
+        <span class="chat-time">${formatChatTime()}</span>
+      `;
+      messagesEl.appendChild(errBubble);
+      scrollToBottom();
+    }
   };
 
-  if (form) {
-    form.addEventListener("submit", (e) => {
+  // Submit form chat
+  document.addEventListener("submit", (e) => {
+    if (e.target && e.target.id === "chatbot-form") {
       e.preventDefault();
-      handleSend(input?.value);
-    });
-  }
+      const input = document.getElementById("chatbot-input");
+      handleSendMessage(input?.value);
+    }
+  });
 
-  // Sự kiện Quick Chips gợi ý
-  if (chipsEl) {
-    chipsEl.addEventListener("click", (e) => {
-      const chip = e.target.closest(".quick-chip-btn");
-      if (chip && chip.dataset.query) {
-        handleSend(chip.dataset.query);
-      }
-    });
-  }
+  // Bấm nút gợi ý nhanh Quick Chips
+  document.addEventListener("click", (e) => {
+    const chip = e.target.closest(".quick-chip-btn");
+    if (chip && chip.dataset.query) {
+      handleSendMessage(chip.dataset.query);
+    }
+  });
 }
 
 /** Chuyển đổi markdown cơ bản (in đậm **, gạch đầu dòng -, link []) sang HTML an toàn */
