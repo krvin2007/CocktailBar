@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0907">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
 <title>Đặt Bàn &amp; Gọi Món — Quán Bar Đêm</title>
 <meta name="description" content="Đặt bàn trước và lựa chọn thức uống thủ công tại Quán Bar Đêm. Xác nhận tức thì và phục vụ chu đáo.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,18 +25,18 @@
     <div class="container">
       <div class="section-head">
         <span class="section-kicker">RESERVATIONS &amp; ORDERS</span>
-        <h2>Đặt Bàn &amp; Gọi Món</h2>
-        <p>Kiểm tra danh sách thức uống đã chọn và hoàn tất thông tin để giữ chỗ tốt nhất tối nay</p>
+        <h2 data-i18n="order_title">Đặt Bàn &amp; Gọi Món</h2>
+        <p data-i18n="order_lead">Kiểm tra danh sách thức uống đã chọn và hoàn tất thông tin để giữ chỗ tốt nhất tối nay</p>
       </div>
 
       <div class="order-layout">
         <!-- ---------- Giỏ Hàng Thức Uống ---------- -->
         <div class="cart-section">
           <div class="cart-header">
-            <h3>Danh sách món đã chọn</h3>
+            <h3 data-i18n="order_cart_title">Danh sách món đã chọn</h3>
             <a href="menu.html" class="cart-add-more">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Chọn thêm món</span>
+              <span data-i18n="order_add_more">Chọn thêm món</span>
             </a>
           </div>
           <div class="cart-list" id="cart-list"></div>
@@ -42,78 +45,127 @@
         <!-- ---------- Form Đặt Bàn & Thanh Toán ---------- -->
         <div class="order-summary-box">
           <div class="bill-header">
-            <span class="bill-title">Phiếu Đặt Chỗ</span>
+            <span class="bill-title" data-i18n="order_bill_title">Phiếu Đặt Chỗ</span>
             <span class="bill-tag">Speakeasy Service</span>
           </div>
 
           <div class="summary-row">
-            <span>Tổng số lượng ly</span>
+            <span data-i18n="order_total_glasses">Tổng số lượng ly</span>
             <span id="sum-count" class="font-bold">0</span>
           </div>
+          <div class="summary-row">
+            <span data-i18n="order_subtotal">Tổng tạm tính</span>
+            <span id="sum-total" class="font-bold">0₫</span>
+          </div>
+          <div id="promo-lines"></div>
           <div class="summary-row total">
-            <span>Tổng tạm tính</span>
-            <span id="sum-total" class="font-serif">0₫</span>
+            <span data-i18n="order_pay_total">Cần thanh toán</span>
+            <span id="sum-final" class="font-serif">0₫</span>
+          </div>
+
+          <!-- ---------- Ưu đãi: mã giảm giá + dùng điểm (giảm theo hạng tự áp khi đã đăng nhập) ---------- -->
+          <div class="promo-box" id="promo-box">
+            <label class="form-group-title" for="voucher-input" data-i18n="order_promo_title">Ưu đãi</label>
+            <div class="promo-row">
+              <input type="text" id="voucher-input" class="promo-input" maxlength="20" autocomplete="off" placeholder="Nhập mã giảm giá" data-i18n-placeholder="order_voucher_ph">
+              <button type="button" class="btn btn-ghost btn-sm" id="voucher-apply-btn" data-i18n="order_voucher_apply">Áp dụng</button>
+            </div>
+            <p class="promo-msg" id="voucher-msg" aria-live="polite"></p>
+
+            <div id="points-box" hidden>
+              <label class="promo-label" for="points-input"><span data-i18n="order_points_label">Dùng điểm thưởng</span> <span id="points-balance" class="text-amber"></span></label>
+              <div class="promo-row">
+                <input type="number" id="points-input" class="promo-input" min="0" step="1" inputmode="numeric" placeholder="0">
+                <button type="button" class="btn btn-ghost btn-sm" id="points-max-btn" data-i18n="order_points_max">Dùng tối đa</button>
+              </div>
+              <p class="promo-msg" id="points-msg" aria-live="polite"></p>
+            </div>
+            <p class="promo-hint" id="promo-login-hint" hidden data-i18n="order_promo_login">Đăng nhập thành viên để được giảm theo hạng và dùng điểm thưởng.</p>
           </div>
 
           <form id="order-form" class="order-form-body">
-            <label class="form-group-title">Hình thức trải nghiệm</label>
+            <label class="form-group-title" data-i18n="order_service_title">Hình thức trải nghiệm</label>
             <div class="service-type-tabs">
               <label class="service-tab">
                 <input type="radio" name="serviceType" value="dine-in" checked>
                 <div class="tab-content">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 22h8m-4-7v7M4 4l8 8 8-8H4z"/></svg>
-                  <span>Tại Quầy / Bàn</span>
+                  <span data-i18n="order_tab_dinein">Tại Quầy / Bàn</span>
                 </div>
               </label>
               <label class="service-tab">
                 <input type="radio" name="serviceType" value="booking">
                 <div class="tab-content">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                  <span>Đặt Bàn Trước</span>
+                  <span data-i18n="order_tab_booking">Đặt Bàn Trước</span>
                 </div>
               </label>
             </div>
 
             <div class="form-grid mt-2">
               <div class="form-group full">
-                <label>Họ và tên quý khách <span class="req">*</span></label>
-                <input type="text" name="name" data-rule="required|min:2|max:60" placeholder="VD: Nguyễn Văn Anh">
+                <label><span data-i18n="order_label_name">Họ và tên quý khách</span> <span class="req">*</span></label>
+                <input type="text" name="name" data-rule="required|min:2|max:60" placeholder="VD: Nguyễn Văn Anh" data-i18n-placeholder="order_ph_name">
               </div>
               <div class="form-group">
-                <label>Số điện thoại liên hệ <span class="req">*</span></label>
-                <input type="tel" name="phone" data-rule="required|phone" placeholder="VD: 0912 345 678">
+                <label><span data-i18n="order_label_phone">Số điện thoại liên hệ</span> <span class="req">*</span></label>
+                <input type="tel" name="phone" data-rule="required|phone" placeholder="VD: 0912 345 678" data-i18n-placeholder="order_ph_phone">
               </div>
               <div class="form-group">
-                <label>Email xác nhận</label>
+                <label data-i18n="order_label_email">Email xác nhận</label>
                 <input type="email" name="email" data-rule="email" placeholder="email@domain.com">
+              </div>
+              <!-- Ngày sinh: chặn khách khai dưới 18 tuổi (age.js). Nhân viên còn đối chiếu CCCD khi khách đến quán -->
+              <div class="form-group full">
+                <label for="birth-date-input"><span data-i18n="order_label_birth">Ngày sinh</span> <span class="req">*</span></label>
+                <input type="date" name="birthDate" id="birth-date-input" data-rule="required|date|adult" autocomplete="bday">
+                <span class="hint-text" data-i18n="order_birth_hint">Quán chỉ phục vụ đồ uống có cồn cho khách từ 18 tuổi trở lên.</span>
               </div>
 
               <!-- Chỉ hiện khi chọn "Tại quán" -->
               <div class="form-group full conditional-fields" data-for="dine-in">
-                <label>Vị trí ngồi mong muốn</label>
-                <input type="text" name="tableNumber" placeholder="VD: Quầy Bar trước Bartender, Bàn Sofa góc riêng...">
+                <label data-i18n="order_label_table">Vị trí ngồi mong muốn</label>
+                <input type="text" name="tableNumber" placeholder="VD: Quầy Bar trước Bartender, Bàn Sofa góc riêng..." data-i18n-placeholder="order_ph_table">
               </div>
 
               <!-- Chỉ hiện khi chọn "Đặt bàn trước" -->
-              <div class="form-group conditional-fields" data-for="booking">
-                <label>Thời gian đến <span class="req">*</span></label>
-                <input type="datetime-local" name="bookingTime" data-rule="" id="booking-time-input">
-                <span class="hint-text">Quán mở 18:00 – 02:00, vui lòng đặt trước tối thiểu 1 tiếng</span>
+              <div class="form-group full conditional-fields" data-for="booking">
+                <p class="booking-optional-note" data-i18n-html="order_optional_note">
+                  Gọi món trước là <strong>tuỳ chọn</strong>: quý khách có thể chỉ giữ bàn và gọi món khi đến quán,
+                  hoặc chọn sẵn món từ thực đơn để quầy bar chuẩn bị trước.
+                </p>
               </div>
               <div class="form-group conditional-fields" data-for="booking">
-                <label>Số lượng khách <span class="req">*</span></label>
-                <input type="number" name="guestCount" min="1" max="50" placeholder="VD: 2">
+                <label><span data-i18n="order_label_time">Thời gian đến</span> <span class="req">*</span></label>
+                <input type="datetime-local" name="bookingTime" data-rule="" id="booking-time-input">
+                <!-- Nội dung do order.js điền từ giờ mở cửa trong venue.js -->
+                <span class="hint-text" id="booking-hours-hint"></span>
+              </div>
+              <div class="form-group conditional-fields" data-for="booking">
+                <label><span data-i18n="order_label_guests">Số lượng khách</span> <span class="req">*</span></label>
+                <input type="number" name="guestCount" min="1" max="50" placeholder="VD: 2" data-i18n-placeholder="order_ph_guests">
+                <!-- Số chỗ còn trống trong khung giờ đã chọn (order.js cập nhật khi đổi giờ / số khách) -->
+                <span class="hint-text capacity-hint" id="capacity-hint" aria-live="polite"></span>
               </div>
 
               <div class="form-group full">
-                <label>Yêu cầu pha chế hoặc ghi chú đặc biệt</label>
-                <textarea name="note" placeholder="VD: Dị ứng quả mọng, thích vị khói đậm, tổ chức sinh nhật..."></textarea>
+                <label data-i18n="order_label_note">Yêu cầu pha chế hoặc ghi chú đặc biệt</label>
+                <textarea name="note" placeholder="VD: Dị ứng quả mọng, thích vị khói đậm, tổ chức sinh nhật..." data-i18n-placeholder="order_ph_note"></textarea>
               </div>
             </div>
 
+            <!-- Luật Phòng chống tác hại của rượu, bia 2019: không bán rượu bia cho người dưới 18 tuổi -->
+            <div class="form-group age-confirm-group">
+              <label class="age-confirm">
+                <input type="checkbox" name="ageConfirm" id="age-confirm">
+                <span id="age-confirm-text" data-i18n-html="order_age_confirm">Tôi xác nhận đã <strong>đủ 18 tuổi</strong>. Quán chỉ phục vụ đồ uống có cồn cho khách từ 18 tuổi trở lên.</span>
+              </label>
+            </div>
+            <p class="id-check-note" data-i18n-html="order_id_note">Quán sẽ <strong>kiểm tra CCCD / giấy tờ tuỳ thân</strong> khi quý khách đến nhận bàn. Chưa đủ 18 tuổi hoặc không xuất trình được giấy tờ, quán xin phép không phục vụ đồ uống có cồn.</p>
+
             <div class="form-actions mt-3">
               <button type="submit" class="btn btn-primary btn-block btn-lg" id="submit-order-btn">
-                <span>Xác Nhận Giữ Chỗ &amp; Đặt Món</span>
+                <span id="submit-order-label">Xác Nhận Gọi Món</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
             </div>
@@ -125,17 +177,17 @@
       <div class="lookup-box" id="lookup-box">
         <div class="lookup-head">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <h3>Tra cứu tình trạng bàn &amp; đơn gọi món</h3>
+          <h3 data-i18n="order_lookup_title">Tra cứu tình trạng bàn &amp; đơn gọi món</h3>
         </div>
-        <p class="lookup-subtitle">Nhập mã đơn (VD: DH0001) <strong>và</strong> số điện thoại đã dùng khi đặt - cần cả hai để bảo vệ thông tin của quý khách</p>
+        <p class="lookup-subtitle" data-i18n-html="order_lookup_sub">Nhập mã đơn (VD: DH0001) <strong>và</strong> số điện thoại đã dùng khi đặt - cần cả hai để bảo vệ thông tin của quý khách</p>
         <form class="lookup-form" id="lookup-form" novalidate>
           <div class="form-group">
-            <input type="text" name="code" id="lookup-code" data-rule="required" placeholder="Mã đơn, VD: DH0001" autocomplete="off">
+            <input type="text" name="code" id="lookup-code" data-rule="required" placeholder="Mã đơn, VD: DH0001" data-i18n-placeholder="order_ph_lookup_code" autocomplete="off">
           </div>
           <div class="form-group">
-            <input type="tel" name="phone" id="lookup-phone" data-rule="required|phone" placeholder="Số điện thoại đã đặt">
+            <input type="tel" name="phone" id="lookup-phone" data-rule="required|phone" placeholder="Số điện thoại đã đặt" data-i18n-placeholder="order_ph_lookup_phone">
           </div>
-          <button type="submit" class="btn btn-primary" id="lookup-btn">Kiểm tra ngay</button>
+          <button type="submit" class="btn btn-primary" id="lookup-btn" data-i18n="order_lookup_btn">Kiểm tra ngay</button>
         </form>
         <div class="lookup-results" id="lookup-results" hidden></div>
       </div>

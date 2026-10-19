@@ -4,7 +4,13 @@
    ========================================================= */
 
 import { api, getCollection, getRecord } from "./api.js";
-import { uid } from "./utils.js";
+import { uid, normalizePhone } from "./utils.js";
+import { hashIfPlain, isHashed, passwordProblem } from "./passwords.js";
+
+/** Mật khẩu chữ thường gửi lên phải đạt luật chung (bản băm có sẵn thì bỏ qua) */
+function assertPasswordAllowed(password) {
+  if (password && !isHashed(password) && passwordProblem(password)) throw new Error(passwordProblem(password));
+}
 
 const COLLECTION = "staff";
 
@@ -96,9 +102,17 @@ export const SEED_STAFF = [
 ];
 
 export const STAFF_STATUS = {
+  pending: "Chờ duyệt",   // tự đăng ký, chưa được quản lý duyệt -> chưa đăng nhập được
   active: "Đang công tác",
   inactive: "Đã nghỉ",
 };
+
+/**
+ * Vị trí được phép TỰ ĐĂNG KÝ ở trang admin-register.html.
+ * "manager" không có trong danh sách: tài khoản quản lý chỉ do
+ * quản lý/admin tạo trong trang Quản lý nhân viên.
+ */
+export const SELF_REGISTER_ROLES = ["bartender", "waiter", "cashier"];
 
 /* ============== LỚP NHÂN VIÊN (class, getter/setter) ============== */
 
@@ -148,6 +162,10 @@ export class Staff {
 
   get isActive() {
     return this.#status === "active";
+  }
+
+  get isPending() {
+    return this.#status === "pending";
   }
 
   get statusLabel() {
@@ -248,8 +266,8 @@ export function isStaffCodeTaken(staffList, staffCode, exceptId = null) {
  * chỉ thuộc về một người). Bỏ qua chính bản ghi đang sửa (exceptId).
  */
 export function isPhoneTaken(staffList, phone, exceptId = null) {
-  const normalized = String(phone || "").replace(/[\s.-]/g, "");
-  return staffList.some((s) => s.id !== exceptId && String(s.phone).replace(/[\s.-]/g, "") === normalized);
+  const normalized = normalizePhone(phone);
+  return staffList.some((s) => s.id !== exceptId && normalizePhone(s.phone) === normalized);
 }
 
 /** GET /staff - dữ liệu thô từ API được chuyển thành đối tượng Staff */
@@ -266,26 +284,42 @@ export async function getStaffById(id) {
 
 /** POST /staff - trả về nhân viên máy chủ đã lưu (kèm id do máy chủ quyết định) */
 export async function addStaff(data) {
-  const staff = new Staff({ id: uid("staff"), ...data }); // dữ liệu sai bị setter chặn trước khi gửi
+  // Mật khẩu luôn được băm trước khi gửi (đã băm rồi thì giữ nguyên, không băm hai lần)
+  assertPasswordAllowed(data.password);
+  const password = data.password ? hashIfPlain(data.password) : "";
+  const staff = new Staff({ id: uid("staff"), ...data, password }); // dữ liệu sai bị setter chặn trước khi gửi
   const saved = await api.post(`/${COLLECTION}`, staff.toJSON());
   return Staff.from(saved);
 }
 
-/** Đăng ký tài khoản nhân viên mới (tự sinh mã NV nếu chưa nhập) */
+/**
+ * Nhân viên TỰ đăng ký tài khoản (trang admin-register.html).
+ * Quy tắc nghiệp vụ:
+ * - Không được tự chọn vị trí Quản lý.
+ * - Tài khoản luôn ở trạng thái "Chờ duyệt", bỏ qua mọi status gửi lên;
+ *   chỉ đăng nhập được sau khi quản lý bấm "Duyệt" ở trang Quản lý nhân viên.
+ */
 export async function registerStaff(data) {
+  if (!SELF_REGISTER_ROLES.includes(data.role)) {
+    throw new Error("Vị trí này không được tự đăng ký. Vui lòng liên hệ quản lý để được cấp tài khoản.");
+  }
   const all = await getAllStaff();
   const staffCode = data.staffCode || generateStaffCode(all);
   return addStaff({
     ...data,
     staffCode,
-    status: data.status || "active",
-    createdAt: data.createdAt || new Date().toISOString(),
+    status: "pending",
+    createdAt: new Date().toISOString(),
   });
 }
 
 /** PATCH /staff/:id */
 export async function updateStaff(id, changes) {
   const { id: _ignored, ...body } = changes;
+  if (body.password) {
+    assertPasswordAllowed(body.password);
+    body.password = hashIfPlain(body.password);
+  }
   if (body.status !== undefined && !Object.hasOwn(STAFF_STATUS, body.status)) {
     throw new Error(`Trạng thái nhân viên không hợp lệ: "${body.status}"`);
   }

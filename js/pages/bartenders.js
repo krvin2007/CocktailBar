@@ -11,18 +11,24 @@ import { loadingHtml, errorHtml } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
 import { escapeHtml } from "../modules/utils.js";
 import { portraitHtml } from "../modules/portrait.js";
+import { getCurrentLang, t } from "../modules/i18n.js";
+import { BARTENDER_CATEGORIES_EN, BARTENDERS_EN } from "../modules/bartendersEn.js";
+import { localizeItem, localizeLabels } from "../modules/contentLang.js";
 
 let currentCategory = "all";
 /** Dữ liệu tải từ API (GET /bartenders); máy chủ chưa chạy thì dùng dữ liệu đóng gói sẵn */
 let collection = [];
 let currentSearch = "";
 
+/** Danh sách theo ngôn ngữ đang chọn: bản tiếng Anh ghép đè lên dữ liệu gốc (xem contentLang.js) */
+const localized = () => collection.map((item) => localizeItem(item, BARTENDERS_EN, getCurrentLang()));
+
 /** Khởi tạo tabs bộ lọc */
 function renderFilterTabs() {
   const tabsHost = document.getElementById("bartender-tabs");
   if (!tabsHost) return;
 
-  tabsHost.innerHTML = Object.entries(BARTENDER_CATEGORIES).map(([key, label]) => `
+  tabsHost.innerHTML = Object.entries(localizeLabels(BARTENDER_CATEGORIES, BARTENDER_CATEGORIES_EN, getCurrentLang())).map(([key, label]) => `
     <button type="button" class="legend-tab-btn ${key === currentCategory ? 'active' : ''}" data-cat="${key}">
       ${label}
     </button>`).join("");
@@ -44,9 +50,9 @@ function bartenderCardHtml(item) {
       <div class="legend-item-head">
         <span class="legend-item-name">${escapeHtml(d.name)} (${d.year})</span>
         ${d.onMenu ? `
-          <a href="order.html" class="crafted-badge-inmenu" title="Có phục vụ tại quán - Bấm để gọi món">
+          <a href="order.html" class="crafted-badge-inmenu" title="${t("bt_in_menu_title", "Có phục vụ tại quán - Bấm để gọi món")}">
             ${ICONS.checkCircle(12)}
-            <span>Có trong Menu 🍸</span>
+            <span>${t("bt_in_menu", "Có trong Menu 🍸")}</span>
           </a>
         ` : `
           <span class="legend-item-sub">${escapeHtml(d.glass)}</span>
@@ -54,7 +60,7 @@ function bartenderCardHtml(item) {
       </div>
       <p class="legend-item-desc">${escapeHtml(d.desc)}</p>
       <div style="font-size: 0.76rem; color: var(--amber-dark); margin-top: 4px; font-family: monospace;">
-        <strong>Công thức:</strong> ${escapeHtml(d.recipe)}
+        <strong>${t("bt_recipe", "Công thức:")}</strong> ${escapeHtml(d.recipe)}
       </div>
     </div>
   `).join("");
@@ -85,11 +91,11 @@ function bartenderCardHtml(item) {
 
         <div class="legend-meta-grid">
           <div class="legend-meta-item">
-            <span class="legend-meta-k">Niên đại hoạt động</span>
+            <span class="legend-meta-k">${t("bt_meta_years", "Niên đại hoạt động")}</span>
             <span class="legend-meta-v">${escapeHtml(item.yearsActive)}</span>
           </div>
           <div class="legend-meta-item">
-            <span class="legend-meta-k">Thánh đường biểu tượng</span>
+            <span class="legend-meta-k">${t("bt_meta_venue", "Thánh đường biểu tượng")}</span>
             <span class="legend-meta-v">${escapeHtml(item.venues[0])}</span>
           </div>
         </div>
@@ -99,7 +105,7 @@ function bartenderCardHtml(item) {
         <div class="legend-highlights-box">
           <h4 class="legend-highlights-title">
             ${ICONS.cocktail(15)}
-            <span>Signature Serves &amp; Công Thức Bất Hủ</span>
+            <span>${t("bt_signature_title", "Signature Serves & Công Thức Bất Hủ").replace("&", "&amp;")}</span>
           </h4>
           <div class="legend-items-list">
             ${drinksHtml}
@@ -112,10 +118,10 @@ function bartenderCardHtml(item) {
 
         <div class="legend-card-foot">
           <button type="button" class="btn btn-outline btn-sm open-dossier-btn" data-id="${item.id}">
-            Xem Tiểu Sử &amp; Giai Thoại
+            ${t("bt_view_bio", "Xem Tiểu Sử & Giai Thoại").replace("&", "&amp;")}
           </button>
           <a href="order.html" class="btn btn-primary btn-sm">
-            Thưởng thức tại Bar
+            ${t("bt_enjoy", "Thưởng thức tại Bar")}
           </a>
         </div>
       </div>
@@ -130,7 +136,8 @@ function renderBartendersGrid() {
 
   const query = currentSearch.trim().toLowerCase();
 
-  const filtered = collection.filter((item) => {
+  const view = localized();
+  const filtered = view.filter((item) => {
     const matchCat = currentCategory === "all" || item.category === currentCategory;
     if (!matchCat) return false;
 
@@ -153,15 +160,16 @@ function renderBartendersGrid() {
   });
 
   if (countEl) {
-    countEl.innerHTML = `Hiển thị <strong>${filtered.length}</strong> / ${collection.length} Master Bartenders`;
+    countEl.innerHTML = t("bt_count", "Hiển thị <strong>{n}</strong> / {total} Master Bartenders")
+      .replace("{n}", filtered.length).replace("{total}", view.length);
   }
 
   if (filtered.length === 0) {
     host.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1; padding: 60px 20px; text-align: center;">
         <div class="empty-icon" style="margin-bottom: 16px;">${ICONS.search(36)}</div>
-        <h3>Không tìm thấy Master Bartender phù hợp</h3>
-        <p class="text-muted">Vui lòng thử từ khóa khác (ví dụ: Savoy, Martini, Ueno, DeGroff, London, Paris)...</p>
+        <h3>${t("bt_empty_title", "Không tìm thấy Master Bartender phù hợp")}</h3>
+        <p class="text-muted">${t("bt_empty_hint", "Vui lòng thử từ khóa khác (ví dụ: Savoy, Martini, Ueno, DeGroff, London, Paris)...")}</p>
       </div>`;
     return;
   }
@@ -172,7 +180,7 @@ function renderBartendersGrid() {
   host.querySelectorAll(".open-dossier-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-id");
-      const found = collection.find((b) => b.id === id);
+      const found = localized().find((b) => b.id === id);
       if (found) openBartenderModal(found);
     });
   });
@@ -192,7 +200,7 @@ function openBartenderModal(bartender) {
   const accoladesEl = document.getElementById("modal-accolades");
 
   if (titleEl) titleEl.textContent = `${bartender.name} “${bartender.nickname}”`;
-  if (subEl) subEl.textContent = `${bartender.categoryLabel} • ${bartender.origin} • Hoạt động: ${bartender.yearsActive}`;
+  if (subEl) subEl.textContent = `${bartender.categoryLabel} • ${bartender.origin} • ${t("bt_active", "Hoạt động:")} ${bartender.yearsActive}`;
   if (quoteEl) quoteEl.textContent = bartender.philosophy;
   if (bioEl) bioEl.innerHTML = bartender.biography.split("\n\n").map((p) => `<p style="margin-bottom: 12px; line-height: 1.7; color: var(--text-muted);">${escapeHtml(p)}</p>`).join("");
 
@@ -213,7 +221,7 @@ function openBartenderModal(bartender) {
           <span style="font-size: 0.75rem; color: var(--text-dim);">${escapeHtml(d.glass)}</span>
         </div>
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; line-height: 1.5;">${escapeHtml(d.desc)}</p>
-        <div style="font-size: 0.8rem; color: var(--amber-dark); font-family: monospace;">Công thức: ${escapeHtml(d.recipe)}</div>
+        <div style="font-size: 0.8rem; color: var(--amber-dark); font-family: monospace;">${t("bt_recipe", "Công thức:")} ${escapeHtml(d.recipe)}</div>
       </div>
     `).join("");
   }
@@ -238,12 +246,20 @@ function closeBartenderModal() {
   document.body.style.overflow = "";
 }
 
+// Đổi VI/EN: vẽ lại thẻ + bộ lọc bằng bản dịch tương ứng (chữ tĩnh trong HTML do applyI18n lo)
+window.addEventListener("languagechange", () => {
+  renderFilterTabs();
+  if (collection.length) renderBartendersGrid();
+});
+
 /** Lắng nghe DOMContentLoaded */
 document.addEventListener("DOMContentLoaded", async () => {
   renderFilterTabs();
 
   const host = document.getElementById("bartenders-grid");
-  if (host) host.innerHTML = loadingHtml("Đang tải danh sách Master Bartenders...");
+  const countBox = document.getElementById("bartenders-count");
+  if (countBox) countBox.textContent = t("bt_loading_count", "Đang tải dữ liệu Master Bartender...");
+  if (host) host.innerHTML = loadingHtml(t("bt_loading", "Đang tải danh sách Master Bartenders..."));
   try {
     collection = await getCollection("bartenders", BARTENDERS_COLLECTION);
     renderBartendersGrid();

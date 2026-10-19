@@ -4,13 +4,14 @@
    Ly phục vụ) và biểu tượng nét mảnh, loại bỏ hoàn toàn Emoji thô.
    ========================================================= */
 
-import { CATEGORY_LABELS, getCategoryLabel } from "./drinksService.js";
+import { CATEGORY_LABELS, getCategoryLabel, servingLabel } from "./drinksService.js";
 import { formatMoney, escapeHtml } from "./utils.js";
 import { ICONS } from "./icons.js";
 import { t } from "./i18n.js";
+import { isSoldOut } from "./drinksService.js";
 
 export function drinkCardHtml(drink) {
-  const soldout = drink.status === "soldout" || drink.stock <= 0;
+  const soldout = isSoldOut(drink);
 
   const isImagePath = typeof drink.image === "string" && (drink.image.includes("/") || drink.image.startsWith("http"));
   const imageHtml = isImagePath
@@ -44,7 +45,7 @@ export function drinkCardHtml(drink) {
         ${tasteTags}
 
         <div class="drink-card-footer">
-          <span class="drink-card-price">${formatMoney(drink.price)}</span>
+          <span class="drink-card-price">${formatMoney(drink.price)}${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}</span>
           <div class="drink-card-badges">
             ${drink.abv > 0 ? `<span class="badge-abv" title="${t("abv_tooltip", "Nồng độ cồn")}">${drink.abv}% ABV</span>` : `<span class="badge-zero">0% ABV</span>`}
             <span class="drink-card-rating" title="${t("rating_tooltip", "Đánh giá")}">${ICONS.star(13)} ${drink.rating}</span>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0907">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
+<title>Đăng nhập &amp; Đăng ký thành viên — Quán Bar Đêm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand-center">
+      <div class="brand-icon-lg">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 22h8m-4-7v7M4 4l8 8 8-8H4z"/></svg>
+      </div>
+      <h2 class="auth-title">Quán Bar Đêm</h2>
+      <p class="auth-subtitle" data-i18n="auth_subtitle">Đăng nhập một cửa - hệ thống tự nhận biết khách hàng, nhân viên hay quản trị viên</p>
+    </div>
+
+    <!-- Tabs chuyển đổi Đăng nhập / Đăng ký -->
+    <div class="cust-auth-tabs mt-3">
+      <button type="button" class="cust-tab-btn active" id="tab-btn-login" data-target="login" data-i18n="auth_tab_login">Đăng Nhập</button>
+      <button type="button" class="cust-tab-btn" id="tab-btn-register" data-target="register" data-i18n="auth_tab_register">Đăng Ký Mới</button>
+    </div>
+
+    <!-- TAB 1: FORM ĐĂNG NHẬP -->
+    <div id="page-pane-login" class="cust-pane active">
+      <form id="page-form-login" class="mt-2" novalidate>
+        <div class="form-group">
+          <label><span data-i18n="auth_lbl_ident">Tên đăng nhập, Số điện thoại hoặc Email</span> <span class="req">*</span></label>
+          <input type="text" id="page-login-ident" placeholder="Tên đăng nhập, SĐT hoặc email" data-i18n-placeholder="auth_ph_ident" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label><span data-i18n="auth_lbl_pass">Mật khẩu xác thực</span> <span class="req">*</span></label>
+          <div class="pw-input-wrap">
+            <input type="password" id="page-login-pass" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="pw-toggle-btn" data-target="page-login-pass" aria-label="Hiện hoặc ẩn mật khẩu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg mt-2" id="page-btn-login">
+          <span data-i18n="auth_btn_login">Đăng nhập</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- TAB 2: FORM ĐĂNG KÝ -->
+    <div id="page-pane-register" class="cust-pane" hidden>
+      <form id="page-form-register" class="mt-2" novalidate>
+        <div class="form-group">
+          <label><span data-i18n="auth_lbl_name">Họ và tên quý khách</span> <span class="req">*</span></label>
+          <input type="text" id="page-reg-name" placeholder="VD: Trần Thị Mai" data-i18n-placeholder="auth_ph_name" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label><span data-i18n="auth_lbl_phone">Số điện thoại liên lạc</span> <span class="req">*</span></label>
+          <input type="tel" id="page-reg-phone" placeholder="VD: 0912 345 678" autocomplete="tel">
+          <small class="text-xs text-muted" data-i18n="auth_phone_hint">Dùng để nhận diện đặt bàn và tích điểm</small>
+        </div>
+        <div class="form-group">
+          <label data-i18n="auth_lbl_email">Email liên hệ</label>
+          <input type="email" id="page-reg-email" placeholder="mai.tran@domain.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="page-reg-birth"><span data-i18n="auth_lbl_birth">Ngày sinh</span> <span class="req">*</span></label>
+          <input type="date" id="page-reg-birth" autocomplete="bday">
+          <small class="text-xs text-muted" data-i18n="auth_birth_hint">Thành viên phải từ 18 tuổi trở lên. Quán sẽ đối chiếu CCCD khi quý khách đến.</small>
+        </div>
+        <div class="form-group">
+          <label><span data-i18n="auth_lbl_regpass">Mật khẩu</span> <span class="req">*</span></label>
+          <div class="pw-input-wrap">
+            <input type="password" id="page-reg-pass" placeholder="Tối thiểu 8 ký tự, chữ đầu viết hoa, có ký tự đặc biệt" data-i18n-placeholder="auth_ph_regpass" autocomplete="new-password">
+            <button type="button" class="pw-toggle-btn" data-target="page-reg-pass" aria-label="Hiện hoặc ẩn mật khẩu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><span data-i18n="auth_lbl_confirm">Nhập lại mật khẩu</span> <span class="req">*</span></label>
+          <div class="pw-input-wrap">
+            <input type="password" id="page-reg-pass-confirm" placeholder="Nhập lại mật khẩu" data-i18n-placeholder="auth_ph_confirm" autocomplete="new-password">
+            <button type="button" class="pw-toggle-btn" data-target="page-reg-pass-confirm" aria-label="Hiện hoặc ẩn mật khẩu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg mt-2" id="page-btn-reg">
+          <span data-i18n="auth_btn_register">Tạo tài khoản thành viên</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="text-center mt-3">
+      <span class="text-xs text-muted" data-i18n="auth_staff_q">Bạn là nhân viên quán?</span>
+      <a href="admin-register.html" class="auth-nav-link" data-i18n="auth_staff_link">Đăng ký tài khoản nhân sự</a>
+    </div>
+
+    <div class="text-center mt-3">
+      <a href="index.html" class="auth-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        <span data-i18n="auth_back_home">Quay lại trang chủ quán bar</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/pages/customer-auth.js"></script>
+</body>
+</html>

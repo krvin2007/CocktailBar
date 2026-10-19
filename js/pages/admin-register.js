@@ -8,7 +8,7 @@
    - Đo độ mạnh mật khẩu và checklist thời gian thực
    ========================================================= */
 
-import { isLoggedIn } from "../modules/auth.js";
+import { isLoggedIn, homePageFor } from "../modules/auth.js";
 import {
   getAllStaff, generateStaffCode, isUsernameTaken, isPhoneTaken, isEmailTaken, registerStaff,
 } from "../modules/staffService.js";
@@ -17,7 +17,7 @@ import { toast, setButtonLoading } from "../modules/ui.js";
 
 // Nếu đã đăng nhập từ trước -> vào thẳng bảng điều hành
 if (isLoggedIn()) {
-  window.location.href = "admin-dashboard.html";
+  window.location.href = homePageFor();
 }
 
 const formEl = document.getElementById("register-form");
@@ -32,8 +32,6 @@ const strengthFill = document.getElementById("strength-fill");
 const strengthLabel = document.getElementById("strength-label");
 const chkLen = document.getElementById("chk-len");
 const chkUpper = document.getElementById("chk-upper");
-const chkLower = document.getElementById("chk-lower");
-const chkNum = document.getElementById("chk-num");
 const chkSpec = document.getElementById("chk-spec");
 
 let allStaff = [];
@@ -64,9 +62,7 @@ function updateStrengthMeter(password) {
   strengthLabel.style.color = result.color;
 
   chkLen.classList.toggle("valid", result.checks.length);
-  chkUpper.classList.toggle("valid", result.checks.uppercase);
-  chkLower.classList.toggle("valid", result.checks.lowercase);
-  chkNum.classList.toggle("valid", result.checks.number);
+  chkUpper.classList.toggle("valid", result.checks.firstUpper);
   chkSpec.classList.toggle("valid", result.checks.special);
 }
 
@@ -158,19 +154,19 @@ formEl.addEventListener("submit", async (e) => {
     role: data.role,
     shift: data.shift,
     startDate: data.startDate,
-    status: "active",
+    // Không gửi status: registerStaff() luôn đặt "pending" (chờ quản lý duyệt)
   };
 
   const restoreButton = setButtonLoading(registerBtn, "Đang đăng ký tài khoản...");
 
   try {
     const newStaff = await registerStaff(payload);
-    toast(`Đăng ký tài khoản thành công! Mã nhân sự: ${newStaff.displayStaffCode}`, "success");
+    toast(`Đã gửi đăng ký! Mã nhân sự: ${newStaff.displayStaffCode} - vui lòng chờ quản lý duyệt.`, "success");
 
-    // Đợi 1.2s rồi chuyển hướng sang trang đăng nhập, tự động điền username
+    // Đợi 1.6s rồi chuyển sang trang đăng nhập (tài khoản chưa đăng nhập được cho tới khi được duyệt)
     setTimeout(() => {
-      window.location.href = `admin-login.html?registered=1&username=${encodeURIComponent(data.username)}`;
-    }, 1200);
+      window.location.href = `customer-auth.html?registered=1&username=${encodeURIComponent(data.username)}`;
+    }, 1600);
   } catch (err) {
     toast(`Đăng ký thất bại: ${err.message}`, "error");
     restoreButton();

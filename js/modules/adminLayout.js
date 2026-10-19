@@ -5,8 +5,8 @@
    Tích hợp nút chuyển đổi ngôn ngữ VI & EN.
    ========================================================= */
 
-import "./ui.js"; // đăng ký banner cảnh báo khi máy chủ API chưa chạy
-import { requireAuth, currentAdmin, logout } from "./auth.js";
+import { toast } from "./ui.js"; // (nạp ui.js cũng đăng ký banner cảnh báo khi máy chủ API chưa chạy)
+import { requireAuth, currentAdmin, logout, can, canAccessPage, homePageFor, refreshSession, LOGIN_PAGE } from "./auth.js";
 import { countUnreadMessages } from "./messagesService.js";
 import { ICONS } from "./icons.js";
 import { escapeHtml } from "./utils.js";
@@ -17,9 +17,11 @@ function getAdminMenu() {
     { href: "admin-dashboard.html", label: t("admin_menu_dash", "Tổng quan & Thống kê"), icon: ICONS.chart(17) },
     { href: "admin-menu.html", label: t("admin_menu_drinks", "Quản lý thực đơn"), icon: ICONS.cocktail(17) },
     { href: "admin-orders.html", label: t("admin_menu_orders", "Quản lý đơn hàng"), icon: ICONS.receipt(17) },
+    { href: "admin-customers.html", label: t("admin_menu_customers", "Khách hàng thành viên"), icon: ICONS.user(17) },
+    { href: "admin-vouchers.html", label: t("admin_menu_vouchers", "Mã giảm giá"), icon: ICONS.sparkle(17) },
     { href: "admin-staff.html", label: t("admin_menu_staff", "Quản lý nhân viên"), icon: ICONS.users(17) },
     { href: "admin-messages.html", label: t("admin_menu_messages", "Hộp thư liên hệ"), icon: ICONS.mail(17), badgeId: "nav-unread-badge" },
-  ];
+  ].filter((item) => canAccessPage(item.href)); // chỉ hiện mục mà vai trò hiện tại được vào
 }
 
 function currentPage() {
@@ -28,6 +30,7 @@ function currentPage() {
 
 /** Lấy số tin nhắn chưa đọc từ API rồi gắn huy hiệu - không chặn việc vẽ giao diện */
 export async function refreshUnreadBadge() {
+  if (!can("page:messages")) return; // vai trò không xem hộp thư thì không hiện số tin
   let unread;
   try {
     unread = await countUnreadMessages();
@@ -48,6 +51,24 @@ export async function refreshUnreadBadge() {
   }
 }
 
+let sessionChecked = false;
+
+/**
+ * Mỗi lần mở trang đối chiếu phiên với danh sách nhân sự trên máy chủ: nhân viên bị khoá/xoá
+ * thì đăng xuất ngay, bị đổi vai trò thì tải lại trang để áp quyền mới (không giữ quyền cũ).
+ */
+async function revalidateSessionOnce(admin) {
+  if (sessionChecked) return;
+  sessionChecked = true;
+  const fresh = await refreshSession();
+  if (!fresh) {
+    toast("Tài khoản của bạn không còn hiệu lực. Vui lòng đăng nhập lại.", "warning");
+    setTimeout(() => { window.location.href = LOGIN_PAGE; }, 1200);
+  } else if (fresh.role !== admin.role) {
+    window.location.reload();
+  }
+}
+
 /**
  * Dựng khung giao diện quản trị.
  * @returns {boolean} false nếu chưa đăng nhập (đang chuyển về trang
@@ -59,6 +80,13 @@ export function initAdminLayout(pageTitle = "") {
   if (!admin) return false;
 
   const page = currentPage();
+
+  // Gõ thẳng địa chỉ trang không thuộc quyền (VD pha chế mở admin-staff.html)
+  // -> chuyển về trang của vai trò đó, không tải dữ liệu trang này.
+  if (!canAccessPage(page, admin)) {
+    window.location.href = homePageFor(admin);
+    return false;
+  }
   const currentLang = getCurrentLang();
   const menu = getAdminMenu();
 
@@ -120,7 +148,7 @@ export function initAdminLayout(pageTitle = "") {
 
     document.getElementById("admin-logout-btn").addEventListener("click", () => {
       logout();
-      window.location.href = "admin-login.html";
+      window.location.href = LOGIN_PAGE;
     });
 
     const langBtn = document.getElementById("admin-lang-btn");
@@ -143,6 +171,7 @@ export function initAdminLayout(pageTitle = "") {
   }
 
   refreshUnreadBadge();
+  revalidateSessionOnce(admin);
   applyI18n();
   return true;
 }

@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0907">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
 <title>Quán Bar Đêm — Artisan Cocktail Lounge &amp; Speakeasy</title>
 <meta name="description" content="Quán Bar Đêm - Không gian cocktail thủ công, thưởng thức hương vị rượu nguyên bản, đặt bàn trực tuyến và quản lý gọi món chuyên nghiệp.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -113,8 +116,8 @@
   <!-- ---------- Spotlight Hầm Rượu Di Sản & Tri Thức Thưởng Thức ---------- -->
   <section class="section section-spirits-spotlight" style="background: radial-gradient(circle at 50% 50%, rgba(197, 152, 67, 0.08) 0%, rgba(18, 14, 10, 0.9) 100%), linear-gradient(180deg, #130f0c 0%, #0b0907 100%); border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); padding: 50px 0;">
     <div class="container">
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 32px; background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: 36px 40px; box-shadow: var(--shadow-lift);">
-        <div style="flex: 1; min-width: 300px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 32px; background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: clamp(20px, 5vw, 36px) clamp(18px, 5vw, 40px); box-shadow: var(--shadow-lift);">
+        <div style="flex: 1; min-width: min(300px, 100%);">
           <span class="section-kicker" data-i18n="spirits_spotlight_kicker">CONNOISSEUR ARCHIVE</span>
           <h2 data-i18n="spirits_spotlight_title" style="font-family: var(--font-heading); font-size: 2.2rem; color: var(--text-main); margin: 8px 0 14px;">Hầm Rượu Di Sản &amp; Bản Đồ Hương Vị</h2>
           <p data-i18n="spirits_spotlight_desc" style="color: var(--text-muted); font-size: 1rem; line-height: 1.7; max-width: 620px; margin-bottom: 22px;">
@@ -216,7 +219,7 @@
         </p>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 24px;">
         <!-- Card Bartenders -->
         <div style="background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
           <div style="position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle, rgba(197, 152, 67, 0.15), transparent 70%); pointer-events: none;"></div>
@@ -255,6 +258,9 @@
       </div>
     </div>
   </section>
+
+  <!-- ---------- Địa điểm: nội dung + bản đồ vẽ bằng JS từ js/modules/venue.js ---------- -->
+  <section class="location-section" id="location" aria-labelledby="location-title"></section>
 
   <!-- ---------- Đặt Bàn & Trải Nghiệm Không Gian Đêm ---------- -->
   <section class="cta-banner">

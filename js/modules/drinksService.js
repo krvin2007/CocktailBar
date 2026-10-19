@@ -11,6 +11,29 @@ import { uid } from "./utils.js";
 
 const COLLECTION = "drinks";
 
+/**
+ * CHỈ CHAI RƯỢU (nhóm "spirits") có tồn kho: chai/lần rót là thứ đếm được và có thể hết.
+ * Cocktail, mocktail... pha từ nhiều nguyên liệu nên KHÔNG giới hạn số ly - luôn bán được,
+ * trừ khi quản lý chủ động "Tạm ngưng phục vụ".
+ */
+export const STOCK_TRACKED_CATEGORIES = ["spirits"];
+
+/** Số ly tối đa khách đặt cho một món KHÔNG theo dõi tồn kho (chỉ để chặn nhập nhầm 9999) */
+export const MAX_UNTRACKED_QTY = 99;
+
+/** Món này có theo dõi tồn kho không (chỉ chai rượu) */
+export const tracksStock = (drink) => STOCK_TRACKED_CATEGORIES.includes(drink?.category);
+
+/** Món hiện không bán được: quản lý tạm ngưng, hoặc (chai rượu) đã hết kho */
+export const isSoldOut = (drink) =>
+  !drink || drink.status !== "available" || (tracksStock(drink) && !(Number(drink.stock) > 0));
+
+/** Số ly còn đặt được: chai rượu = tồn kho, món pha chế = tối đa MAX_UNTRACKED_QTY, tạm ngưng/hết = 0 */
+export const availableQty = (drink) => {
+  if (isSoldOut(drink)) return 0;
+  return tracksStock(drink) ? Number(drink.stock) : MAX_UNTRACKED_QTY;
+};
+
 /** Một món đồ uống trong thực đơn chuẩn bar */
 export class Drink {
   constructor({
@@ -29,6 +52,7 @@ export class Drink {
     featured = false,
     stock = 20,
     abv = 0,
+    servingMl = 0,
     createdAt = new Date().toISOString(),
   }) {
     this.id = id;
@@ -44,10 +68,19 @@ export class Drink {
     this.status = status;       // "available" | "soldout"
     this.rating = Number(rating) || 0;
     this.featured = Boolean(featured);
-    this.stock = Number(stock) || 0;   // tồn kho hiện có (ly có thể pha được)
+    // Tồn kho chỉ có nghĩa với chai rượu; món pha chế luôn lưu 0 (bị bỏ qua, xem tracksStock)
+    this.stock = STOCK_TRACKED_CATEGORIES.includes(category) ? Number(stock) || 0 : 0;
     this.abv = Number(abv) || 0;       // nồng độ cồn (%) - 0 với đồ uống không cồn
+    // Dung tích mỗi lần rót (ml). Rượu mạnh bán theo lần rót (VD 30ml) nên phải
+    // ghi rõ giá là cho bao nhiêu ml; cocktail bán theo ly thì để 0 (không ghi).
+    this.servingMl = Number(servingMl) || 0;
     this.createdAt = createdAt;
   }
+}
+
+/** "/ 30ml" khi món bán theo lần rót, chuỗi rỗng với cocktail bán theo ly */
+export function servingLabel(drink) {
+  return drink.servingMl > 0 ? `/ ${drink.servingMl}ml` : "";
 }
 
 /** Nhãn tiếng Việt cho từng danh mục cocktail & rượu chuẩn quán bar */
@@ -57,6 +90,7 @@ export const CATEGORY_LABELS = {
   "sour-fizz": "Sour & Highball",
   aperitivo: "Aperitivo & Spritz",
   spirits: "Rượu Mạnh Thượng Hạng",
+  "zero-proof": "Mocktail Không Cồn",   // cho khách lái xe (Nghị định 100) / không uống rượu
 };
 
 /** Nhãn tiếng Anh cho từng danh mục cocktail */
@@ -66,6 +100,7 @@ export const CATEGORY_LABELS_EN = {
   "sour-fizz": "Sour & Highball",
   aperitivo: "Aperitivo & Spritz",
   spirits: "Rare Heritage Spirits",
+  "zero-proof": "Zero-Proof Mocktails",
 };
 
 /** Lấy nhãn danh mục theo ngôn ngữ hiện hành */
@@ -83,7 +118,7 @@ export function getCategoryLabel(category) {
 }
 
 /**
- * Dữ liệu đồ uống mẫu - 100% thức uống có cồn & cocktail thủ công.
+ * Dữ liệu đồ uống mẫu - cocktail thủ công, rượu mạnh và mocktail không cồn.
  * Dùng cho 2 việc: (1) script tools/tao-db.js sinh ra db.json từ đây,
  * (2) dữ liệu dự phòng khi máy chủ API chưa chạy và chưa có bản đệm.
  */
@@ -236,7 +271,7 @@ export const SEED_DRINKS = [
     id: "d10",
     name: "The Macallan 12 Double Cask",
     category: "spirits",
-    price: 195000,
+    price: 250000,
     image: "img/drinks/macallan-12.jpg",
     description: "Dòng Single Malt Scotch trứ danh từ Speyside Scotland, ủ kết hợp thùng gỗ sồi Sherry Châu Âu và Châu Mỹ, phục vụ Neat hoặc On The Rocks.",
     ingredients: ["Single Malt Scotch Whisky 12 Years Old", "Khối đá tròn điêu khắc tay"],
@@ -247,6 +282,7 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 12,
     abv: 40,
+    servingMl: 30,
   }),
   new Drink({
     id: "d11",
@@ -444,7 +480,7 @@ export const SEED_DRINKS = [
     id: "d23",
     name: "The Macallan 18 Sherry Oak",
     category: "spirits",
-    price: 285000,
+    price: 1150000,
     image: "img/drinks/macallan-18.jpg",
     description: "Đỉnh cao Single Malt Scotch từ vùng Speyside: 18 năm ủ trọn vẹn trong thùng gỗ sồi Oloroso Sherry từ Jerez Tây Ban Nha, màu hổ phách đậm đà đầy mê hoặc.",
     ingredients: ["Single Malt Scotch 18 Năm Tuổi", "Đá cầu pha lê thủ công"],
@@ -455,12 +491,13 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 10,
     abv: 43,
+    servingMl: 30,
   }),
   new Drink({
     id: "d24",
     name: "Lagavulin 16 Islay Peat",
     category: "spirits",
-    price: 230000,
+    price: 320000,
     image: "img/drinks/lagavulin-16.jpg",
     description: "Vua khói của đảo Islay Scotland: Mùi hương khói than bùn biển nồng nàn, rong biển mặn mòi kết hợp vị ngọt ngào sâu thẳm của trái cây chín và gỗ sồi già.",
     ingredients: ["Single Malt Scotch Islay 16 Năm", "Khối đá điêu khắc hoặc uống Neat"],
@@ -471,12 +508,13 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 12,
     abv: 43,
+    servingMl: 30,
   }),
   new Drink({
     id: "d25",
     name: "Hennessy X.O Cognac",
     category: "spirits",
-    price: 260000,
+    price: 650000,
     image: "img/drinks/hennessy-xo.jpg",
     description: "Biểu tượng Cognac Extra Old trứ danh vùng Cognac nước Pháp: Pha trộn từ hơn 100 loại eaux-de-vie lâu năm với hương thơm vani, tiêu đen cay nhẹ và socola đen quyến rũ.",
     ingredients: ["Hennessy X.O Extra Old Cognac", "Đá tròn pha lê"],
@@ -487,12 +525,13 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 12,
     abv: 40,
+    servingMl: 30,
   }),
   new Drink({
     id: "d26",
     name: "Don Julio 1942 Añejo Tequila",
     category: "spirits",
-    price: 270000,
+    price: 600000,
     image: "img/drinks/don-julio-1942.jpg",
     description: "Kiệt tác Tequila Añejo thủ công sản xuất số lượng giới hạn: 100% Blue Weber Agave thu hoạch tại cao nguyên Jalisco, ủ ít nhất hai năm rưỡi trong thùng sồi trắng Mỹ.",
     ingredients: ["100% Blue Weber Agave Tequila 1942", "Đá khối hoặc uống Neat"],
@@ -503,12 +542,13 @@ export const SEED_DRINKS = [
     rating: 5.0,
     stock: 10,
     abv: 38,
+    servingMl: 30,
   }),
   new Drink({
     id: "d27",
     name: "Monkey 47 Schwarzwald Dry Gin",
     category: "spirits",
-    price: 195000,
+    price: 290000,
     image: "img/drinks/monkey-47.jpg",
     description: "Dòng Gin thủ công nổi tiếng từ Rừng Đen nước Đức: Chưng cất cùng 47 loại thảo mộc quý hiếm, quả nam việt quất và nguồn nước suối rừng sâu nguyên sơ.",
     ingredients: ["Monkey 47 Dry Gin", "Tonic Fever-Tree cao cấp", "Vỏ bưởi và quả việt quất"],
@@ -519,12 +559,13 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 15,
     abv: 47,
+    servingMl: 30,
   }),
   new Drink({
     id: "d28",
     name: "Bulleit Bourbon Frontier 10Y",
     category: "spirits",
-    price: 180000,
+    price: 220000,
     image: "img/drinks/bulleit-bourbon.jpg",
     description: "Dòng Bourbon Kentucky mang đậm tinh thần miền viễn Tây nước Mỹ: Tỷ lệ lúa mạch đen Rye cao độc đáo, ủ 10 năm trong thùng gỗ sồi Mỹ đốt than bề mặt số 4.",
     ingredients: ["Bulleit 10-Year Kentucky Bourbon", "Khối đá vuông điêu khắc"],
@@ -535,12 +576,13 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 18,
     abv: 45,
+    servingMl: 30,
   }),
   new Drink({
     id: "d29",
     name: "Diplomático Reserva Exclusiva Rum",
     category: "spirits",
-    price: 175000,
+    price: 190000,
     image: "img/drinks/diplomatico-rum.jpg",
     description: "Dòng Dark Rum thượng hạng từ Venezuela: Chưng cất trong nồi đồng cổ truyền và ủ tới 12 năm trong thùng gỗ sồi, hương vị ngọt ngào như bản giao hưởng caramel và chuối chín.",
     ingredients: ["Diplomático Reserva Exclusiva Rum", "Vỏ cam cháy", "Khối đá pha lê"],
@@ -551,6 +593,7 @@ export const SEED_DRINKS = [
     rating: 4.9,
     stock: 16,
     abv: 40,
+    servingMl: 30,
   }),
   new Drink({
     id: "d30",
@@ -567,6 +610,50 @@ export const SEED_DRINKS = [
     rating: 4.8,
     stock: 25,
     abv: 25,
+  }),
+
+  /* ----- Mocktail không cồn (abv = 0): cho khách lái xe / không uống rượu ----- */
+  new Drink({
+    id: "d31",
+    name: "Virgin Mojito Garden",
+    category: "zero-proof",
+    price: 75000,
+    description: "Phiên bản không cồn của Mojito: bạc hà tươi giã nhẹ, chanh xanh, đường mía và soda lạnh - sảng khoái mà vẫn tỉnh táo cầm lái.",
+    ingredients: ["Lá bạc hà tươi", "Chanh xanh", "Đường mía", "Soda", "Đá tuyết"],
+    baseSpirit: "Không cồn",
+    glassType: "Highball",
+    tasteNotes: ["Bạc hà mát", "Chua thanh", "Sủi bọt"],
+    rating: 4.7,
+    stock: 30,
+    abv: 0,
+  }),
+  new Drink({
+    id: "d32",
+    name: "Seedlip Garden Tonic",
+    category: "zero-proof",
+    price: 95000,
+    description: "Rượu thảo mộc chưng cất KHÔNG cồn Seedlip Garden 108 với tonic, dưa leo và hương thảo - trải nghiệm như một ly Gin & Tonic thực thụ.",
+    ingredients: ["Seedlip Garden 108 (0% cồn)", "Tonic", "Dưa leo", "Hương thảo"],
+    baseSpirit: "Seedlip Garden 108 (không cồn)",
+    glassType: "Copa Balloon",
+    tasteNotes: ["Thảo mộc xanh", "Đắng nhẹ", "Thanh mát"],
+    rating: 4.8,
+    stock: 20,
+    abv: 0,
+  }),
+  new Drink({
+    id: "d33",
+    name: "Saigon Passion Cooler",
+    category: "zero-proof",
+    price: 80000,
+    description: "Chanh dây chín, siro sả nhà làm, lá chanh và soda - hương vị nhiệt đới Sài Gòn trong một ly không cồn.",
+    ingredients: ["Chanh dây", "Siro sả nhà làm", "Lá chanh", "Soda"],
+    baseSpirit: "Không cồn",
+    glassType: "Collins",
+    tasteNotes: ["Chua ngọt nhiệt đới", "Thơm sả", "Sảng khoái"],
+    rating: 4.7,
+    stock: 25,
+    abv: 0,
   }),
 ];
 
@@ -642,7 +729,7 @@ export function filterDrinks(drinks, opts = {}) {
   list = list.filter((d) => d.price >= minPrice && d.price <= maxPrice);
 
   if (onlyAvailable) {
-    list = list.filter((d) => d.status === "available" && d.stock > 0);
+    list = list.filter((d) => !isSoldOut(d));
   }
 
   const sorters = {
@@ -674,23 +761,66 @@ export async function getFeaturedDrinks(limit = 4) {
 
 /* ---------------- Tồn kho ---------------- */
 
+/** Còn từ ngần này ly trở xuống thì cảnh báo "Sắp hết" để quản lý nhập thêm */
+export const LOW_STOCK_THRESHOLD = 5;
+
+/** Mức tồn kho của một món: "out" (hết) | "low" (sắp hết) | "ok" */
+export function stockLevel(drink) {
+  if (!tracksStock(drink)) return "na"; // món pha chế: không theo dõi tồn kho
+  const stock = Number(drink.stock) || 0;
+  if (stock <= 0) return "out";
+  if (stock <= LOW_STOCK_THRESHOLD) return "low";
+  return "ok";
+}
+
+/**
+ * Phần tồn kho / trạng thái cần gửi lên máy chủ khi quản lý lưu form sửa món.
+ * Form được điền lúc MỞ, còn lúc bấm Lưu có thể khách đã đặt thêm (kho đã giảm). Nếu cứ gửi
+ * lại số tồn kho cũ trong form thì ghi đè mất các ly vừa bán (kho tự "mọc" thêm ly).
+ * Vì vậy chỉ gửi trường nào quản lý THỰC SỰ đổi so với bản lúc mở form.
+ *
+ * Luật: kho 0 -> bắt buộc "soldout"; nhập thêm hàng cho món đang hết mà quản lý không chủ động
+ * chọn trạng thái khác -> tự mở bán lại ("available").
+ * @param {{stock: number, status: string}} original bản ghi lúc mở form
+ * @returns {{stock?: number, status?: string}} chỉ gồm các trường cần cập nhật
+ */
+export function stockPatch(original, formStock, formStatus) {
+  const patch = {};
+  const stockChanged = formStock !== (Number(original.stock) || 0);
+  if (stockChanged) patch.stock = formStock;
+
+  let status = formStatus;
+  if (formStock === 0) status = "soldout";
+  else if (stockChanged && (Number(original.stock) || 0) === 0 && formStatus === original.status && original.status === "soldout") {
+    status = "available";
+  }
+  if (status !== original.status) patch.status = status;
+  return patch;
+}
+
 /** Món còn đủ tồn kho để bán "qty" ly hay không (đọc số liệu mới nhất từ API) */
 export async function hasEnoughStock(id, qty = 1) {
   const drink = await getDrinkById(id);
-  return Boolean(drink) && drink.status === "available" && drink.stock >= qty;
+  return Boolean(drink) && !isSoldOut(drink) && availableQty(drink) >= qty;
 }
 
 /**
  * Cộng/trừ tồn kho một món (delta âm = bán ra, delta dương = hoàn lại
- * khi đơn bị huỷ). Tự đồng bộ status: hết hàng (<=0) thì "soldout",
- * có hàng trở lại thì mở bán lại. Quản trị viên vẫn có thể tạm ẩn món
- * qua form Sửa - lựa chọn thủ công đó bị ghi đè ở lần adjustStock() kế tiếp.
+ * khi đơn bị huỷ). Tự đồng bộ status:
+ * - về 0 ly                        -> "soldout" (hết hàng)
+ * - đang 0 ly mà có hàng trở lại   -> "available" (mở bán lại)
+ * - còn lại GIỮ NGUYÊN status: món quản lý chủ động "Tạm ngưng" (VD hết
+ *   lá basil tươi) thì hoàn kho cũng không tự mở bán lại.
  */
 export async function adjustStock(id, delta) {
   const drink = await getDrinkById(id);
   if (!drink) return null;
+  if (!tracksStock(drink)) return drink; // món pha chế: không có tồn kho để cộng/trừ
 
-  const stock = Math.max(0, (Number(drink.stock) || 0) + delta);
-  const status = stock > 0 ? "available" : "soldout";
+  const oldStock = Number(drink.stock) || 0;
+  const stock = Math.max(0, oldStock + delta);
+  let status = drink.status;
+  if (stock === 0) status = "soldout";
+  else if (oldStock === 0) status = "available";
   return updateDrink(id, { stock, status });
 }

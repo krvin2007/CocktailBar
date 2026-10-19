@@ -4,6 +4,8 @@
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
+import { currentAdmin } from "../modules/auth.js";
+import { passwordProblem } from "../modules/passwords.js";
 import {
   getAllStaff, filterStaff, addStaff, updateStaff, deleteStaff,
   isPhoneTaken, isUsernameTaken, isEmailTaken, generateStaffCode,
@@ -34,6 +36,9 @@ const submitBtn = document.getElementById("staff-form-submit");
 /** Danh sách nhân viên tải từ API - tải lại sau mỗi lần thêm/sửa/xoá */
 let allStaff = [];
 let currentPage = 1;
+
+/** Màu huy hiệu theo trạng thái tài khoản */
+const STATUS_BADGE = { active: "badge-success", pending: "badge-warning", inactive: "badge-muted" };
 
 function fillSelects() {
   Object.entries(STAFF_ROLES).forEach(([value, label]) => {
@@ -70,14 +75,16 @@ function rowHtml(s) {
         <div class="text-xs">Thâm niên: ${s.seniorityLabel}</div>
       </td>
       <td>
-        <span class="badge ${s.isActive ? "badge-success" : "badge-muted"}">
+        <span class="badge ${STATUS_BADGE[s.status] || "badge-muted"}">
           ${s.statusLabel}
         </span>
       </td>
       <td class="cell-actions" style="text-align: right; white-space: nowrap;">
-        <button type="button" class="btn btn-ghost btn-sm" data-action="toggle-status" title="${s.isActive ? "Tạm khóa tài khoản" : "Kích hoạt lại tài khoản"}">
+        ${s.isPending
+    ? `<button type="button" class="btn btn-primary btn-sm" data-action="approve" title="Duyệt tài khoản tự đăng ký">Duyệt</button>`
+    : `<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-status" title="${s.isActive ? "Tạm khóa tài khoản" : "Kích hoạt lại tài khoản"}">
           ${s.isActive ? "Khóa" : "Mở"}
-        </button>
+        </button>`}
         <button type="button" class="btn btn-ghost btn-sm" data-action="edit" title="Chỉnh sửa">${ICONS.edit(14)} Sửa</button>
         <button type="button" class="btn btn-danger btn-sm" data-action="delete" title="Xoá nhân sự">${ICONS.trash(14)} Xoá</button>
       </td>
@@ -116,11 +123,11 @@ function openForCreate() {
 
   // Tạo mới -> Bắt buộc nhập mật khẩu an toàn
   if (formPasswordInput) {
-    formPasswordInput.dataset.rule = "required|min:8|max:32";
-    formPasswordInput.placeholder = "Tối thiểu 8 ký tự, gồm hoa, thường, số, ký tự đặc biệt";
+    formPasswordInput.dataset.rule = "required|password";
+    formPasswordInput.placeholder = "Tối thiểu 8 ký tự, chữ đầu viết hoa, có ký tự đặc biệt";
   }
   if (formPasswordReq) formPasswordReq.hidden = false;
-  if (formPasswordHint) formPasswordHint.textContent = "Mật khẩu tạo mới: Bắt buộc từ 8-32 ký tự, đủ hoa, thường, số, ký tự đặc biệt.";
+  if (formPasswordHint) formPasswordHint.textContent = "Mật khẩu tạo mới: ít nhất 8 ký tự, chữ cái đầu viết hoa, có ít nhất 1 ký tự đặc biệt.";
 
   modalTitle.textContent = "Tiếp nhận nhân sự mới";
   openModal("staff-modal");
@@ -153,7 +160,14 @@ function openForEdit(staff) {
   openModal("staff-modal");
 }
 
+/** Hồ sơ này có phải chính người đang đăng nhập không (admin gốc không có hồ sơ nhân sự nên luôn là false) */
+const isSelf = (staff) => Boolean(currentAdmin()?.staffId) && currentAdmin().staffId === staff.id;
+
 async function handleToggleStatus(staff) {
+  if (isSelf(staff)) {
+    toast("Bạn không thể tự khoá tài khoản của chính mình.", "error");
+    return;
+  }
   const newStatus = staff.isActive ? "inactive" : "active";
   const actionText = staff.isActive ? "tạm khóa tài khoản & đình chỉ" : "kích hoạt lại tài khoản cho";
 
@@ -172,7 +186,28 @@ async function handleToggleStatus(staff) {
   }
 }
 
+/** Duyệt tài khoản nhân viên tự đăng ký: Chờ duyệt -> Đang công tác (đăng nhập được) */
+async function handleApprove(staff) {
+  const ok = await confirmDialog(
+    `Duyệt tài khoản "${staff.username}" của ${staff.name} - vị trí ${staff.roleLabel}? Sau khi duyệt, nhân viên này đăng nhập được khu quản trị.`,
+    { title: "Duyệt tài khoản nhân sự", okText: "Duyệt" },
+  );
+  if (!ok) return;
+
+  try {
+    await updateStaff(staff.id, { status: "active" });
+    toast(`Đã duyệt tài khoản "${staff.name}".`, "success");
+    await reloadTable();
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
 async function handleDelete(staff) {
+  if (isSelf(staff)) {
+    toast("Bạn không thể tự xoá hồ sơ của chính mình.", "error");
+    return;
+  }
   const ok = await confirmDialog(`Xác nhận xoá nhân viên "${staff.name}" (${staff.displayStaffCode}) khỏi danh sách nhân sự?`, {
     title: "Xoá hồ sơ nhân viên",
     okText: "Xác nhận xoá",
@@ -197,6 +232,7 @@ bodyEl.addEventListener("click", (e) => {
   if (btn.dataset.action === "edit") openForEdit(staff);
   if (btn.dataset.action === "delete") handleDelete(staff);
   if (btn.dataset.action === "toggle-status") handleToggleStatus(staff);
+  if (btn.dataset.action === "approve") handleApprove(staff);
 });
 
 formEl.addEventListener("submit", async (e) => {
@@ -235,13 +271,18 @@ formEl.addEventListener("submit", async (e) => {
     formPasswordInput.focus();
     return;
   }
-  if (rawPassword && rawPassword.length < 8) {
-    setFieldError(formPasswordInput, "Mật khẩu phải có tối thiểu 8 ký tự");
+  if (rawPassword && passwordProblem(rawPassword)) {
+    setFieldError(formPasswordInput, passwordProblem(rawPassword));
     formPasswordInput.focus();
     return;
   }
 
   const existingStaff = staffId ? allStaff.find((s) => s.id === staffId) : null;
+  // Tự đổi vai trò / khoá mình sẽ làm mất quyền ngay giữa chừng (hoặc không ai còn quyền quản lý)
+  if (existingStaff && isSelf(existingStaff) && (data.role !== existingStaff.role || data.status !== existingStaff.status)) {
+    toast("Bạn không thể tự đổi vai trò hoặc trạng thái của chính mình.", "error");
+    return;
+  }
   const staffCode = data.staffCode || (existingStaff ? existingStaff.displayStaffCode : generateStaffCode(allStaff));
 
   const payload = {
@@ -300,19 +341,22 @@ function bindPasswordToggles() {
   if (genBtn && formPasswordInput) {
     genBtn.addEventListener("click", () => {
       // Sinh mật khẩu mạnh ngẫu nhiên: chữ hoa + chữ thường + số + ký tự đặc biệt
+      // Dùng crypto.getRandomValues (bộ sinh số ngẫu nhiên an toàn) thay cho Math.random(),
+      // rồi xáo trộn để vị trí chữ hoa/số/ký tự đặc biệt không theo một khuôn cố định
       const charsUpper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
       const charsLower = "abcdefghijkmnpqrstuvwxyz";
       const charsNum = "23456789";
       const charsSpec = "@#$%&*!";
-      let pw = "";
-      pw += charsUpper[Math.floor(Math.random() * charsUpper.length)];
-      pw += charsLower[Math.floor(Math.random() * charsLower.length)];
-      pw += charsLower[Math.floor(Math.random() * charsLower.length)];
-      pw += charsSpec[Math.floor(Math.random() * charsSpec.length)];
-      pw += charsNum[Math.floor(Math.random() * charsNum.length)];
-      pw += charsNum[Math.floor(Math.random() * charsNum.length)];
-      pw += charsNum[Math.floor(Math.random() * charsNum.length)];
-      pw += charsUpper[Math.floor(Math.random() * charsUpper.length)];
+      const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+      const pick = (chars) => chars[rand(chars.length)];
+      // Chữ cái ĐẦU luôn là chữ hoa (đúng luật mật khẩu); phần còn lại xáo trộn
+      const rest = [pick(charsUpper), pick(charsLower), pick(charsLower), pick(charsLower), pick(charsLower),
+        pick(charsNum), pick(charsNum), pick(charsNum), pick(charsSpec), pick(charsSpec), pick(charsLower)];
+      for (let i = rest.length - 1; i > 0; i--) {
+        const j = rand(i + 1);
+        [rest[i], rest[j]] = [rest[j], rest[i]];
+      }
+      const pw = pick(charsUpper) + rest.join("");
       formPasswordInput.type = "text";
       formPasswordInput.value = pw;
       toast(`Đã tạo mật khẩu ngẫu nhiên: ${pw}`, "info");

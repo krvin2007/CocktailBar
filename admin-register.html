@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0907">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
 <title>Đăng ký tài khoản nhân sự — Quán Bar Đêm</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +25,10 @@
       </div>
       <h2 class="auth-title">Đăng Ký Tài Khoản Nhân Sự</h2>
       <p class="auth-subtitle">Cổng đăng ký &amp; cấp quyền nhân viên vào hệ thống điều hành nội bộ</p>
+    <div class="auth-notice-box mt-2 mb-3 text-center" style="background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 8px; padding: 12px 16px;">
+      <p style="margin: 0; font-size: 0.85rem; color: var(--gold-light); line-height: 1.5;">
+        <strong>🔒 Lưu ý bảo mật:</strong> Theo chính sách quán bar, tài khoản nhân viên được khởi tạo và cấp quyền trực tiếp bởi <strong>Quản trị viên (Admin)</strong> trong khu vực nội bộ (<a href="admin-staff.html" style="color: var(--gold-primary); text-decoration: underline; font-weight: 600;">Quản lý nhân viên</a>) sau khi đăng nhập.
+      </p>
     </div>
 
     <form id="register-form" class="mt-2" novalidate>
@@ -59,8 +66,8 @@
             <option value="bartender">Pha chế (Bartender)</option>
             <option value="cashier">Thu ngân (Cashier)</option>
             <option value="waiter">Phục vụ (Server/Waiter)</option>
-            <option value="manager">Quản lý ca (Shift Manager)</option>
           </select>
+          <small class="text-xs text-muted" style="display:block; margin-top: 4px;">Tài khoản Quản lý do quản lý cấp trực tiếp. Tài khoản đăng ký mới cần được quản lý duyệt trước khi đăng nhập.</small>
         </div>
 
         <div class="form-group">
@@ -80,7 +87,7 @@
         <div class="form-group full">
           <label>Mật khẩu xác thực <span class="req">*</span></label>
           <div class="pw-input-wrap">
-            <input type="password" name="password" id="reg-password" data-rule="required|min:8|max:32|strongPassword" placeholder="Tối thiểu 8 ký tự, gồm hoa, thường, số, ký tự đặc biệt" autocomplete="new-password">
+            <input type="password" name="password" id="reg-password" data-rule="required|password" placeholder="Tối thiểu 8 ký tự, chữ đầu viết hoa, có ký tự đặc biệt" autocomplete="new-password">
             <button type="button" class="pw-toggle-btn" data-target="reg-password" aria-label="Hiện hoặc ẩn mật khẩu">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
@@ -101,17 +108,9 @@
               </div>
               <div class="strength-check-item" id="chk-upper">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Ít nhất 1 chữ hoa (A-Z)</span>
+                <span>Chữ cái đầu tiên viết hoa</span>
               </div>
-              <div class="strength-check-item" id="chk-lower">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Ít nhất 1 chữ thường (a-z)</span>
-              </div>
-              <div class="strength-check-item" id="chk-num">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Ít nhất 1 chữ số (0-9)</span>
-              </div>
-              <div class="strength-check-item" id="chk-spec" style="grid-column: span 2;">
+              <div class="strength-check-item" id="chk-spec">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                 <span>Ký tự đặc biệt (!@#$%^&amp;*...)</span>
               </div>
@@ -145,8 +144,8 @@
 
     <div class="text-center mt-3" style="display: flex; flex-direction: column; gap: 10px;">
       <div>
-        <span class="text-xs text-muted">Đã được cấp tài khoản làm việc? </span>
-        <a href="admin-login.html" class="auth-nav-link">Đăng nhập hệ thống ngay</a>
+        <span class="text-xs text-muted">Đã có tài khoản? </span>
+        <a href="customer-auth.html" class="auth-nav-link">Đăng nhập</a>
       </div>
       <div>
         <a href="index.html" class="auth-back">

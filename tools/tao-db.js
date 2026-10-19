@@ -30,6 +30,10 @@ const modulePath = (name) => new URL(`../js/modules/${name}`, import.meta.url).h
 const { SEED_DRINKS } = await import(modulePath("drinksService.js"));
 const { SEED_ORDERS } = await import(modulePath("ordersService.js"));
 const { SEED_STAFF } = await import(modulePath("staffService.js"));
+const { SEED_CUSTOMERS } = await import(modulePath("customerAuth.js"));
+const { SEED_VOUCHERS } = await import(modulePath("vouchersService.js"));
+const { hashPassword } = await import(modulePath("passwords.js"));
+const { DEFAULT_SETTINGS } = await import(modulePath("settingsService.js"));
 const { SPIRITS_COLLECTION } = await import(modulePath("spiritsData.js"));
 const { BARTENDERS_COLLECTION } = await import(modulePath("bartendersData.js"));
 const { COLLECTORS_COLLECTION } = await import(modulePath("collectorsData.js"));
@@ -37,20 +41,28 @@ const { COLLECTORS_COLLECTION } = await import(modulePath("collectorsData.js"));
 // JSON.parse(JSON.stringify(...)) biến các instance class Drink thành object thuần
 const plain = (data) => JSON.parse(JSON.stringify(data));
 
+// db.json không chứa mật khẩu chữ thường: băm mật khẩu mẫu (mật khẩu demo vẫn ghi trong README)
+const withHashedPassword = (list) => list.map((row) => ({ ...row, password: hashPassword(row.password) }));
+
 const db = {
   drinks: plain(SEED_DRINKS),
   orders: plain(SEED_ORDERS),
-  staff: plain(SEED_STAFF),
+  staff: withHashedPassword(plain(SEED_STAFF)),
+  customers: withHashedPassword(plain(SEED_CUSTOMERS)), // thiếu bảng này thì đăng ký/đăng nhập khách và tích điểm đều hỏng
+  vouchers: plain(SEED_VOUCHERS),
   messages: [],
   spirits: plain(SPIRITS_COLLECTION),
   bartenders: plain(BARTENDERS_COLLECTION),
   collectors: plain(COLLECTORS_COLLECTION),
+  // Object (không phải mảng): json-server phục vụ tại GET/PATCH /settings
+  settings: plain(DEFAULT_SETTINGS),
 };
 
 const target = path.join(ROOT, "db.json");
 fs.writeFileSync(target, JSON.stringify(db, null, 2) + "\n", "utf8");
 
 console.log(`Đã tạo ${path.relative(ROOT, target)} (nếu json-server đang chạy, hãy khởi động lại):`);
-Object.entries(db).forEach(([name, list]) => {
-  console.log(`  /${name.padEnd(11)} ${String(list.length).padStart(3)} bản ghi`);
+Object.entries(db).forEach(([name, data]) => {
+  const size = Array.isArray(data) ? `${String(data.length).padStart(3)} bản ghi` : "  1 object cấu hình";
+  console.log(`  /${name.padEnd(11)} ${size}`);
 });

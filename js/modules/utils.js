@@ -31,6 +31,18 @@ export function formatDateTime(isoString) {
 }
 
 /** Trì hoãn gọi hàm cho đến khi người dùng ngừng gõ (dùng cho ô tìm kiếm) */
+/**
+ * Chuẩn hoá số điện thoại Việt Nam về dạng 0xxxxxxxxx: bỏ khoảng trắng/dấu chấm/gạch,
+ * đổi đầu số quốc tế (+84 / 84) về 0. Nhờ vậy cùng một người nhập "+84 912 345 678"
+ * hay "0912.345.678" thì hệ thống vẫn nhận ra là một số (tra cứu đơn, đăng nhập, chống trùng).
+ */
+export function normalizePhone(value = "") {
+  let phone = String(value).replace(/[\s.\-()]/g, "");
+  if (phone.startsWith("+84")) phone = "0" + phone.slice(3);
+  else if (/^84\d{9}$/.test(phone)) phone = "0" + phone.slice(2);
+  return phone;
+}
+
 export function debounce(fn, delay = 300) {
   let timer = null;
   return (...args) => {

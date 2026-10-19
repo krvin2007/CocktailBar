@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0907">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
+<title>Mã giảm giá — Quán Bar Đêm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside id="admin-sidebar"></aside>
+
+  <div class="admin-main">
+    <button type="button" class="admin-sidebar-toggle" id="admin-sidebar-toggle" aria-label="Mở menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div id="admin-topbar"></div>
+
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="filters">
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="f-keyword" placeholder="Tìm theo mã, mô tả...">
+          </div>
+          <select id="f-status">
+            <option value="all">Tất cả trạng thái</option>
+            <option value="live">Đang dùng được</option>
+            <option value="off">Đã tắt</option>
+            <option value="expired">Hết hạn / hết lượt</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="add-voucher-btn">+ Tạo mã giảm giá</button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mã</th>
+            <th>Ưu đãi</th>
+            <th>Điều kiện</th>
+            <th>Hạn dùng</th>
+            <th>Đã dùng</th>
+            <th>Trạng thái</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="vouchers-body"></tbody>
+      </table>
+
+      <div class="table-pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- Modal thêm / sửa mã ---------- -->
+<div class="modal-overlay" id="voucher-modal" hidden>
+  <div class="modal-box modal-wide">
+    <div class="modal-head">
+      <h3 id="voucher-modal-title">Tạo mã giảm giá</h3>
+      <button type="button" class="modal-close-x" id="voucher-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+    <form id="voucher-form" novalidate>
+      <input type="hidden" name="id">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Mã giảm giá <span class="req">*</span></label>
+          <input type="text" name="code" data-rule="required|min:3|max:20" placeholder="VD: HAPPY20" style="text-transform: uppercase;">
+        </div>
+        <div class="form-group">
+          <label>Loại ưu đãi <span class="req">*</span></label>
+          <select name="type" id="voucher-type" data-rule="required"></select>
+        </div>
+        <div class="form-group">
+          <label id="voucher-value-label">Giá trị giảm <span class="req">*</span></label>
+          <input type="number" name="value" data-rule="required|positive" min="1" step="1" placeholder="VD: 10">
+        </div>
+        <div class="form-group" id="voucher-cap-group">
+          <label>Trần giảm tối đa (VNĐ)</label>
+          <input type="number" name="maxDiscount" data-rule="integer|minval:0" min="0" step="1000" value="0" placeholder="0 = không giới hạn">
+        </div>
+        <div class="form-group">
+          <label>Đơn tối thiểu (VNĐ)</label>
+          <input type="number" name="minOrder" data-rule="integer|minval:0" min="0" step="1000" value="0" placeholder="0 = mọi đơn">
+        </div>
+        <div class="form-group">
+          <label>Số lượt dùng tối đa</label>
+          <input type="number" name="usageLimit" data-rule="integer|minval:0" min="0" step="1" value="0" placeholder="0 = không giới hạn">
+        </div>
+        <div class="form-group">
+          <label>Hạn dùng (hết ngày này)</label>
+          <input type="date" name="expiresAt" data-rule="date">
+        </div>
+        <div class="form-group" style="justify-content: flex-end; align-self: center;">
+          <label class="filter-checkbox-custom">
+            <input type="checkbox" name="active" checked>
+            <span class="checkbox-box"></span>
+            <span class="checkbox-label">Đang bật (khách dùng được)</span>
+          </label>
+        </div>
+        <div class="form-group full">
+          <label>Mô tả hiển thị cho khách</label>
+          <input type="text" name="description" data-rule="max:160" placeholder="VD: Giảm 10% cho đơn từ 200.000đ">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="voucher-form-cancel">Huỷ</button>
+        <button type="submit" class="btn btn-primary" id="voucher-form-submit">Lưu mã giảm giá</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/admin-vouchers.js"></script>
+</body>
+</html>

@@ -66,17 +66,27 @@
     flex-direction: column;
     align-items: stretch;
     gap: 0;
-    padding: 12px 20px 24px;
+    /* Khi ĐÓNG: không padding/viền/bóng + ẩn hẳn (visibility). Trước đây
+       padding 12px + 24px vẫn hiện một dải 37px lộ chữ "Trang chủ" dưới
+       header, và link ẩn vẫn bấm/Tab tới được. */
+    padding: 0 20px;
     background: rgba(11, 9, 7, 0.98);
-    border-bottom: 1px solid var(--border-soft);
+    border-bottom: 0 solid var(--border-soft);
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7);
+    visibility: hidden;
+    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease, visibility 0s linear 0.3s;
   }
 
   .main-nav.open {
-    max-height: 480px;
+    max-height: 480px;                 /* trình duyệt cũ không hiểu dvh dùng giá trị này */
+    max-height: calc(100dvh - 70px);   /* điện thoại xoay ngang vẫn cuộn được hết menu */
+    overflow-y: auto;
+    padding: 12px 20px 24px;
+    border-bottom-width: 1px;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7);
+    visibility: visible;
+    transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease, visibility 0s;
   }
 
   .main-nav ul {
@@ -282,5 +292,186 @@
 
   .auth-card {
     padding: 32px 20px;
+  }
+}
+
+/* =========================================================
+   TƯƠNG THÍCH MỌI THIẾT BỊ
+   Các lỗi đo được khi kiểm tra ở 320 / 375 / 390 / 768 / 1024 /
+   1440 / 1920px và điện thoại xoay ngang. File này nạp CUỐI CÙNG
+   ở mọi trang nên các quy tắc dưới đây ghi đè được style gốc.
+   ========================================================= */
+
+/* --- Lưới bố cục: dùng minmax(0, 1fr) thay vì 1fr ---
+   "1fr" = minmax(auto, 1fr): cột không chịu nhỏ hơn nội dung rộng nhất
+   bên trong -> trang Đặt món ở 320px bị đẩy rộng 352px, mất nút xoá món. */
+@media (max-width: 1024px) {
+  .about-grid,
+  .detail-grid,
+  .order-layout,
+  .contact-layout,
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.order-layout > *,
+.detail-grid > *,
+.contact-layout > * {
+  min-width: 0;
+}
+
+.cart-header {
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+/* --- Sơ đồ 3D trên trang chủ --- */
+.lounge-zone-strip {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 992px) {
+  .lounge3d-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lounge-zone-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .lounge-zone-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lounge-mode-switch {
+    flex-wrap: wrap;
+    max-width: calc(100% - 32px);
+    border-radius: 16px;
+  }
+}
+
+/* --- Chân thẻ Master Bartenders / Nhà sưu tầm: 2 nút tự xuống dòng --- */
+.legend-card-foot {
+  flex-wrap: wrap;
+}
+.legend-card-foot .btn {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+/* --- Bảng quản trị: cuộn ngang thay vì cắt mất cột thao tác ---
+   Trước đây chỉ cuộn được ở <= 640px; tablet 768px bị .table-wrap
+   (overflow: hidden) cắt mất cột "Sửa / Xoá / Chi tiết". */
+@media (max-width: 1280px) {
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 860px) {
+  .admin-topbar,
+  .admin-topbar-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+/* --- Thông báo toast vừa màn hình điện thoại --- */
+@media (max-width: 480px) {
+  .toast-host {
+    left: 12px;
+    right: 12px;
+  }
+  .toast-item {
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+/* --- Thiết bị cảm ứng ---
+   Ô nhập nhỏ hơn 16px khiến iPhone tự phóng to trang mỗi khi chạm vào. */
+@media (max-width: 860px), (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* --- iPhone có tai thỏ / thanh home (cần viewport-fit=cover trong meta viewport) --- */
+@supports (padding: env(safe-area-inset-left)) {
+  /* Giữ padding gốc, chỉ nới ra khi tai thỏ chiếm chỗ (điện thoại xoay ngang) */
+  .header-inner {
+    padding-left: max(clamp(20px, 3vw, 56px), env(safe-area-inset-left));
+    padding-right: max(clamp(20px, 3vw, 56px), env(safe-area-inset-right));
+  }
+  .toast-host {
+    top: max(24px, env(safe-area-inset-top));
+  }
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* --- Điện thoại rất nhỏ (iPhone SE, Galaxy Fold...) --- */
+@media (max-width: 380px) {
+  .header-inner {
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+    gap: 10px;
+  }
+  .brand {
+    gap: 8px;
+  }
+  .brand-title {
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+  .brand-subtitle {
+    display: none;
+  }
+  .header-mobile-tools {
+    gap: 6px;
+  }
+  .lang-toggle-btn {
+    padding: 2px 6px;
+  }
+}
+
+/* --- Gợi ý trên sơ đồ 3D + nút lật trang sách menu không tràn mép --- */
+.lounge3d-hint {
+  max-width: calc(100% - 24px);
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .book-controls-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  .book-nav-btn {
+    padding: 8px 14px;
+  }
+}
+
+/* Email / chuỗi dài không dấu cách (VD reservation@quanbardem.vn) được ngắt dòng */
+.info-content,
+.info-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Nút có chữ dài (VD "Tham Quan Phòng Trưng Bày Rượu") được xuống dòng trên điện thoại */
+@media (max-width: 480px) {
+  .btn {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
   }
 }

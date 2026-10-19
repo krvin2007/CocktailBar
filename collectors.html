@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0907">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
 <title>Nhà Sưu Tầm Rượu Lừng Danh &amp; Hầm Bí Mật — Quán Bar Đêm</title>
 <meta name="description" content="Khám phá các hầm rượu bọc thép, bộ sưu tập triệu đô và báu vật vô giá của những nhà sưu tầm rượu vĩ đại: Richard Gooding, Michel-Jack Chasseuil, Valentino Zagatti...">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,28 +26,28 @@
   <section class="legends-hero">
     <div class="container">
       <div class="legends-hero-inner">
-        <span class="section-kicker">NGƯỜI LƯU GIỮ LỊCH SỬ RƯỢU</span>
-        <h1>Nhà Sưu Tầm Rượu Lừng Danh &amp; <em>Hầm Bí Mật</em></h1>
-        <p class="legends-hero-desc">
+        <span class="section-kicker" data-i18n="col_kicker">NGƯỜI LƯU GIỮ LỊCH SỬ RƯỢU</span>
+        <h1 data-i18n-html="col_h1_html">Nhà Sưu Tầm Rượu Lừng Danh &amp; <em>Hầm Bí Mật</em></h1>
+        <p class="legends-hero-desc" data-i18n="col_desc">
           Bước vào những thánh đường riêng tư và hầm ngầm bọc thép của các nhà sưu tầm vĩ đại—những người đã giải cứu các thùng ủ từ lò chưng cất đã đóng cửa, dòng Cognac trước Cách mạng Pháp và những tuyệt tác Single Malt huyền thoại.
         </p>
 
         <div class="legends-stats-strip">
           <div class="legends-stat-item">
             <span class="legends-stat-num">5</span>
-            <span class="legends-stat-label">Bậc Thầy Sưu Tầm</span>
+            <span class="legends-stat-label" data-i18n="col_stat1">Bậc Thầy Sưu Tầm</span>
           </div>
           <div class="legends-stat-item">
             <span class="legends-stat-num">65,000+</span>
-            <span class="legends-stat-label">Chai Rượu Lưu Giữ</span>
+            <span class="legends-stat-label" data-i18n="col_stat2">Chai Rượu Lưu Giữ</span>
           </div>
           <div class="legends-stat-item">
             <span class="legends-stat-num">$100M+</span>
-            <span class="legends-stat-label">Giá Trị Di Sản</span>
+            <span class="legends-stat-label" data-i18n="col_stat3">Giá Trị Di Sản</span>
           </div>
           <div class="legends-stat-item">
             <span class="legends-stat-num">1780</span>
-            <span class="legends-stat-label">Niên Đại Cổ Nhất</span>
+            <span class="legends-stat-label" data-i18n="col_stat4">Niên Đại Cổ Nhất</span>
           </div>
         </div>
       </div>
@@ -60,7 +63,7 @@
             <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input type="text" id="collectors-search-input" placeholder="Tìm kiếm nhà sưu tầm, hầm rượu, kiệt tác (Macallan 1926, Yquem 1811, Karuizawa)...">
+            <input type="text" id="collectors-search-input" placeholder="Tìm kiếm nhà sưu tầm, hầm rượu, kiệt tác (Macallan 1926, Yquem 1811, Karuizawa)..." data-i18n-placeholder="col_search_ph">
           </div>
           <div class="legends-count-badge" id="collectors-count">
             Đang tải dữ liệu hầm rượu sưu tầm...
@@ -76,16 +79,16 @@
       <!-- Cross-Navigation Banner -->
       <div class="cross-nav-strip">
         <div class="cross-nav-info">
-          <h3>Hội Ngộ Những Master Bartenders Huyền Thoại</h3>
-          <p>
+          <h3 data-i18n="col_cross_title">Hội Ngộ Những Master Bartenders Huyền Thoại</h3>
+          <p data-i18n="col_cross_desc">
             Khám phá chân dung những người đứng sau quầy bar đã sáng tạo nên các món cocktail chúng ta thưởng thức ngày nay, từ Ada Coleman, Harry Craddock đến Salvatore Calabrese và Dale DeGroff.
           </p>
         </div>
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <a href="bartenders.html" class="btn btn-primary btn-sm">
+          <a href="bartenders.html" class="btn btn-primary btn-sm" data-i18n="col_cross_btn_bt">
             Xem Master Bartenders 🍸
           </a>
-          <a href="spirits.html" class="btn btn-outline btn-sm">
+          <a href="spirits.html" class="btn btn-outline btn-sm" data-i18n="legends_btn_spirits">
             Khám Phá Hầm Rượu 🥃
           </a>
         </div>
@@ -112,14 +115,14 @@
 
       <div>
         <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
-          Hành Trình Sưu Tầm &amp; Giai Thoại Đời Người
+          <span data-i18n="col_modal_bio">Hành Trình Sưu Tầm &amp; Giai Thoại Đời Người</span>
         </h3>
         <div id="modal-bio"></div>
       </div>
 
       <div>
         <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
-          Báu Vật Độc Bản &amp; Kỷ Lục Đấu Giá
+          <span data-i18n="col_modal_jewels">Báu Vật Độc Bản &amp; Kỷ Lục Đấu Giá</span>
         </h3>
         <div id="modal-crown-jewels"></div>
       </div>
@@ -127,10 +130,10 @@
 
     <div class="legend-modal-foot">
       <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('modal-close-btn').click();">
-        Đóng hồ sơ
+        <span data-i18n="legends_close_dossier">Đóng hồ sơ</span>
       </button>
       <a href="spirits.html" class="btn btn-primary btn-sm">
-        Khám phá rượu tại Quán Bar Đêm
+        <span data-i18n="col_modal_cta">Khám phá rượu tại Quán Bar Đêm</span>
       </a>
     </div>
   </div>

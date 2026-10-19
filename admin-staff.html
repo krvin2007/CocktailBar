@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0907">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
 <title>Quản lý nhân sự quầy Bar — Quán Bar Đêm</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +27,15 @@
     </button>
     <div id="admin-topbar"></div>
 
+    <div class="admin-page-header" style="margin-bottom: 16px; padding: 0 4px;">
+      <h2 style="font-size: 1.3rem; color: var(--cream); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+        Quản Lý &amp; Cấp Tài Khoản Nhân Sự
+      </h2>
+      <p class="text-xs text-muted" style="margin: 0;">
+        Khu vực nội bộ dành cho Ban Quản trị: Xem danh sách, tạo tài khoản và phân quyền cho nhân viên (Bartender, Waiter, Cashier).
+      </p>
+    </div>
+
     <div class="table-wrap">
       <div class="table-toolbar">
         <div class="filters">
@@ -34,6 +46,7 @@
           <select id="f-role"><option value="all">Tất cả vị trí</option></select>
           <select id="f-status">
             <option value="all">Tất cả trạng thái</option>
+            <option value="pending">Chờ duyệt</option>
             <option value="active">Đang làm việc</option>
             <option value="inactive">Đã nghỉ việc</option>
           </select>
@@ -121,6 +134,7 @@
         <div class="form-group">
           <label>Trạng thái công tác</label>
           <select name="status">
+            <option value="pending">Chờ duyệt (Chưa đăng nhập được)</option>
             <option value="active">Đang làm việc (Kích hoạt tài khoản)</option>
             <option value="inactive">Đã tạm nghỉ / nghỉ việc (Khóa tài khoản)</option>
           </select>
@@ -134,7 +148,7 @@
             </button>
           </div>
           <div class="pw-input-wrap">
-            <input type="password" name="password" id="staff-form-password" data-rule="required|min:8|max:32" placeholder="Tối thiểu 8 ký tự (hoa, thường, số, ký tự đặc biệt)">
+            <input type="password" name="password" id="staff-form-password" data-rule="required|password" placeholder="Tối thiểu 8 ký tự, chữ đầu viết hoa, có ký tự đặc biệt">
             <button type="button" class="pw-toggle-btn" data-target="staff-form-password" aria-label="Hiện hoặc ẩn mật khẩu">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>

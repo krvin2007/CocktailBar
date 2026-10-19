@@ -8,25 +8,34 @@ import { getAllOrders } from "../modules/ordersService.js";
 import { formatMoney, formatDateTime, escapeHtml } from "../modules/utils.js";
 import { ICONS } from "../modules/icons.js";
 import { errorHtml } from "../modules/ui.js";
+import { businessDayKey, BUSINESS_DAY_CUTOFF_HOUR } from "../modules/venue.js";
 
 /* Dữ liệu tải từ API trong init() */
 let drinks = [];
 let orders = [];
 let activeOrders = [];
 
+/**
+ * Doanh thu THỰC THU = đơn đã được thu ngân xác nhận nhận tiền (paid) và
+ * không bị huỷ. Khách chỉ bấm "Tôi đã chuyển khoản" (awaiting) thì chưa tính.
+ */
+const isCollected = (o) => o.paymentStatus === "paid" && o.status !== "cancelled";
+
 /* ---------------- Thẻ thống kê tổng quan ---------------- */
 function renderStatCards() {
   const totalRevenue = orders
-    .filter((o) => o.status === "completed")
+    .filter(isCollected)
     .reduce((sum, o) => sum + o.total, 0);
 
   const pendingCount = orders.filter((o) => o.status === "pending").length;
+  const awaitingCount = orders.filter((o) => o.paymentStatus === "awaiting" && o.status !== "cancelled").length;
 
   const cards = [
     { icon: ICONS.cocktail(22), value: drinks.length, label: "Thức uống trong Menu" },
     { icon: ICONS.receipt(22), value: orders.length, label: "Tổng lượt đặt chỗ" },
     { icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`, value: formatMoney(totalRevenue), label: "Doanh thu thực thu" },
     { icon: ICONS.clock(22), value: pendingCount, label: "Đơn cần xử lý ngay" },
+    { icon: ICONS.receipt(22), value: awaitingCount, label: "Chuyển khoản chờ đối chiếu" },
   ];
 
   const host = document.getElementById("stat-cards");
@@ -47,19 +56,27 @@ function renderRevenueChart() {
   const chartEl = document.getElementById("revenue-chart");
   if (!chartEl) return;
 
-  const completedOrders = orders.filter((o) => o.status === "completed");
+  const collectedOrders = orders.filter(isCollected);
+
+  // 7 NGÀY KINH DOANH gần nhất (chốt 06:00 sáng - xem venue.js): mở trang lúc
+  // 01:00 sáng thì "hôm nay" vẫn là đêm hôm trước. Đặt giờ 12:00 trưa cho
+  // mốc mỗi ngày để businessDayKey() không bị lùi sang ngày trước.
+  const today = new Date();
+  if (today.getHours() < BUSINESS_DAY_CUTOFF_HOUR) today.setDate(today.getDate() - 1);
+  today.setHours(12, 0, 0, 0);
 
   const days = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date();
+    const d = new Date(today);
     d.setDate(d.getDate() - i);
     days.push(d);
   }
 
+  // Mỗi đơn tính vào đêm khách được phục vụ (order.serviceTime: đặt bàn = giờ hẹn)
   const revenueByDay = days.map((d) => {
-    const key = d.toDateString();
-    const total = completedOrders
-      .filter((o) => new Date(o.createdAt).toDateString() === key)
+    const key = businessDayKey(d);
+    const total = collectedOrders
+      .filter((o) => businessDayKey(o.serviceTime) === key)
       .reduce((sum, o) => sum + o.total, 0);
     return { date: d, total };
   });

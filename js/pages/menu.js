@@ -29,10 +29,16 @@ const filters = {
 /** Toàn bộ đồ uống tải từ API - nguồn để lọc */
 let allDrinks = [];
 
+let categoryFilled = false;
+
 /** Nạp danh mục vào select từ dữ liệu dùng chung */
 function fillCategoryOptions() {
   if (!filters.category) return;
-  const currentVal = filters.category.value || getQueryParam("category") || "all";
+  // Lần nạp ĐẦU lấy danh mục từ địa chỉ (?category=...) - các thẻ danh mục ở trang chủ dẫn tới đây.
+  // Các lần sau (đổi ngôn ngữ) giữ lựa chọn hiện tại của người dùng. Trước đây luôn ưu tiên giá trị
+  // mặc định "all" của ô chọn nên tham số trên địa chỉ không bao giờ có tác dụng.
+  const currentVal = (categoryFilled ? filters.category.value : getQueryParam("category")) || "all";
+  categoryFilled = true;
   const isEn = getCurrentLang() === "en";
 
   filters.category.innerHTML = `<option value="all">${isEn ? "All Categories" : "Tất cả danh mục"}</option>`;

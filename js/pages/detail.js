@@ -4,12 +4,13 @@
 
 import "../modules/navbar.js";
 import { refreshCartBadge } from "../modules/navbar.js";
-import { getDrinkById, queryDrinks, CATEGORY_LABELS, getCategoryLabel } from "../modules/drinksService.js";
-import { addToCart, getCart } from "../modules/ordersService.js";
+import { getDrinkById, queryDrinks, CATEGORY_LABELS, getCategoryLabel, servingLabel, isSoldOut } from "../modules/drinksService.js";
+import { addToCart, checkCanAdd } from "../modules/ordersService.js";
 import { drinkCardHtml } from "../modules/drinkCard.js";
 import { formatMoney, escapeHtml, getQueryParam, clamp } from "../modules/utils.js";
 import { toast, loadingHtml, errorHtml, setButtonLoading } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
+import { t } from "../modules/i18n.js";
 
 const container = document.getElementById("detail-container");
 const relatedSection = document.getElementById("related-section");
@@ -24,16 +25,16 @@ function renderNotFound() {
   container.innerHTML = `
     <div class="empty-state">
       <div class="empty-icon">${ICONS.cocktail(40)}</div>
-      <h2>Không tìm thấy đồ uống này</h2>
-      <p class="text-muted">Món này có thể đã được gỡ khỏi danh sách phục vụ hoặc đường dẫn không chính xác.</p>
+      <h2>${t("detail_not_found", "Không tìm thấy đồ uống này")}</h2>
+      <p class="text-muted">${t("detail_not_found_desc", "Món này có thể đã được gỡ khỏi danh sách phục vụ hoặc đường dẫn không chính xác.")}</p>
       <a href="menu.html" class="btn btn-primary mt-2">
-        ${ICONS.arrowLeft(14)} <span>Quay lại thực đơn</span>
+        ${ICONS.arrowLeft(14)} <span>${t("detail_back_menu", "Quay lại thực đơn")}</span>
       </a>
     </div>`;
 }
 
 function renderDetail() {
-  const soldout = drink.status === "soldout" || drink.stock <= 0;
+  const soldout = isSoldOut(drink);
   const maxQty = 20;
 
   const isImagePath = typeof drink.image === "string" && (drink.image.includes("/") || drink.image.startsWith("http"));
@@ -43,18 +44,18 @@ function renderDetail() {
 
   const tasteTags = Array.isArray(drink.tasteNotes) && drink.tasteNotes.length > 0
     ? `<div class="detail-taste-strip">
-        <span class="taste-label">Hương vị đặc trưng:</span>
+        <span class="taste-label">${t("detail_taste", "Hương vị đặc trưng:")}</span>
         <div class="taste-pills">
-          ${drink.tasteNotes.map((t) => `<span class="taste-tag-large">${escapeHtml(t)}</span>`).join("")}
+          ${drink.tasteNotes.map((note) => `<span class="taste-tag-large">${escapeHtml(note)}</span>`).join("")}
         </div>
        </div>`
     : "";
 
   container.innerHTML = `
     <div class="detail-breadcrumb">
-      <a href="index.html">Trang chủ</a>
+      <a href="index.html">${t("detail_crumb_home", "Trang chủ")}</a>
       <span class="sep">/</span>
-      <a href="menu.html">Thực đơn</a>
+      <a href="menu.html">${t("detail_crumb_menu", "Thực đơn")}</a>
       <span class="sep">/</span>
       <span class="curr">${escapeHtml(drink.name)}</span>
     </div>
@@ -78,8 +79,8 @@ function renderDetail() {
 
         <h1 class="detail-name">${escapeHtml(drink.name)}</h1>
         <div class="detail-price-row">
-          <span class="detail-price">${formatMoney(drink.price)}</span>
-          <span class="detail-price-note">Giá đã bao gồm phí phục vụ</span>
+          <span class="detail-price">${formatMoney(drink.price)}${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}</span>
+          <span class="detail-price-note">${t("detail_price_note", "Giá đã bao gồm phí phục vụ")}</span>
         </div>
 
         <p class="detail-desc">${escapeHtml(drink.description)}</p>
@@ -89,28 +90,28 @@ function renderDetail() {
         <!-- Bảng thông số chi tiết chuẩn quầy Bar -->
         <div class="detail-spec-grid">
           <div class="spec-item">
-            <span class="spec-label">Nồng độ cồn</span>
-            <span class="spec-val">${drink.abv > 0 ? `${drink.abv}% ABV` : "Không cồn (0%)"}</span>
+            <span class="spec-label">${t("detail_abv", "Nồng độ cồn")}</span>
+            <span class="spec-val">${drink.abv > 0 ? `${drink.abv}% ABV` : t("detail_zero_abv", "Không cồn (0%)")}</span>
           </div>
           <div class="spec-item">
-            <span class="spec-label">Rượu nền</span>
-            <span class="spec-val">${escapeHtml(drink.baseSpirit || "Pha chế thủ công")}</span>
+            <span class="spec-label">${t("detail_base", "Rượu nền")}</span>
+            <span class="spec-val">${escapeHtml(drink.baseSpirit || t("detail_handcrafted", "Pha chế thủ công"))}</span>
           </div>
           <div class="spec-item">
-            <span class="spec-label">Ly phục vụ</span>
-            <span class="spec-val">${escapeHtml(drink.glassType || "Ly tiêu chuẩn")}</span>
+            <span class="spec-label">${t("detail_glass", "Ly phục vụ")}</span>
+            <span class="spec-val">${escapeHtml(drink.glassType || t("detail_std_glass", "Ly tiêu chuẩn"))}</span>
           </div>
           <div class="spec-item">
-            <span class="spec-label">Trạng thái</span>
+            <span class="spec-label">${t("detail_status", "Trạng thái")}</span>
             <span class="spec-val ${soldout ? 'text-danger' : 'text-success'}">
-              ${soldout ? "Tạm ngưng phục vụ" : "Đang phục vụ"}
+              ${soldout ? t("detail_soldout", "Tạm ngưng phục vụ") : t("detail_available", "Đang phục vụ")}
             </span>
           </div>
         </div>
 
         <!-- Thành phần nguyên liệu -->
         <div class="detail-ingredients-wrap">
-          <span class="ingredients-title">Thành phần phối trộn:</span>
+          <span class="ingredients-title">${t("detail_ingredients", "Thành phần phối trộn:")}</span>
           <div class="ingredient-tags">
             ${drink.ingredients.map((i) => `<span>${escapeHtml(i)}</span>`).join("")}
           </div>
@@ -119,9 +120,9 @@ function renderDetail() {
         ${soldout ? `
           <div class="alert-box alert-warning">
             ${ICONS.alertCircle(18)}
-            <span>Món này hiện đang tạm ngưng phục vụ. Bạn vui lòng chọn một hương vị khác nhé!</span>
+            <span>${t("detail_soldout_msg", "Món này hiện đang tạm ngưng phục vụ. Bạn vui lòng chọn một hương vị khác nhé!")}</span>
           </div>
-          <button class="btn btn-primary btn-block btn-lg" disabled>Tạm ngưng phục vụ</button>
+          <button class="btn btn-primary btn-block btn-lg" disabled>${t("detail_soldout", "Tạm ngưng phục vụ")}</button>
         ` : `
           <div class="detail-action-bar">
             <div class="qty-control">
@@ -132,11 +133,11 @@ function renderDetail() {
 
             <button class="btn btn-primary btn-lg" id="add-cart-btn">
               ${ICONS.shoppingBag(18)}
-              <span>Thêm Vào Danh Sách</span>
+              <span>${t("detail_add", "Thêm Vào Danh Sách")}</span>
             </button>
 
             <a href="order.html" class="btn btn-ghost btn-lg">
-              <span>Xem Giỏ Hàng</span>
+              <span>${t("detail_view_cart", "Xem Giỏ Hàng")}</span>
             </a>
           </div>
         `}
@@ -144,7 +145,7 @@ function renderDetail() {
         ${drink.abv > 0 ? `
           <div class="detail-responsibility-note">
             ${ICONS.info(15)}
-            <span>Đồ uống có nồng độ cồn chỉ phục vụ khách hàng trên 18 tuổi. Hãy thưởng thức có trách nhiệm.</span>
+            <span>${t("detail_age_note", "Đồ uống có nồng độ cồn chỉ phục vụ khách hàng trên 18 tuổi. Hãy thưởng thức có trách nhiệm.")}</span>
           </div>` : ""}
       </div>
     </div>`;
@@ -183,16 +184,11 @@ function bindQuantityControls(maxQty) {
 
       try {
         const freshDrink = await getDrinkById(drink.id);
-        const inCart = getCart().find((item) => item.drinkId === drink.id)?.qty || 0;
-        const available = freshDrink && freshDrink.status === "available" ? freshDrink.stock : 0;
-
-        if (!freshDrink || freshDrink.status !== "available" || freshDrink.stock <= 0) {
-          toast(`"${drink.name}" hiện đang tạm ngưng phục vụ.`, "error");
-          return;
-        }
-
-        if (inCart + qty > available) {
-          toast(`"${drink.name}" hiện đang tạm ngưng phục vụ thêm cho ca này.`, "error");
+        const check = checkCanAdd(freshDrink, qty);
+        if (!check.ok) {
+          toast(check.reason === "soldout"
+            ? `"${drink.name}" hiện đang tạm ngưng phục vụ.`
+            : `"${drink.name}" chỉ còn ${check.available} ly (danh sách của bạn đã có ${check.inCart} ly).`, "error");
           return;
         }
 

@@ -6,6 +6,9 @@
 
 import "../modules/navbar.js";
 import { SPIRITS_COLLECTION, SPIRIT_FAMILIES } from "../modules/spiritsData.js";
+import { SPIRIT_FAMILIES_EN, SPIRITS_EN } from "../modules/spiritsEn.js";
+import { localizeItem, localizeLabels } from "../modules/contentLang.js";
+import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCollection } from "../modules/api.js";
 import { loadingHtml, errorHtml } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
@@ -14,6 +17,9 @@ import { escapeHtml } from "../modules/utils.js";
 let currentFamily = "all";
 /** Dữ liệu tải từ API (GET /spirits); máy chủ chưa chạy thì dùng dữ liệu đóng gói sẵn */
 let collection = [];
+
+/** Danh sách theo ngôn ngữ đang chọn: bản tiếng Anh ghép đè lên dữ liệu gốc (xem contentLang.js) */
+const localized = () => collection.map((item) => localizeItem(item, SPIRITS_EN, getCurrentLang()));
 let currentSearch = "";
 
 /** Khởi tạo các tab phân loại dòng rượu */
@@ -21,7 +27,7 @@ function renderFilterTabs() {
   const tabsHost = document.getElementById("spirits-tabs");
   if (!tabsHost) return;
 
-  tabsHost.innerHTML = Object.entries(SPIRIT_FAMILIES).map(([key, label]) => `
+  tabsHost.innerHTML = Object.entries(localizeLabels(SPIRIT_FAMILIES, SPIRIT_FAMILIES_EN, getCurrentLang())).map(([key, label]) => `
     <button type="button" class="spirit-tab-btn ${key === currentFamily ? 'active' : ''}" data-family="${key}">
       ${label}
     </button>`).join("");
@@ -46,9 +52,9 @@ function spiritCardHtml(item) {
           <span class="crafted-cat-tag">(${escapeHtml(c.category)})</span>
         </span>
         ${c.inMenu ? `
-          <a href="order.html" class="crafted-badge-inmenu" title="Có phục vụ tại quán - Bấm để gọi món hoặc đặt bàn">
+          <a href="order.html" class="crafted-badge-inmenu" title="${t("sp_in_menu_title", "Có phục vụ tại quán - Bấm để gọi món hoặc đặt bàn")}">
             ${ICONS.checkCircle(13)}
-            <span>Có trong Menu 🍸</span>
+            <span>${t("bt_in_menu", "Có trong Menu 🍸")}</span>
           </a>
         ` : `
           <span style="font-size: 0.72rem; color: var(--text-dim);">Classic Standard</span>
@@ -57,7 +63,7 @@ function spiritCardHtml(item) {
       <p class="crafted-desc">${escapeHtml(c.desc)}</p>
       <div class="crafted-recipe-row">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span><strong>Công thức:</strong> ${escapeHtml(c.recipe)}</span>
+        <span><strong>${t("bt_recipe", "Công thức:")}</strong> ${escapeHtml(c.recipe)}</span>
       </div>
     </div>
   `).join("");
@@ -68,7 +74,7 @@ function spiritCardHtml(item) {
         <div class="spirit-bottle-real-wrap" title="${escapeHtml(item.fullName)}">
           ${item.image
             ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="real-bottle-img" loading="lazy">`
-            : `<div class="bottle-missing">${ICONS.wine(34)}<span>Chưa có ảnh đúng chai</span></div>`}
+            : `<div class="bottle-missing">${ICONS.wine(34)}<span>${t("sp_no_photo", "Chưa có ảnh đúng chai")}</span></div>`}
         </div>
 
         <div class="spirit-header-content">
@@ -84,19 +90,19 @@ function spiritCardHtml(item) {
 
       <div class="spirit-specs-grid">
         <div class="spirit-spec-item">
-          <span class="spirit-spec-title">Xuất xứ &amp; Nhà chưng cất</span>
+          <span class="spirit-spec-title">${t("sp_spec_origin", "Xuất xứ & Nhà chưng cất").replace(/&/g, "&amp;")}</span>
           <span class="spirit-spec-val">${escapeHtml(item.origin)}</span>
         </div>
         <div class="spirit-spec-item">
-          <span class="spirit-spec-title">Lịch sử &amp; Nồng độ (Proof)</span>
+          <span class="spirit-spec-title">${t("sp_spec_history", "Lịch sử & Nồng độ (Proof)").replace(/&/g, "&amp;")}</span>
           <span class="spirit-spec-val">Est. ${escapeHtml(item.established)} • ${item.proof}</span>
         </div>
         <div class="spirit-spec-item">
-          <span class="spirit-spec-title">Kỹ nghệ ủ thùng (Cask Maturation)</span>
+          <span class="spirit-spec-title">${t("sp_spec_cask", "Kỹ nghệ ủ thùng (Cask Maturation)")}</span>
           <span class="spirit-spec-val">${escapeHtml(item.caskType)}</span>
         </div>
         <div class="spirit-spec-item">
-          <span class="spirit-spec-title">Ly phục vụ chuẩn</span>
+          <span class="spirit-spec-title">${t("sp_spec_glass", "Ly phục vụ chuẩn")}</span>
           <span class="spirit-spec-val">${escapeHtml(item.glassType)}</span>
         </div>
       </div>
@@ -118,13 +124,13 @@ function spiritCardHtml(item) {
 
       <div class="spirit-radar-box">
         <div class="spirit-radar-head">
-          <span>Hồ sơ cảm quan hương vị</span>
+          <span>${t("sp_radar_title", "Hồ sơ cảm quan hương vị")}</span>
           <span>${item.colorName}</span>
         </div>
         <div class="radar-bars-list">
           <div class="radar-bar-row">
             <div class="radar-bar-meta">
-              <span>Độ Đậm &amp; Độ Sánh (Body)</span>
+              <span>${t("sp_radar_body", "Độ Đậm & Độ Sánh (Body)").replace(/&/g, "&amp;")}</span>
               <span>${item.sensoryScores.richness}%</span>
             </div>
             <div class="radar-bar-track">
@@ -133,7 +139,7 @@ function spiritCardHtml(item) {
           </div>
           <div class="radar-bar-row">
             <div class="radar-bar-meta">
-              <span>Gỗ Sồi &amp; Gia Vị (Oak &amp; Spice)</span>
+              <span>${t("sp_radar_oak", "Gỗ Sồi & Gia Vị (Oak & Spice)").replace(/&/g, "&amp;")}</span>
               <span>${item.sensoryScores.oakSpice}%</span>
             </div>
             <div class="radar-bar-track">
@@ -142,7 +148,7 @@ function spiritCardHtml(item) {
           </div>
           <div class="radar-bar-row">
             <div class="radar-bar-meta">
-              <span>Khói &amp; Than Bùn (Smoke &amp; Peat)</span>
+              <span>${t("sp_radar_smoke", "Khói & Than Bùn (Smoke & Peat)").replace(/&/g, "&amp;")}</span>
               <span>${item.sensoryScores.smoke}%</span>
             </div>
             <div class="radar-bar-track">
@@ -151,7 +157,7 @@ function spiritCardHtml(item) {
           </div>
           <div class="radar-bar-row">
             <div class="radar-bar-meta">
-              <span>Thảo Mộc &amp; Hương Hoa (Botanical)</span>
+              <span>${t("sp_radar_botanical", "Thảo Mộc & Hương Hoa (Botanical)").replace(/&/g, "&amp;")}</span>
               <span>${item.sensoryScores.botanical}%</span>
             </div>
             <div class="radar-bar-track">
@@ -166,9 +172,9 @@ function spiritCardHtml(item) {
         <div class="crafted-header">
           <h4 class="crafted-title">
             ${ICONS.cocktail(16)}
-            <span>Cocktail Kinh Điển &amp; Thưởng Thức Signature</span>
+            <span>${t("sp_crafted_title", "Cocktail Kinh Điển & Thưởng Thức Signature").replace(/&/g, "&amp;")}</span>
           </h4>
-          <span class="crafted-sub-badge">${item.craftedCocktails ? item.craftedCocktails.length : 0} Công thức pha chế</span>
+          <span class="crafted-sub-badge">${item.craftedCocktails ? item.craftedCocktails.length : 0} ${t("sp_crafted_count", "Công thức pha chế")}</span>
         </div>
         <div class="crafted-list">
           ${craftedList}
@@ -182,10 +188,10 @@ function spiritCardHtml(item) {
         </div>
         <div style="display: flex; gap: 8px;">
           <button type="button" class="btn btn-outline btn-sm open-dossier-btn" data-id="${item.id}">
-            Hồ sơ di sản
+            ${t("sp_view_dossier", "Hồ sơ di sản")}
           </button>
           <a href="order.html" class="btn btn-primary btn-sm">
-            Đặt bàn tại Bar
+            ${t("sp_book_bar", "Đặt bàn tại Bar")}
           </a>
         </div>
       </div>
@@ -200,7 +206,8 @@ function renderSpiritsGrid() {
 
   const query = currentSearch.trim().toLowerCase();
 
-  const filtered = collection.filter((item) => {
+  const view = localized();
+  const filtered = view.filter((item) => {
     const matchFamily = currentFamily === "all" || item.family === currentFamily;
     if (!matchFamily) return false;
 
@@ -225,15 +232,16 @@ function renderSpiritsGrid() {
   });
 
   if (countEl) {
-    countEl.innerHTML = `Hiển thị <strong>${filtered.length}</strong> / ${collection.length} chai rượu di sản`;
+    countEl.innerHTML = t("sp_count", "Hiển thị <strong>{n}</strong> / {total} chai rượu di sản")
+      .replace("{n}", filtered.length).replace("{total}", view.length);
   }
 
   if (filtered.length === 0) {
     host.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1; padding: 60px 20px; text-align: center;">
         <div class="empty-icon" style="margin-bottom: 16px;">${ICONS.search(36)}</div>
-        <h3>Không tìm thấy chai rượu phù hợp</h3>
-        <p class="text-muted">Vui lòng thử từ khóa khác (ví dụ: Speyside, Peat, Sherry, Cognac, Tequila, Gin)...</p>
+        <h3>${t("sp_empty_title", "Không tìm thấy chai rượu phù hợp")}</h3>
+        <p class="text-muted">${t("sp_empty_hint", "Vui lòng thử từ khóa khác (ví dụ: Speyside, Peat, Sherry, Cognac, Tequila, Gin)...")}</p>
       </div>`;
     return;
   }
@@ -244,7 +252,7 @@ function renderSpiritsGrid() {
   host.querySelectorAll(".open-dossier-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-id");
-      const found = collection.find((s) => s.id === id);
+      const found = localized().find((s) => s.id === id);
       if (found) openDossierModal(found);
     });
   });
@@ -274,29 +282,29 @@ function openDossierModal(spirit) {
       <div style="background: rgba(197, 152, 67, 0.08); border: 1px solid var(--border-soft); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 10px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 8px;">
           <strong style="color: var(--amber-soft); font-size: 0.95rem;">${escapeHtml(c.name)}</strong>
-          ${c.inMenu ? `<span class="crafted-badge-inmenu">${ICONS.checkCircle(13)} Có trong Menu 🍸</span>` : `<span style="font-size: 0.75rem; color: var(--text-dim);">${escapeHtml(c.category)}</span>`}
+          ${c.inMenu ? `<span class="crafted-badge-inmenu">${ICONS.checkCircle(13)} ${t("bt_in_menu", "Có trong Menu 🍸")}</span>` : `<span style="font-size: 0.75rem; color: var(--text-dim);">${escapeHtml(c.category)}</span>`}
         </div>
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; line-height: 1.5;">${escapeHtml(c.desc)}</p>
-        <div style="font-size: 0.8rem; color: var(--amber-dark); font-family: monospace;">Công thức (Spec): ${escapeHtml(c.recipe)}</div>
+        <div style="font-size: 0.8rem; color: var(--amber-dark); font-family: monospace;">${t("sp_recipe_spec", "Công thức (Spec):")} ${escapeHtml(c.recipe)}</div>
       </div>`).join("");
   }
 
   if (specsEl) {
     specsEl.innerHTML = `
       <div class="spirit-spec-item">
-        <span class="spirit-spec-title">Nhà chưng cất / Lãnh địa</span>
+        <span class="spirit-spec-title">${t("sp_dist_title", "Nhà chưng cất / Lãnh địa")}</span>
         <span class="spirit-spec-val">${escapeHtml(spirit.distillery)}</span>
       </div>
       <div class="spirit-spec-item">
-        <span class="spirit-spec-title">Bậc thầy chưng cất (Master Distiller)</span>
+        <span class="spirit-spec-title">${t("sp_master_title", "Bậc thầy chưng cất (Master Distiller)")}</span>
         <span class="spirit-spec-val">${escapeHtml(spirit.masterBlender)}</span>
       </div>
       <div class="spirit-spec-item">
-        <span class="spirit-spec-title">Nguyên liệu (Mash Bill) &amp; Thảo mộc</span>
+        <span class="spirit-spec-title">${t("sp_mash_title", "Nguyên liệu (Mash Bill) & Thảo mộc").replace(/&/g, "&amp;")}</span>
         <span class="spirit-spec-val">${escapeHtml(spirit.mashBill)}</span>
       </div>
       <div class="spirit-spec-item">
-        <span class="spirit-spec-title">Kỹ nghệ ủ thùng &amp; Độ tuổi</span>
+        <span class="spirit-spec-title">${t("sp_cask_title", "Kỹ nghệ ủ thùng & Độ tuổi").replace(/&/g, "&amp;")}</span>
         <span class="spirit-spec-val">${escapeHtml(spirit.caskType)}</span>
       </div>`;
   }
@@ -312,12 +320,20 @@ function closeDossierModal() {
   document.body.style.overflow = "";
 }
 
+// Đổi VI/EN: vẽ lại thẻ + bộ lọc bằng bản dịch tương ứng (chữ tĩnh trong HTML do applyI18n lo)
+window.addEventListener("languagechange", () => {
+  renderFilterTabs();
+  if (collection.length) renderSpiritsGrid();
+});
+
 /** Lắng nghe tìm kiếm & Modal */
 document.addEventListener("DOMContentLoaded", async () => {
   renderFilterTabs();
 
   const host = document.getElementById("spirits-grid");
-  if (host) host.innerHTML = loadingHtml("Đang tải hầm rượu...");
+  const countBox = document.getElementById("spirits-count");
+  if (countBox) countBox.textContent = t("sp_loading_count", "Đang tải dữ liệu hầm rượu...");
+  if (host) host.innerHTML = loadingHtml(t("sp_loading", "Đang tải hầm rượu..."));
   try {
     collection = await getCollection("spirits", SPIRITS_COLLECTION);
     renderSpiritsGrid();

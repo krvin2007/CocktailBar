@@ -6,6 +6,9 @@
 
 import "../modules/navbar.js";
 import { COLLECTORS_COLLECTION, COLLECTOR_CATEGORIES } from "../modules/collectorsData.js";
+import { COLLECTOR_CATEGORIES_EN, COLLECTORS_EN } from "../modules/collectorsEn.js";
+import { localizeItem, localizeLabels } from "../modules/contentLang.js";
+import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCollection } from "../modules/api.js";
 import { loadingHtml, errorHtml } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
@@ -15,6 +18,9 @@ import { portraitHtml } from "../modules/portrait.js";
 let currentCategory = "all";
 /** Dữ liệu tải từ API (GET /collectors); máy chủ chưa chạy thì dùng dữ liệu đóng gói sẵn */
 let collection = [];
+
+/** Danh sách theo ngôn ngữ đang chọn: bản tiếng Anh ghép đè lên dữ liệu gốc (xem contentLang.js) */
+const localized = () => collection.map((item) => localizeItem(item, COLLECTORS_EN, getCurrentLang()));
 let currentSearch = "";
 
 /** Render các tab bộ lọc danh mục */
@@ -22,7 +28,7 @@ function renderFilterTabs() {
   const tabsHost = document.getElementById("collector-tabs");
   if (!tabsHost) return;
 
-  tabsHost.innerHTML = Object.entries(COLLECTOR_CATEGORIES).map(([key, label]) => `
+  tabsHost.innerHTML = Object.entries(localizeLabels(COLLECTOR_CATEGORIES, COLLECTOR_CATEGORIES_EN, getCurrentLang())).map(([key, label]) => `
     <button type="button" class="legend-tab-btn ${key === currentCategory ? 'active' : ''}" data-cat="${key}">
       ${label}
     </button>`).join("");
@@ -68,19 +74,19 @@ function collectorCardHtml(item) {
 
         <div class="legend-meta-grid">
           <div class="legend-meta-item">
-            <span class="legend-meta-k">Hầm lưu trữ</span>
+            <span class="legend-meta-k">${t("col_meta_vault", "Hầm lưu trữ")}</span>
             <span class="legend-meta-v">${escapeHtml(item.vaultName)}</span>
           </div>
           <div class="legend-meta-item">
-            <span class="legend-meta-k">Quy mô bộ sưu tập</span>
+            <span class="legend-meta-k">${t("col_meta_scale", "Quy mô bộ sưu tập")}</span>
             <span class="legend-meta-v" style="color: var(--amber-soft);">${escapeHtml(item.collectionScale)}</span>
           </div>
           <div class="legend-meta-item">
-            <span class="legend-meta-k">Định giá ước tính</span>
+            <span class="legend-meta-k">${t("col_meta_value", "Định giá ước tính")}</span>
             <span class="legend-meta-v">${escapeHtml(item.estimatedValue)}</span>
           </div>
           <div class="legend-meta-item">
-            <span class="legend-meta-k">Trọng tâm sưu tầm</span>
+            <span class="legend-meta-k">${t("col_meta_specialty", "Trọng tâm sưu tầm")}</span>
             <span class="legend-meta-v">${escapeHtml(item.specialty)}</span>
           </div>
         </div>
@@ -90,7 +96,7 @@ function collectorCardHtml(item) {
         <div class="legend-highlights-box">
           <h4 class="legend-highlights-title">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <span>Báu Vật Độc Bản trong Hầm Rượu</span>
+            <span>${t("col_jewels_title", "Báu Vật Độc Bản trong Hầm Rượu")}</span>
           </h4>
           <div class="legend-items-list">
             ${crownJewelsHtml}
@@ -99,10 +105,10 @@ function collectorCardHtml(item) {
 
         <div class="legend-card-foot">
           <button type="button" class="btn btn-outline btn-sm open-dossier-btn" data-id="${item.id}">
-            Xem Hồ Sơ Hầm Rượu
+            ${t("col_view_vault", "Xem Hồ Sơ Hầm Rượu")}
           </button>
           <a href="spirits.html" class="btn btn-primary btn-sm">
-            Xem Rượu Tại Hầm Bar 🥃
+            ${t("col_view_spirits", "Xem Rượu Tại Hầm Bar 🥃")}
           </a>
         </div>
       </div>
@@ -117,7 +123,8 @@ function renderCollectorsGrid() {
 
   const query = currentSearch.trim().toLowerCase();
 
-  const filtered = collection.filter((item) => {
+  const view = localized();
+  const filtered = view.filter((item) => {
     const matchCat = currentCategory === "all" || item.category === currentCategory;
     if (!matchCat) return false;
 
@@ -140,15 +147,16 @@ function renderCollectorsGrid() {
   });
 
   if (countEl) {
-    countEl.innerHTML = `Hiển thị <strong>${filtered.length}</strong> / ${collection.length} nhà sưu tầm huyền thoại`;
+    countEl.innerHTML = t("col_count", "Hiển thị <strong>{n}</strong> / {total} nhà sưu tầm huyền thoại")
+      .replace("{n}", filtered.length).replace("{total}", view.length);
   }
 
   if (filtered.length === 0) {
     host.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1; padding: 60px 20px; text-align: center;">
         <div class="empty-icon" style="margin-bottom: 16px;">${ICONS.search(36)}</div>
-        <h3>Không tìm thấy nhà sưu tầm phù hợp</h3>
-        <p class="text-muted">Vui lòng thử từ khóa khác (ví dụ: Macallan 1926, France, Islay, Karuizawa, Chasseuil, Gooding)...</p>
+        <h3>${t("col_empty_title", "Không tìm thấy nhà sưu tầm phù hợp")}</h3>
+        <p class="text-muted">${t("col_empty_hint", "Vui lòng thử từ khóa khác (ví dụ: Macallan 1926, France, Islay, Karuizawa, Chasseuil, Gooding)...")}</p>
       </div>`;
     return;
   }
@@ -159,7 +167,7 @@ function renderCollectorsGrid() {
   host.querySelectorAll(".open-dossier-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-id");
-      const found = collection.find((c) => c.id === id);
+      const found = localized().find((c) => c.id === id);
       if (found) openCollectorModal(found);
     });
   });
@@ -178,7 +186,7 @@ function openCollectorModal(collector) {
   const jewelsEl = document.getElementById("modal-crown-jewels");
 
   if (titleEl) titleEl.textContent = collector.name;
-  if (subEl) subEl.textContent = `${collector.title} • ${collector.country} • Thời gian sưu tầm: ${collector.yearsCollecting}`;
+  if (subEl) subEl.textContent = `${collector.title} • ${collector.country} • ${t("col_collecting_time", "Thời gian sưu tầm:")} ${collector.yearsCollecting}`;
   if (quoteEl) quoteEl.textContent = collector.philosophy;
   if (bioEl) bioEl.innerHTML = collector.biography.split("\n\n").map((p) => `<p style="margin-bottom: 12px; line-height: 1.7; color: var(--text-muted);">${escapeHtml(p)}</p>`).join("");
 
@@ -186,11 +194,11 @@ function openCollectorModal(collector) {
     vaultEl.innerHTML = `
       <div style="background: rgba(19, 15, 12, 0.8); border: 1px solid var(--border-soft); border-radius: var(--radius-sm); padding: 14px 18px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
         <div>
-          <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Hầm Lưu Trữ</span>
+          <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">${t("col_modal_vault", "Hầm Lưu Trữ")}</span>
           <div style="font-size: 0.92rem; color: var(--text-main); font-weight: 500; margin-top: 2px;">${escapeHtml(collector.vaultName)}</div>
         </div>
         <div>
-          <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Quy Mô &amp; Định Giá</span>
+          <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">${t("col_modal_scale", "Quy Mô & Định Giá").replace("&", "&amp;")}</span>
           <div style="font-size: 0.92rem; color: var(--amber-soft); font-weight: 600; margin-top: 2px;">${escapeHtml(collector.collectionScale)} (${escapeHtml(collector.estimatedValue)})</div>
         </div>
       </div>
@@ -220,12 +228,20 @@ function closeCollectorModal() {
   document.body.style.overflow = "";
 }
 
+// Đổi VI/EN: vẽ lại thẻ + bộ lọc bằng bản dịch tương ứng (chữ tĩnh trong HTML do applyI18n lo)
+window.addEventListener("languagechange", () => {
+  renderFilterTabs();
+  if (collection.length) renderCollectorsGrid();
+});
+
 /** Lắng nghe DOMContentLoaded */
 document.addEventListener("DOMContentLoaded", async () => {
   renderFilterTabs();
 
   const host = document.getElementById("collectors-grid");
-  if (host) host.innerHTML = loadingHtml("Đang tải danh sách nhà sưu tầm...");
+  const countBox = document.getElementById("collectors-count");
+  if (countBox) countBox.textContent = t("col_loading_count", "Đang tải dữ liệu hầm rượu sưu tầm...");
+  if (host) host.innerHTML = loadingHtml(t("col_loading", "Đang tải danh sách nhà sưu tầm..."));
   try {
     collection = await getCollection("collectors", COLLECTORS_COLLECTION);
     renderCollectorsGrid();

@@ -8,16 +8,27 @@
    ========================================================= */
 
 import { formatMoney, escapeHtml } from "./utils.js";
+import { VENUE, openingHoursText } from "./venue.js";
 import { ICONS } from "./icons.js";
-import { addToCart } from "./ordersService.js";
+import { addToCart, checkCanAdd } from "./ordersService.js";
 import { toast } from "./ui.js";
 import { refreshCartBadge } from "./navbar.js";
 import { getCurrentLang, t } from "./i18n.js";
-import { getCategoryLabel } from "./drinksService.js";
+import { getCategoryLabel, servingLabel, isSoldOut } from "./drinksService.js";
 
 let soundEnabled = true;
 
 /** Phát âm thanh lật trang chân thực qua Web Audio API (không cần file âm thanh ngoài) */
+/** Các khung danh sách món trong trang sách - cuộn được khi nhiều món */
+const SCROLL_LIST_SELECTOR =
+  ".book-drinks-stack, .book-drinks-stack-4, .book-drinks-rows, .book-drinks-grid-2col, .book-spirits-grid-2x2";
+
+/** Còn món ở dưới chưa thấy -> gắn class "has-more" lên trang để CSS hiện gợi ý cuộn */
+function updateScrollHint(list) {
+  const hasMore = list.scrollTop + list.clientHeight < list.scrollHeight - 4;
+  list.closest(".page-inner")?.classList.toggle("has-more", hasMore);
+}
+
 function playPageFlipSound() {
   if (!soundEnabled) return;
   try {
@@ -79,7 +90,7 @@ export class MenuBookController {
   /** Thẻ đồ uống tiêu chuẩn (Trang Signature - 3 món/trang) */
   renderSignatureCard(drink) {
     const isEn = getCurrentLang() === "en";
-    const soldout = drink.status === "soldout" || drink.stock <= 0;
+    const soldout = isSoldOut(drink);
     const catLabel = getCategoryLabel(drink.category);
 
     const tastePills = Array.isArray(drink.tasteNotes) && drink.tasteNotes.length
@@ -127,7 +138,7 @@ export class MenuBookController {
   /** Thẻ dạng hàng ngang tinh gọn (Trang Classic - 4 món/trang) */
   renderClassicRow(drink) {
     const isEn = getCurrentLang() === "en";
-    const soldout = drink.status === "soldout" || drink.stock <= 0;
+    const soldout = isSoldOut(drink);
 
     return `
       <div class="book-drink-row" data-drink-id="${drink.id}">
@@ -161,7 +172,7 @@ export class MenuBookController {
   /** Thẻ dạng lưới 2 cột (Trang Sour & Fizz 6 món, Khai vị 5 món, Rượu di sản 5 chai) */
   renderGridCard(drink) {
     const isEn = getCurrentLang() === "en";
-    const soldout = drink.status === "soldout" || drink.stock <= 0;
+    const soldout = isSoldOut(drink);
 
     return `
       <div class="book-grid-card" data-drink-id="${drink.id}">
@@ -197,7 +208,7 @@ export class MenuBookController {
   /** Thẻ Rượu Di Sản 2x2 chuyên biệt cho Hầm Rượu (4 chai/trang) */
   renderSpiritCard(drink) {
     const isEn = getCurrentLang() === "en";
-    const soldout = drink.status === "soldout" || drink.stock <= 0;
+    const soldout = isSoldOut(drink);
     const tastePills = Array.isArray(drink.tasteNotes) && drink.tasteNotes.length
       ? drink.tasteNotes.slice(0, 3).map((tNote) => `<span class="book-taste-pill">${escapeHtml(tNote)}</span>`).join("")
       : "";
@@ -212,7 +223,7 @@ export class MenuBookController {
           </div>
           <div class="book-spirit-titles">
             <h5 class="book-spirit-name">${escapeHtml(drink.name)}</h5>
-            <span class="book-spirit-price">${formatMoney(drink.price)}</span>
+            <span class="book-spirit-price">${formatMoney(drink.price)}${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}</span>
           </div>
         </div>
         <div class="book-spirit-meta">
@@ -243,6 +254,16 @@ export class MenuBookController {
     const aperitivos = this.getByCategory("aperitivo");
     const spirits = this.getByCategory("spirits");
     const sourAndSpritz = [...sourFizz, ...aperitivos];
+    const mocktails = this.getByCategory("zero-proof");
+
+    // Mỗi chương trải trên 2 trang: trang đầu nửa đầu danh sách, trang sau phần còn lại.
+    // Tính theo SỐ MÓN THẬT (không cắt cứng 3/4/5 món) -> admin thêm món vẫn hiện đủ.
+    const half = (list) => Math.ceil(list.length / 2);
+    const names = (list) => list.map((d) => d.name).join(" · ");
+    // Trang 3 dùng thẻ Signature cỡ lớn -> nhận phần ÍT hơn (VD 7 món: 3 + 4)
+    const sigSplit = Math.floor(signatures.length / 2);
+    const classicSplit = half(classics);
+    const spiritSplit = half(spirits);
 
     this.container.innerHTML = `
       <div class="book-viewport-wrapper">
@@ -359,7 +380,7 @@ export class MenuBookController {
                       </li>
                       <li class="toc-item" data-jump-sheet="5">
                         <span class="toc-ch">VI</span>
-                        <span class="toc-name">${isEn ? "Hospitality & VIP Reservations" : "Nghệ Thuật Thưởng Thức & Đặt Bàn VIP"}</span>
+                        <span class="toc-name">${isEn ? "Zero-Proof Mocktails & Reservations" : "Mocktail Không Cồn & Đặt Bàn"}</span>
                         <span class="toc-dots"></span>
                         <span class="toc-pg">Tr. 10</span>
                       </li>
@@ -388,7 +409,7 @@ export class MenuBookController {
                     </div>
                     <h3 class="page-title">${isEn ? "Artisan Signatures (I)" : "Tuyển Tập Độc Bản (I)"}</h3>
                     <div class="book-drinks-stack">
-                      ${signatures.slice(0, 3).map((d) => this.renderSignatureCard(d)).join("")}
+                      ${signatures.slice(0, sigSplit).map((d) => this.renderSignatureCard(d)).join("")}
                     </div>
                     <div class="page-footer">
                       <span>Night Bar Lounge · Signature Collection</span>
@@ -408,10 +429,10 @@ export class MenuBookController {
                     </div>
                     <h3 class="page-title">${isEn ? "Artisan Signatures (II)" : "Tuyển Tập Độc Bản (II)"}</h3>
                     <div class="book-drinks-stack-4">
-                      ${signatures.slice(3, 7).map((d) => this.renderSignatureCard(d)).join("")}
+                      ${signatures.slice(sigSplit).map((d) => this.renderSignatureCard(d)).join("")}
                     </div>
                     <div class="page-footer">
-                      <span>Green Park Basil · Serendipity Ritz · Blue Blazer 1862 · Diamond Ice</span>
+                      <span>${escapeHtml(names(signatures.slice(sigSplit)))}</span>
                     </div>
                   </div>
                   <div class="sheet-dogear sheet-dogear-br"></div>
@@ -425,10 +446,10 @@ export class MenuBookController {
                     </div>
                     <h3 class="page-title">${isEn ? "Timeless Classics (I)" : "Kinh Điển Vượt Thời Gian (I)"}</h3>
                     <div class="book-drinks-rows">
-                      ${classics.slice(0, 5).map((d) => this.renderClassicRow(d)).join("")}
+                      ${classics.slice(0, classicSplit).map((d) => this.renderClassicRow(d)).join("")}
                     </div>
                     <div class="page-footer">
-                      <span>Negroni Classico · Smoked Old Fashioned · Dry Martini · Manhattan · Sazerac</span>
+                      <span>${escapeHtml(names(classics.slice(0, classicSplit)))}</span>
                     </div>
                   </div>
                   <div class="sheet-dogear sheet-dogear-bl"></div>
@@ -445,10 +466,10 @@ export class MenuBookController {
                     </div>
                     <h3 class="page-title">${isEn ? "Timeless Classics (II)" : "Kinh Điển Vượt Thời Gian (II)"}</h3>
                     <div class="book-drinks-rows">
-                      ${classics.slice(5, 10).map((d) => this.renderClassicRow(d)).join("")}
+                      ${classics.slice(classicSplit).map((d) => this.renderClassicRow(d)).join("")}
                     </div>
                     <div class="page-footer">
-                      <span>Daiquiri · Boulevardier Parisien · French 75 · Hanky Panky · White Lady</span>
+                      <span>${escapeHtml(names(classics.slice(classicSplit)))}</span>
                     </div>
                   </div>
                   <div class="sheet-dogear sheet-dogear-br"></div>
@@ -486,7 +507,7 @@ export class MenuBookController {
                       </div>
                     </div>
                     <div class="page-footer">
-                      <span>Bourbon Sour · Margarita · Mojito · Aperol Spritz · Campari Cask</span>
+                      <span>${escapeHtml(names(sourAndSpritz))}</span>
                     </div>
                   </div>
                   <div class="sheet-dogear sheet-dogear-bl"></div>
@@ -503,10 +524,10 @@ export class MenuBookController {
                     </div>
                     <h3 class="page-title">${isEn ? "Whiskies & Bourbon Vault" : "Hầm Rượu Di Sản · Whiskies"}</h3>
                     <div class="book-spirits-grid-2x2">
-                      ${spirits.slice(0, 4).map((d) => this.renderSpiritCard(d)).join("")}
+                      ${spirits.slice(0, spiritSplit).map((d) => this.renderSpiritCard(d)).join("")}
                     </div>
                     <div class="page-footer">
-                      <span>The Macallan 12 · The Macallan 18 · Lagavulin 16 · Bulleit Bourbon 10Y</span>
+                      <span>${escapeHtml(names(spirits.slice(0, spiritSplit)))}</span>
                     </div>
                   </div>
                   <div class="sheet-dogear sheet-dogear-br"></div>
@@ -520,10 +541,10 @@ export class MenuBookController {
                     </div>
                     <h3 class="page-title">${isEn ? "Cognac, Agave & Sipping Rum" : "Hầm Rượu Di Sản · Độc Bản"}</h3>
                     <div class="book-spirits-grid-2x2">
-                      ${spirits.slice(4, 8).map((d) => this.renderSpiritCard(d)).join("")}
+                      ${spirits.slice(spiritSplit).map((d) => this.renderSpiritCard(d)).join("")}
                     </div>
                     <div class="page-footer">
-                      <span>Hennessy X.O · Don Julio 1942 · Monkey 47 · Diplomático Rum</span>
+                      <span>${escapeHtml(names(spirits.slice(spiritSplit)))}</span>
                     </div>
                   </div>
                   <div class="sheet-dogear sheet-dogear-bl"></div>
@@ -538,10 +559,10 @@ export class MenuBookController {
                       <span class="page-kicker">${isEn ? "HOSPITALITY & RESERVATIONS" : "ĐẶT BÀN & THƯỞNG THỨC"}</span>
                       <span class="page-folio">Trang 10</span>
                     </div>
-                    <h3 class="page-title">${isEn ? "A Night Well Spent" : "Trải Nghiệm Trọn Vẹn"}</h3>
-                    <div class="book-guide-box">
-                      <h4>✦ ${isEn ? "The Craft of Tasting" : "Nghệ thuật thưởng thức:"}</h4>
-                      <p>${isEn ? "Sip slowly to perceive layers from crisp botanicals down to the warm oak finish. Feel free to request our bartender adjust sweetness or dilution." : "Hãy nhấp từng ngụm nhỏ để cảm nhận trọn vẹn 3 tầng hương vị. Bạn luôn có thể yêu cầu bartender gia giảm độ ngọt hoặc đá thủ công theo gu riêng."}</p>
+                    <h3 class="page-title">${isEn ? "Zero-Proof Mocktails" : "Mocktail Không Cồn"}</h3>
+                    <!-- Đồ uống 0% cồn cho khách lái xe / không uống rượu (danh mục "zero-proof") -->
+                    <div class="book-drinks-rows">
+                      ${mocktails.map((d) => this.renderClassicRow(d)).join("")}
                     </div>
                     <div class="book-cta-card">
                       <span class="book-cta-badge">${isEn ? "EXCLUSIVE LOUNGE" : "KHÔNG GIAN RIÊNG TƯ"}</span>
@@ -552,11 +573,11 @@ export class MenuBookController {
                       </a>
                     </div>
                     <div class="book-contact-note">
-                      <span>Hotline VIP: <strong>0901 234 567</strong></span>
-                      <span>18:00 – 02:00 Mỗi đêm</span>
+                      <span>Hotline: <strong>${escapeHtml(VENUE.hotline)}</strong></span>
+                      <span>${escapeHtml(openingHoursText(isEn ? "en" : "vi"))}</span>
                     </div>
                     <div class="page-footer">
-                      <span>Night Bar Lounge · 123 Nguyễn Huệ, Quận 1</span>
+                      <span>Night Bar Lounge · ${escapeHtml(VENUE.address)}</span>
                     </div>
                   </div>
                   <div class="sheet-dogear sheet-dogear-br"></div>
@@ -575,8 +596,8 @@ export class MenuBookController {
                       "${isEn ? "The night is still young, and the finest drink is the one in your hand." : "Màn đêm luôn còn dài, và ly rượu ngon nhất là ly đang ở trên tay bạn."}"
                     </p>
                     <div class="cover-back-info">
-                      <span>123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM</span>
-                      <span>Phục vụ từ 18:00 đến 02:00 sáng</span>
+                      <span>${escapeHtml(VENUE.address)}</span>
+                      <span>${escapeHtml(openingHoursText(isEn ? "en" : "vi"))}</span>
                     </div>
                     <div class="cover-back-actions">
                       <button type="button" class="btn-cover-reopen" id="btn-cover-reopen">
@@ -685,9 +706,17 @@ export class MenuBookController {
       const drinkId = orderBtn.getAttribute("data-order-id");
       const drink = this.drinks.find((d) => d.id === drinkId);
       if (drink) {
+        const isEn = getCurrentLang() === "en";
+        const check = checkCanAdd(drink, 1);
+        if (!check.ok) {
+          // Bấm liên tục vượt số ly còn lại thì dừng ở đây, không để giỏ vượt tồn kho
+          toast(check.reason === "soldout"
+            ? (isEn ? `"${drink.name}" is sold out` : `"${drink.name}" đã hết`)
+            : (isEn ? `Only ${check.available} left of "${drink.name}"` : `"${drink.name}" chỉ còn ${check.available} ly`), "error");
+          return;
+        }
         addToCart(drink, 1);
         refreshCartBadge();
-        const isEn = getCurrentLang() === "en";
         toast(isEn ? `Added "${drink.name}" to cart` : `Đã thêm "${drink.name}" vào giỏ hàng`, "success");
       }
     });
@@ -744,9 +773,35 @@ export class MenuBookController {
       this.updateSheets();
     };
     window.addEventListener("languagechange", this.onLanguageChange);
+
+    this.markScrollableLists();
+  }
+
+  /**
+   * Trang sách có chiều cao cố định: danh sách món nào dài hơn khung trang
+   * thì cuộn được bên trong (CSS overflow-y: auto) thay vì bị cắt mất.
+   * Gắn sự kiện scroll cho từng danh sách (sau mỗi lần render) và tính lại
+   * gợi ý "cuộn xem thêm" khi đổi kích thước cửa sổ.
+   */
+  markScrollableLists() {
+    this.scrollLists = [...this.container.querySelectorAll(SCROLL_LIST_SELECTOR)];
+    this.scrollLists.forEach((list) => {
+      list.addEventListener("scroll", () => updateScrollHint(list), { passive: true });
+    });
+    this.refreshScrollHints();
+
+    if (!this.onResize) {
+      this.onResize = () => this.refreshScrollHints();
+      window.addEventListener("resize", this.onResize);
+    }
+  }
+
+  refreshScrollHints() {
+    (this.scrollLists || []).forEach(updateScrollHint);
   }
 
   destroy() {
+    if (this.onResize) window.removeEventListener("resize", this.onResize);
     if (this.onKeydown) window.removeEventListener("keydown", this.onKeydown);
     if (this.onLanguageChange) window.removeEventListener("languagechange", this.onLanguageChange);
   }

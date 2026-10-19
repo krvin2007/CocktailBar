@@ -24,9 +24,10 @@
       "status": "available",
       "rating": 5,
       "featured": true,
-      "stock": 25,
+      "stock": 0,
       "abv": 24,
-      "createdAt": "2026-10-07T13:03:33.146Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.153Z"
     },
     {
       "id": "d2",
@@ -52,9 +53,10 @@
       "status": "available",
       "rating": 5,
       "featured": true,
-      "stock": 20,
+      "stock": 0,
       "abv": 30,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d3",
@@ -79,9 +81,10 @@
       "status": "available",
       "rating": 4.9,
       "featured": true,
-      "stock": 18,
+      "stock": 0,
       "abv": 28,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d4",
@@ -107,9 +110,10 @@
       "status": "available",
       "rating": 4.9,
       "featured": true,
-      "stock": 22,
+      "stock": 0,
       "abv": 18,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d5",
@@ -134,9 +138,10 @@
       "status": "available",
       "rating": 4.8,
       "featured": false,
-      "stock": 26,
+      "stock": 0,
       "abv": 20,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d6",
@@ -163,9 +168,10 @@
       "status": "available",
       "rating": 4.8,
       "featured": false,
-      "stock": 30,
+      "stock": 0,
       "abv": 14,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d7",
@@ -191,9 +197,10 @@
       "status": "available",
       "rating": 4.9,
       "featured": true,
-      "stock": 20,
+      "stock": 0,
       "abv": 19,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d8",
@@ -219,9 +226,10 @@
       "status": "available",
       "rating": 4.8,
       "featured": false,
-      "stock": 28,
+      "stock": 0,
       "abv": 11,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d9",
@@ -246,15 +254,16 @@
       "status": "available",
       "rating": 4.9,
       "featured": false,
-      "stock": 16,
+      "stock": 0,
       "abv": 30,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d10",
       "name": "The Macallan 12 Double Cask",
       "category": "spirits",
-      "price": 195000,
+      "price": 250000,
       "image": "img/drinks/macallan-12.jpg",
       "description": "Dòng Single Malt Scotch trứ danh từ Speyside Scotland, ủ kết hợp thùng gỗ sồi Sherry Châu Âu và Châu Mỹ, phục vụ Neat hoặc On The Rocks.",
       "ingredients": [
@@ -273,7 +282,8 @@
       "featured": false,
       "stock": 12,
       "abv": 40,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 30,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d11",
@@ -299,9 +309,10 @@
       "status": "available",
       "rating": 4.9,
       "featured": true,
-      "stock": 20,
+      "stock": 0,
       "abv": 32,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d12",
@@ -327,9 +338,10 @@
       "status": "available",
       "rating": 4.8,
       "featured": false,
-      "stock": 25,
+      "stock": 0,
       "abv": 22,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d13",
@@ -355,9 +367,10 @@
       "status": "available",
       "rating": 5,
       "featured": true,
-      "stock": 22,
+      "stock": 0,
       "abv": 26,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d14",
@@ -383,9 +396,10 @@
       "status": "available",
       "rating": 4.9,
       "featured": false,
-      "stock": 18,
+      "stock": 0,
       "abv": 16,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d15",
@@ -410,9 +424,10 @@
       "status": "available",
       "rating": 4.9,
       "featured": false,
-      "stock": 20,
+      "stock": 0,
       "abv": 24,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d16",
@@ -438,9 +453,10 @@
       "status": "available",
       "rating": 4.8,
       "featured": false,
-      "stock": 24,
+      "stock": 0,
       "abv": 21,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d17",
@@ -466,9 +482,10 @@
       "status": "available",
       "rating": 4.9,
       "featured": true,
-      "stock": 22,
+      "stock": 0,
       "abv": 19,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d18",
@@ -494,9 +511,10 @@
       "status": "available",
       "rating": 5,
       "featured": true,
-      "stock": 18,
+      "stock": 0,
       "abv": 22,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d19",
@@ -522,9 +540,10 @@
       "status": "available",
       "rating": 4.9,
       "featured": false,
-      "stock": 20,
+      "stock": 0,
       "abv": 18,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d20",
@@ -550,9 +569,10 @@
       "status": "available",
       "rating": 5,
       "featured": true,
-      "stock": 16,
+      "stock": 0,
       "abv": 15,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d21",
@@ -577,9 +597,10 @@
       "status": "available",
       "rating": 5,
       "featured": true,
-      "stock": 15,
+      "stock": 0,
       "abv": 35,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d22",
@@ -602,15 +623,16 @@
       "status": "available",
       "rating": 5,
       "featured": false,
-      "stock": 14,
+      "stock": 0,
       "abv": 40,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d23",
       "name": "The Macallan 18 Sherry Oak",
       "category": "spirits",
-      "price": 285000,
+      "price": 1150000,
       "image": "img/drinks/macallan-18.jpg",
       "description": "Đỉnh cao Single Malt Scotch từ vùng Speyside: 18 năm ủ trọn vẹn trong thùng gỗ sồi Oloroso Sherry từ Jerez Tây Ban Nha, màu hổ phách đậm đà đầy mê hoặc.",
       "ingredients": [
@@ -629,13 +651,14 @@
       "featured": true,
       "stock": 10,
       "abv": 43,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 30,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d24",
       "name": "Lagavulin 16 Islay Peat",
       "category": "spirits",
-      "price": 230000,
+      "price": 320000,
       "image": "img/drinks/lagavulin-16.jpg",
       "description": "Vua khói của đảo Islay Scotland: Mùi hương khói than bùn biển nồng nàn, rong biển mặn mòi kết hợp vị ngọt ngào sâu thẳm của trái cây chín và gỗ sồi già.",
       "ingredients": [
@@ -654,13 +677,14 @@
       "featured": false,
       "stock": 12,
       "abv": 43,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 30,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d25",
       "name": "Hennessy X.O Cognac",
       "category": "spirits",
-      "price": 260000,
+      "price": 650000,
       "image": "img/drinks/hennessy-xo.jpg",
       "description": "Biểu tượng Cognac Extra Old trứ danh vùng Cognac nước Pháp: Pha trộn từ hơn 100 loại eaux-de-vie lâu năm với hương thơm vani, tiêu đen cay nhẹ và socola đen quyến rũ.",
       "ingredients": [
@@ -679,13 +703,14 @@
       "featured": false,
       "stock": 12,
       "abv": 40,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 30,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d26",
       "name": "Don Julio 1942 Añejo Tequila",
       "category": "spirits",
-      "price": 270000,
+      "price": 600000,
       "image": "img/drinks/don-julio-1942.jpg",
       "description": "Kiệt tác Tequila Añejo thủ công sản xuất số lượng giới hạn: 100% Blue Weber Agave thu hoạch tại cao nguyên Jalisco, ủ ít nhất hai năm rưỡi trong thùng sồi trắng Mỹ.",
       "ingredients": [
@@ -704,13 +729,14 @@
       "featured": true,
       "stock": 10,
       "abv": 38,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 30,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d27",
       "name": "Monkey 47 Schwarzwald Dry Gin",
       "category": "spirits",
-      "price": 195000,
+      "price": 290000,
       "image": "img/drinks/monkey-47.jpg",
       "description": "Dòng Gin thủ công nổi tiếng từ Rừng Đen nước Đức: Chưng cất cùng 47 loại thảo mộc quý hiếm, quả nam việt quất và nguồn nước suối rừng sâu nguyên sơ.",
       "ingredients": [
@@ -730,13 +756,14 @@
       "featured": false,
       "stock": 15,
       "abv": 47,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 30,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d28",
       "name": "Bulleit Bourbon Frontier 10Y",
       "category": "spirits",
-      "price": 180000,
+      "price": 220000,
       "image": "img/drinks/bulleit-bourbon.jpg",
       "description": "Dòng Bourbon Kentucky mang đậm tinh thần miền viễn Tây nước Mỹ: Tỷ lệ lúa mạch đen Rye cao độc đáo, ủ 10 năm trong thùng gỗ sồi Mỹ đốt than bề mặt số 4.",
       "ingredients": [
@@ -755,13 +782,14 @@
       "featured": false,
       "stock": 18,
       "abv": 45,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 30,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d29",
       "name": "Diplomático Reserva Exclusiva Rum",
       "category": "spirits",
-      "price": 175000,
+      "price": 190000,
       "image": "img/drinks/diplomatico-rum.jpg",
       "description": "Dòng Dark Rum thượng hạng từ Venezuela: Chưng cất trong nồi đồng cổ truyền và ủ tới 12 năm trong thùng gỗ sồi, hương vị ngọt ngào như bản giao hưởng caramel và chuối chín.",
       "ingredients": [
@@ -781,7 +809,8 @@
       "featured": false,
       "stock": 16,
       "abv": 40,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 30,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     },
     {
       "id": "d30",
@@ -806,9 +835,95 @@
       "status": "available",
       "rating": 4.8,
       "featured": false,
-      "stock": 25,
+      "stock": 0,
       "abv": 25,
-      "createdAt": "2026-10-07T13:03:33.147Z"
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
+    },
+    {
+      "id": "d31",
+      "name": "Virgin Mojito Garden",
+      "category": "zero-proof",
+      "price": 75000,
+      "image": "",
+      "description": "Phiên bản không cồn của Mojito: bạc hà tươi giã nhẹ, chanh xanh, đường mía và soda lạnh - sảng khoái mà vẫn tỉnh táo cầm lái.",
+      "ingredients": [
+        "Lá bạc hà tươi",
+        "Chanh xanh",
+        "Đường mía",
+        "Soda",
+        "Đá tuyết"
+      ],
+      "baseSpirit": "Không cồn",
+      "glassType": "Highball",
+      "tasteNotes": [
+        "Bạc hà mát",
+        "Chua thanh",
+        "Sủi bọt"
+      ],
+      "status": "available",
+      "rating": 4.7,
+      "featured": false,
+      "stock": 0,
+      "abv": 0,
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
+    },
+    {
+      "id": "d32",
+      "name": "Seedlip Garden Tonic",
+      "category": "zero-proof",
+      "price": 95000,
+      "image": "",
+      "description": "Rượu thảo mộc chưng cất KHÔNG cồn Seedlip Garden 108 với tonic, dưa leo và hương thảo - trải nghiệm như một ly Gin & Tonic thực thụ.",
+      "ingredients": [
+        "Seedlip Garden 108 (0% cồn)",
+        "Tonic",
+        "Dưa leo",
+        "Hương thảo"
+      ],
+      "baseSpirit": "Seedlip Garden 108 (không cồn)",
+      "glassType": "Copa Balloon",
+      "tasteNotes": [
+        "Thảo mộc xanh",
+        "Đắng nhẹ",
+        "Thanh mát"
+      ],
+      "status": "available",
+      "rating": 4.8,
+      "featured": false,
+      "stock": 0,
+      "abv": 0,
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
+    },
+    {
+      "id": "d33",
+      "name": "Saigon Passion Cooler",
+      "category": "zero-proof",
+      "price": 80000,
+      "image": "",
+      "description": "Chanh dây chín, siro sả nhà làm, lá chanh và soda - hương vị nhiệt đới Sài Gòn trong một ly không cồn.",
+      "ingredients": [
+        "Chanh dây",
+        "Siro sả nhà làm",
+        "Lá chanh",
+        "Soda"
+      ],
+      "baseSpirit": "Không cồn",
+      "glassType": "Collins",
+      "tasteNotes": [
+        "Chua ngọt nhiệt đới",
+        "Thơm sả",
+        "Sảng khoái"
+      ],
+      "status": "available",
+      "rating": 4.7,
+      "featured": false,
+      "stock": 0,
+      "abv": 0,
+      "servingMl": 0,
+      "createdAt": "2026-10-13T07:48:36.154Z"
     }
   ],
   "orders": [
@@ -832,7 +947,8 @@
       ],
       "total": 250000,
       "status": "completed",
-      "createdAt": "2026-10-01T13:30:00.000Z"
+      "paymentStatus": "paid",
+      "createdAt": "2026-10-07T13:30:00.000Z"
     },
     {
       "id": "o2",
@@ -853,7 +969,8 @@
       ],
       "total": 270000,
       "status": "completed",
-      "createdAt": "2026-10-02T14:30:00.000Z"
+      "paymentStatus": "paid",
+      "createdAt": "2026-10-08T14:30:00.000Z"
     },
     {
       "id": "o3",
@@ -862,7 +979,7 @@
       "phone": "0923334455",
       "email": "",
       "serviceType": "booking",
-      "bookingTime": "2026-10-03T12:30:00.000Z",
+      "bookingTime": "2026-10-09T12:30:00.000Z",
       "guestCount": 4,
       "note": "Bàn lounge gần quầy pha chế",
       "items": [
@@ -883,7 +1000,8 @@
       ],
       "total": 500000,
       "status": "completed",
-      "createdAt": "2026-10-03T12:30:00.000Z"
+      "paymentStatus": "paid",
+      "createdAt": "2026-10-09T12:30:00.000Z"
     },
     {
       "id": "o4",
@@ -905,7 +1023,7 @@
       ],
       "total": 120000,
       "status": "cancelled",
-      "createdAt": "2026-10-04T15:30:00.000Z"
+      "createdAt": "2026-10-10T15:30:00.000Z"
     },
     {
       "id": "o5",
@@ -933,7 +1051,8 @@
       ],
       "total": 335000,
       "status": "completed",
-      "createdAt": "2026-10-05T14:30:00.000Z"
+      "paymentStatus": "paid",
+      "createdAt": "2026-10-11T14:30:00.000Z"
     },
     {
       "id": "o6",
@@ -942,7 +1061,7 @@
       "phone": "0956667788",
       "email": "",
       "serviceType": "booking",
-      "bookingTime": "2026-10-06T13:30:00.000Z",
+      "bookingTime": "2026-10-12T13:30:00.000Z",
       "guestCount": 6,
       "note": "Kỷ niệm sinh nhật",
       "items": [
@@ -963,7 +1082,7 @@
       ],
       "total": 765000,
       "status": "preparing",
-      "createdAt": "2026-10-06T13:30:00.000Z"
+      "createdAt": "2026-10-12T13:30:00.000Z"
     },
     {
       "id": "o7",
@@ -985,7 +1104,7 @@
       ],
       "total": 240000,
       "status": "pending",
-      "createdAt": "2026-10-07T12:30:00.000Z"
+      "createdAt": "2026-10-13T12:30:00.000Z"
     },
     {
       "id": "o8",
@@ -1006,7 +1125,7 @@
       ],
       "total": 195000,
       "status": "pending",
-      "createdAt": "2026-10-07T13:30:00.000Z"
+      "createdAt": "2026-10-13T13:30:00.000Z"
     }
   ],
   "staff": [
@@ -1015,7 +1134,7 @@
       "staffCode": "NV001",
       "name": "Trần Minh Khoa",
       "username": "khoa.tran",
-      "password": "Khoa@123456",
+      "password": "sha256$c3ea7f0b51bdff2743006d48e663d889$df01b8c94bdfed629d4cacbebac9e1e732657a9220048ad8bcfd2f71e20cf6bb",
       "role": "manager",
       "shift": "morning",
       "phone": "0901234567",
@@ -1029,7 +1148,7 @@
       "staffCode": "NV002",
       "name": "Nguyễn Thị Lan",
       "username": "lan.nguyen",
-      "password": "Lan@123456",
+      "password": "sha256$b8eb198a0bdfb3c96657ed6eda7880d9$018e8ffae0026c4b02c5454c236b90dc3cc8ae264b28aafdbd8be60e19ba626c",
       "role": "bartender",
       "shift": "evening",
       "phone": "0912345678",
@@ -1043,7 +1162,7 @@
       "staffCode": "NV003",
       "name": "Lê Văn Đức",
       "username": "duc.le",
-      "password": "Duc@123456",
+      "password": "sha256$56572708dafe19676eb373506b5ae697$cabd36cdd5fd26f32ce2604ae7ca1dd5b844f5a2c66faa9c91fb11e4a4cb5162",
       "role": "bartender",
       "shift": "afternoon",
       "phone": "0923456789",
@@ -1057,7 +1176,7 @@
       "staffCode": "NV004",
       "name": "Phạm Thu Hà",
       "username": "ha.pham",
-      "password": "Ha@123456",
+      "password": "sha256$48937943f9704b20d237fd07cc5a54d2$84975941f07afd9a578f3443c0952f426bf672687fc95be291b43b90c6f98609",
       "role": "waiter",
       "shift": "evening",
       "phone": "0934567890",
@@ -1071,7 +1190,7 @@
       "staffCode": "NV005",
       "name": "Hoàng Anh Tuấn",
       "username": "tuan.hoang",
-      "password": "Tuan@123456",
+      "password": "sha256$f0845f30cfed3ba722cbd94c137825bf$6ee5c516622f93eead5cf326fab08692f27b00267c543b2a737d0cd239fe9e55",
       "role": "cashier",
       "shift": "morning",
       "phone": "0945678901",
@@ -1079,6 +1198,73 @@
       "startDate": "2022-11-02",
       "status": "inactive",
       "createdAt": "2022-11-02T09:00:00.000Z"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust-001",
+      "name": "Nguyễn Hoàng Long",
+      "phone": "0909123456",
+      "email": "long.nguyen@gmail.com",
+      "birthDate": "1992-05-14",
+      "password": "sha256$27442e978276667660c09510127ec13c$f1030e85c5cfcd2fcbdf6e77df6f6327e36af706743c590350406d8c73189a73",
+      "tier": "Thành viên Vàng",
+      "points": 150,
+      "lifetimePoints": 150,
+      "createdAt": "2026-01-15T19:30:00.000Z"
+    },
+    {
+      "id": "cust-002",
+      "name": "Lê Thu Hương",
+      "phone": "0918765432",
+      "email": "huong.le@gmail.com",
+      "birthDate": "1995-08-22",
+      "password": "sha256$4763129f8cbaf57389c2ff10224f4cd5$f13ad2e6f6619895ec4c42040a61bcdf21da52587770bf6c7c8f1b87bcd3d55f",
+      "tier": "Thành viên Bạc",
+      "points": 80,
+      "lifetimePoints": 80,
+      "createdAt": "2026-03-20T20:15:00.000Z"
+    }
+  ],
+  "vouchers": [
+    {
+      "id": "v1",
+      "code": "WELCOME10",
+      "description": "Chào bạn mới: giảm 10% (tối đa 100.000đ) cho đơn từ 200.000đ",
+      "type": "percent",
+      "value": 10,
+      "maxDiscount": 100000,
+      "minOrder": 200000,
+      "expiresAt": "2027-01-11T16:59:00.000Z",
+      "usageLimit": 0,
+      "usedCount": 0,
+      "active": true
+    },
+    {
+      "id": "v2",
+      "code": "GIAM50K",
+      "description": "Giảm thẳng 50.000đ cho đơn từ 300.000đ (100 lượt đầu)",
+      "type": "amount",
+      "value": 50000,
+      "maxDiscount": 0,
+      "minOrder": 300000,
+      "expiresAt": "2026-12-12T16:59:00.000Z",
+      "usageLimit": 100,
+      "usedCount": 0,
+      "active": true
+    },
+    {
+      "id": "v3",
+      "code": "HAPPYNIGHT",
+      "description": "Đêm vui: giảm 15% (tối đa 150.000đ) cho đơn từ 400.000đ",
+      "type": "percent",
+      "value": 15,
+      "maxDiscount": 150000,
+      "minOrder": 400000,
+      "expiresAt": "2026-11-12T16:59:00.000Z",
+      "usageLimit": 0,
+      "usedCount": 0,
+      "active": true
     }
   ],
   "messages": [],
@@ -2098,5 +2284,11 @@
       ],
       "biography": "Edoardo Giaccone, người thường được gọi với biệt danh thân mật \"Baffo\" bởi bộ ria mép đặc trưng, đã mở quán bar đầu tiên của mình tại Salò ven bờ hồ Garda tuyệt đẹp vào năm 1958, ban đầu lấy tên là Garten và sau đổi thành Edward & Edward. Quán bar này lưu giữ tới hơn 1.500 loại whisky thượng hạng.\n\nTừ cuối thập niên 1960, ông tiên phong nhập khẩu các mẻ single malt chính hãng được tuyển chọn và đóng chai riêng, và ông thường được tôn vinh là nhà đóng chai độc lập đầu tiên của nước Ý. Bộ sưu tập đồ sộ của ông – ghi nhận hơn 5.500 mẫu chai khác biệt – đã được Tổ chức Kỷ lục Guinness thế giới công nhận là bộ sưu tập whisky lớn nhất hành tinh, và ông được hậu thế tri ân là người đã biến nước Ý thành chiếc nôi thưởng thức single malt Scotch sớm nhất tại châu Âu."
     }
-  ]
+  ],
+  "settings": {
+    "bankId": "MB",
+    "bankName": "MBBank — Ngân hàng Quân Đội",
+    "accountNumber": "0901234567",
+    "accountName": "QUAN BAR DEM"
+  }
 }

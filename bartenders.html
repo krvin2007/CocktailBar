@@ -2,7 +2,10 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0907">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
 <title>Huyền Thoại Master Bartenders &amp; Mixology Icons — Quán Bar Đêm</title>
 <meta name="description" content="Chiêm ngưỡng chân dung, triết lý phục vụ và công thức cocktail kinh điển của các Master Bartender lừng danh: Salvatore Calabrese, Ada Coleman, Dale DeGroff, Harry Craddock, Hidetsugu Ueno, Colin Field...">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,28 +26,28 @@
   <section class="legends-hero">
     <div class="container">
       <div class="legends-hero-inner">
-        <span class="section-kicker">BẬC THẦY MIXOLOGY</span>
-        <h1>Huyền Thoại Quầy Bar &amp; <em>Mixology Icons</em></h1>
-        <p class="legends-hero-desc">
+        <span class="section-kicker" data-i18n="bt_kicker">BẬC THẦY MIXOLOGY</span>
+        <h1 data-i18n-html="bt_h1_html">Huyền Thoại Quầy Bar &amp; <em>Mixology Icons</em></h1>
+        <p class="legends-hero-desc" data-i18n="bt_desc">
           Hội ngộ những bộ óc sáng tạo tiên phong và bậc thầy đương đại—những người đã dùng lòng hiếu khách, kỹ nghệ pha chế đỉnh cao và công thức bất hủ để định hình văn hóa cocktail thế giới từ thế kỷ 19 đến các quán speakeasy ngày nay.
         </p>
 
         <div class="legends-stats-strip">
           <div class="legends-stat-item">
             <span class="legends-stat-num">8</span>
-            <span class="legends-stat-label">Bậc Thầy Huyền Thoại</span>
+            <span class="legends-stat-label" data-i18n="bt_stat1">Bậc Thầy Huyền Thoại</span>
           </div>
           <div class="legends-stat-item">
             <span class="legends-stat-num">160+</span>
-            <span class="legends-stat-label">Năm Di Sản Nghề Bar</span>
+            <span class="legends-stat-label" data-i18n="bt_stat2">Năm Di Sản Nghề Bar</span>
           </div>
           <div class="legends-stat-item">
             <span class="legends-stat-num">20+</span>
-            <span class="legends-stat-label">Công Thức Bất Hủ</span>
+            <span class="legends-stat-label" data-i18n="bt_stat3">Công Thức Bất Hủ</span>
           </div>
           <div class="legends-stat-item">
             <span class="legends-stat-num">4</span>
-            <span class="legends-stat-label">Châu Lục Tầm Vóc</span>
+            <span class="legends-stat-label" data-i18n="bt_stat4">Châu Lục Tầm Vóc</span>
           </div>
         </div>
       </div>
@@ -60,7 +63,7 @@
             <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input type="text" id="bartenders-search-input" placeholder="Tìm kiếm Master Bartender, quán bar, cocktail, thành phố...">
+            <input type="text" id="bartenders-search-input" placeholder="Tìm kiếm Master Bartender, quán bar, cocktail, thành phố..." data-i18n-placeholder="bt_search_ph">
           </div>
           <div class="legends-count-badge" id="bartenders-count">
             Đang tải dữ liệu Master Bartender...
@@ -76,16 +79,16 @@
       <!-- Cross-Navigation Banner -->
       <div class="cross-nav-strip">
         <div class="cross-nav-info">
-          <h3>Khám Phá Nhà Sưu Tầm Rượu Lừng Danh &amp; Hầm Bí Mật</h3>
-          <p>
+          <h3 data-i18n="bt_cross_title">Khám Phá Nhà Sưu Tầm Rượu Lừng Danh &amp; Hầm Bí Mật</h3>
+          <p data-i18n="bt_cross_desc">
             Hành trình khám phá các hầm rượu bọc thép lưu giữ Single Malt cổ hiếm, Cognac trước thời Cách mạng Pháp và những mẻ thùng đơn độc bản.
           </p>
         </div>
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <a href="collectors.html" class="btn btn-primary btn-sm">
+          <a href="collectors.html" class="btn btn-primary btn-sm" data-i18n="bt_cross_btn_col">
             Xem Nhà Sưu Tầm 🏆
           </a>
-          <a href="spirits.html" class="btn btn-outline btn-sm">
+          <a href="spirits.html" class="btn btn-outline btn-sm" data-i18n="legends_btn_spirits">
             Khám Phá Hầm Rượu 🥃
           </a>
         </div>
@@ -110,28 +113,28 @@
 
       <div>
         <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
-          Hành Trình Sự Nghiệp &amp; Tiểu Sử
+          <span data-i18n="bt_modal_bio">Hành Trình Sự Nghiệp &amp; Tiểu Sử</span>
         </h3>
         <div id="modal-bio"></div>
       </div>
 
       <div>
         <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
-          Quán Bar &amp; Thánh Đường Gắn Liền Sự Nghiệp
+          <span data-i18n="bt_modal_venues">Quán Bar &amp; Thánh Đường Gắn Liền Sự Nghiệp</span>
         </h3>
         <ul id="modal-venues" style="list-style: none; padding: 0; margin: 0;"></ul>
       </div>
 
       <div>
         <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
-          Công Thức Độc Bản &amp; Tác Phẩm Mixology
+          <span data-i18n="bt_modal_drinks">Công Thức Độc Bản &amp; Tác Phẩm Mixology</span>
         </h3>
         <div id="modal-drinks"></div>
       </div>
 
       <div>
         <h3 style="font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber-soft); margin-bottom: 10px;">
-          Vinh Danh &amp; Giải Thưởng Trọn Đời
+          <span data-i18n="bt_modal_accolades">Vinh Danh &amp; Giải Thưởng Trọn Đời</span>
         </h3>
         <div id="modal-accolades" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
       </div>
@@ -139,10 +142,10 @@
 
     <div class="legend-modal-foot">
       <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('modal-close-btn').click();">
-        Đóng hồ sơ
+        <span data-i18n="legends_close_dossier">Đóng hồ sơ</span>
       </button>
       <a href="order.html" class="btn btn-primary btn-sm">
-        Thưởng thức tại Quán Bar Đêm
+        <span data-i18n="bt_modal_cta">Thưởng thức tại Quán Bar Đêm</span>
       </a>
     </div>
   </div>

@@ -11,12 +11,14 @@
    ========================================================= */
 
 import { escapeHtml } from "./utils.js";
+import { t } from "./i18n.js";
 
-const IMAGE_LABELS = {
-  archival: "Ảnh tư liệu",
-  illustration: "Ảnh minh hoạ",
-  portrait: "Chân dung minh hoạ (AI)",
-};
+/** Nhãn loại ảnh theo ngôn ngữ đang chọn (gọi lúc vẽ thẻ nên đổi VI/EN là đổi theo) */
+const imageLabels = () => ({
+  archival: t("portrait_archival", "Ảnh tư liệu"),
+  illustration: t("portrait_illustration", "Ảnh minh hoạ"),
+  portrait: t("portrait_ai", "Chân dung minh hoạ (AI)"),
+});
 
 /** "Salvatore Calabrese" -> "SC", "Michel-Jack Chasseuil" -> "MC" */
 export function initialsOf(name = "") {
@@ -30,7 +32,8 @@ export function initialsOf(name = "") {
 /** HTML phần ảnh đại diện của một thẻ nhân vật */
 export function portraitHtml(item) {
   if (item.image) {
-    const label = IMAGE_LABELS[item.imageType] || IMAGE_LABELS.illustration;
+    const labels = imageLabels();
+    const label = labels[item.imageType] || labels.illustration;
     return `
       <img src="${escapeHtml(item.image)}" alt="${escapeHtml(label)} - ${escapeHtml(item.name)}"
            class="legend-portrait-img" loading="lazy">
@@ -41,5 +44,5 @@ export function portraitHtml(item) {
     <div class="legend-monogram" role="img" aria-label="${escapeHtml(item.name)} (chưa có ảnh chân dung)">
       <span class="legend-monogram-initials">${escapeHtml(initialsOf(item.name))}</span>
     </div>
-    <span class="legend-image-label">Chưa có ảnh chân dung được phép sử dụng</span>`;
+    <span class="legend-image-label">${t("portrait_none", "Chưa có ảnh chân dung được phép sử dụng")}</span>`;
 }

@@ -4,6 +4,7 @@
    ========================================================= */
 
 import { ICONS } from "./icons.js";
+import { escapeHtml } from "./utils.js";
 
 /** Đảm bảo có sẵn khung chứa toast trong trang, tạo nếu chưa có */
 function ensureToastHost() {
@@ -19,21 +20,26 @@ function ensureToastHost() {
 
 /**
  * Hiện thông báo nổi góc màn hình.
+ * message luôn là CHỮ THUẦN (đưa vào bằng textContent): thông báo hay chứa tên khách,
+ * tên món, tham số URL... nên không được coi là HTML - tránh tấn công XSS.
  * @param {string} message
- * @param {"success"|"error"|"info"} type
+ * @param {"success"|"error"|"warning"|"info"} type ("danger" là tên gọi khác của "error")
  */
 export function toast(message, type = "info") {
   const host = ensureToastHost();
+  const kind = type === "danger" ? "error" : type;
   const iconMap = {
     success: ICONS.checkCircle(18),
     error: ICONS.alertCircle(18),
+    warning: ICONS.alertCircle(18),
     info: ICONS.info(18)
   };
-  const iconSvg = iconMap[type] || ICONS.info(18);
+  const iconSvg = iconMap[kind] || ICONS.info(18);
 
   const el = document.createElement("div");
-  el.className = `toast-item toast-${type}`;
-  el.innerHTML = `<span class="toast-icon">${iconSvg}</span><span class="toast-msg">${message}</span>`;
+  el.className = `toast-item toast-${iconMap[kind] ? kind : "info"}`;
+  el.innerHTML = `<span class="toast-icon">${iconSvg}</span><span class="toast-msg"></span>`;
+  el.querySelector(".toast-msg").textContent = message;
   host.appendChild(el);
 
   requestAnimationFrame(() => el.classList.add("show"));
@@ -142,7 +148,7 @@ export function errorHtml(message) {
     <div class="empty-state error-state">
       <div class="empty-icon">${ICONS.alertCircle(32)}</div>
       <h4>Không tải được dữ liệu</h4>
-      <p class="text-muted">${message}</p>
+      <p class="text-muted">${escapeHtml(message)}</p>
     </div>`;
 }
 

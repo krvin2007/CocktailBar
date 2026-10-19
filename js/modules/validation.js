@@ -7,6 +7,9 @@
      3. Hàm tự chèn thông báo lỗi dưới từng ô, trả về true/false
    ========================================================= */
 
+import { checkPassword, passwordProblem } from "./passwords.js";
+import { ageProblem } from "./age.js";
+
 /** Từng luật nhận vào chuỗi giá trị, trả về true (hợp lệ) hoặc chuỗi lỗi */
 const RULES = {
   required: (v) => v.trim().length > 0 || "Không được bỏ trống",
@@ -14,7 +17,7 @@ const RULES = {
   email: (v) => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
     || "Email không đúng định dạng",
 
-  phone: (v) => !v.trim() || /^(0|\+84)(\d{9,10})$/.test(v.trim().replace(/[\s.-]/g, ""))
+  phone: (v) => !v.trim() || /^(0|\+84)\d{9}$/.test(v.trim().replace(/[\s.-]/g, ""))
     || "Số điện thoại không hợp lệ (VD: 0912345678)",
 
   vnphone: (v) => !v.trim() || /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(v.trim().replace(/[\s.-]/g, ""))
@@ -23,8 +26,7 @@ const RULES = {
   username: (v) => !v.trim() || /^[a-zA-Z0-9_]{4,20}$/.test(v.trim())
     || "Tên đăng nhập từ 4-20 ký tự, chỉ gồm chữ cái, số và dấu gạch dưới (_)",
 
-  strongPassword: (v) => !v || /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]).{8,32}$/.test(v)
-    || "Mật khẩu 8-32 ký tự, gồm ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt",
+  password: (v) => !v || passwordProblem(v) === "" || passwordProblem(v),
 
   number: (v) => !v.trim() || !Number.isNaN(Number(v))
     || "Giá trị phải là số",
@@ -37,6 +39,9 @@ const RULES = {
 
   date: (v) => !v.trim() || !Number.isNaN(new Date(v).getTime())
     || "Ngày không hợp lệ",
+
+  // Ngày sinh phải đủ tuổi được phục vụ đồ uống có cồn (age.js); để trống thì luật "required" lo
+  adult: (v) => !v.trim() || ageProblem(v) === "" || ageProblem(v),
 };
 
 /** Luật có tham số, ví dụ "min:2", "max:100" */
@@ -163,29 +168,12 @@ export function clearFormErrors(formEl) {
  */
 export function checkPasswordStrength(password = "") {
   const p = String(password || "");
-  const checks = {
-    length: p.length >= 8,
-    lowercase: /[a-z]/.test(p),
-    uppercase: /[A-Z]/.test(p),
-    number: /\d/.test(p),
-    special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(p),
-  };
+  const checks = checkPassword(p);
+  const passed = [checks.length, checks.firstUpper, checks.special].filter(Boolean).length;
 
-  const passedCount = Object.values(checks).filter(Boolean).length;
-
-  if (!p) {
-    return { score: 0, label: "Chưa nhập", color: "var(--border-soft)", percent: 0, checks };
-  }
-
-  if (passedCount <= 2) {
-    return { score: 1, label: "Yếu", color: "var(--danger)", percent: 25, checks };
-  }
-  if (passedCount === 3) {
-    return { score: 2, label: "Trung bình", color: "#f59e0b", percent: 50, checks };
-  }
-  if (passedCount === 4) {
-    return { score: 3, label: "Khá mạnh", color: "#38bdf8", percent: 75, checks };
-  }
-  return { score: 4, label: "Rất an toàn", color: "var(--success)", percent: 100, checks };
+  if (!p) return { score: 0, label: "Chưa nhập", color: "var(--border-soft)", percent: 0, checks };
+  if (passed === 3) return { score: 3, label: "Đạt yêu cầu", color: "var(--success)", percent: 100, checks };
+  if (passed === 2) return { score: 2, label: "Gần đạt", color: "#f59e0b", percent: 66, checks };
+  return { score: 1, label: "Chưa đạt", color: "var(--danger)", percent: 33, checks };
 }
 

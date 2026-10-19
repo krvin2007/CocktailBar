@@ -6,6 +6,7 @@
    ========================================================= */
 
 import { escapeHtml } from "./utils.js";
+import { VENUE } from "./venue.js";
 import { ICONS } from "./icons.js";
 import { getCurrentLang, t } from "./i18n.js";
 
@@ -385,7 +386,7 @@ class Lounge3DController {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </a>
               <div class="info-contact-hint">
-                <span class="text-xs text-muted">${t("hotline_vip", "Hotline tư vấn vị trí VIP:")} <strong>0938 686 620</strong></span>
+                <span class="text-xs text-muted">${t("hotline_vip", "Hotline tư vấn vị trí VIP:")} <strong>${escapeHtml(VENUE.hotline)}</strong></span>
               </div>
             </div>
           </div>
