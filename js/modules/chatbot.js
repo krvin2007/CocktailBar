@@ -468,9 +468,8 @@ export function renderChatbotWidget() {
     fallbackBtn.setAttribute("aria-label", "Trò chuyện với Bartender ảo");
     fallbackBtn.innerHTML = `
       <span class="floating-btn-pulse"></span>
-      <span class="floating-btn-tooltip">AI Bartender</span>
+      <span class="floating-btn-tooltip">Trợ lý Bartender</span>
       <span class="floating-chatbot-icon">🍸</span>
-      <span class="floating-chatbot-badge">AI</span>
     `;
     document.body.appendChild(fallbackBtn);
   }
