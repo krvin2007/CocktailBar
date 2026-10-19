@@ -27,7 +27,7 @@ export const ADMIN_ACCOUNT = {
   username: "admin",
   // Chỉ lưu BẢN BĂM (mật khẩu demo ghi trong README) - mã nguồn không còn chữ thường
   passwordHash: "sha256$d77972b180397a5af2ce8ad233e84d56$90532f4b297d8e3a0329f75db92939d6cd807594ff0d5a58cc13da07c8acefd8",
-  displayName: "Quản trị viên",
+  displayName: "Lê Thành Tài",
 };
 
 /**
