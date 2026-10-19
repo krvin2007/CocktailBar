@@ -1132,13 +1132,13 @@
     {
       "id": "s1",
       "staffCode": "NV001",
-      "name": "Trần Minh Khoa",
-      "username": "khoa.tran",
-      "password": "sha256$c3ea7f0b51bdff2743006d48e663d889$df01b8c94bdfed629d4cacbebac9e1e732657a9220048ad8bcfd2f71e20cf6bb",
+      "name": "Lê Thành Tài",
+      "username": "tai.le",
+      "password": "sha256$4b1b287e5c4740321ccb4e27ccc82c7e$850c16278957bfb79f963d31314489208c6caf1b031813c1e099fe792fa1a44c",
       "role": "manager",
       "shift": "morning",
-      "phone": "0901234567",
-      "email": "khoa.tran@quanbar.vn",
+      "phone": "0397062429",
+      "email": "tai.le@quanbar.vn",
       "startDate": "2023-03-01",
       "status": "active",
       "createdAt": "2023-03-01T08:00:00.000Z"

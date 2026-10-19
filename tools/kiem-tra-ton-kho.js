@@ -509,9 +509,9 @@ const lanAgain = await auth.signIn("lan.nguyen", "Lan@123456");
 check("...và không đăng nhập lại được khi còn bị khoá", lanAgain.success, false);
 await auth.signIn("admin", "Admin@123");
 check("Tài khoản admin gốc (không nằm trong /staff) giữ nguyên phiên", (await auth.refreshSession())?.username, "admin");
-await auth.signIn("khoa.tran", "Khoa@123456");
+await auth.signIn("tai.le", "Tai@123456");
 await new Promise((resolve) => setTimeout(resolve, 30)); // chờ lần băm lại mật khẩu chạy nền xong
-fakeDb.staff = fakeDb.staff.filter((s) => s.username !== "khoa.tran");
+fakeDb.staff = fakeDb.staff.filter((s) => s.username !== "tai.le");
 check("Nhân sự bị xoá khỏi hệ thống -> phiên bị huỷ", [await auth.refreshSession(), auth.isLoggedIn()], [null, false]);
 
 section("[30] Giới hạn thêm món vào giỏ");
