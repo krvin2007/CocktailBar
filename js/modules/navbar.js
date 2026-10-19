@@ -577,7 +577,19 @@ export function renderFloatingContactWidget() {
   const isEn = getCurrentLang() === "en";
 
   widget.innerHTML = `
-    <!-- 1. Nút Facebook / Messenger -->
+    <!-- 1. Nút Chatbot AI Bartender -->
+    <button type="button"
+            class="floating-contact-btn floating-btn-chatbot"
+            id="bar-chatbot-toggle-btn"
+            aria-label="${isEn ? "Chat with AI Bartender" : "Trò chuyện với Bartender ảo"}"
+            title="${isEn ? "AI Bartender Assistant" : "Trợ lý Bartender ảo AI"}">
+      <span class="floating-btn-pulse"></span>
+      <span class="floating-btn-tooltip">${isEn ? "AI Bartender Assistant" : "AI Bartender (Trợ lý ảo)"}</span>
+      <span class="floating-chatbot-icon">🍸</span>
+      <span class="floating-chatbot-badge">AI</span>
+    </button>
+
+    <!-- 2. Nút Facebook / Messenger -->
     <a href="https://www.facebook.com/jayz0904?locale=vi_VN"
        target="_blank"
        rel="noopener noreferrer"
