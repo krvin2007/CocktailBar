@@ -1,0 +1,605 @@
+/* =========================================================
+   LEGENDS.CSS - Shared Styling for Master Bartenders & Spirits Collectors
+   Designed with high-end Speakeasy luxury aesthetics:
+   - Deep obsidian background (#0b0907) & warm ambient glow
+   - Portrait photo cards with subtle zoom and gold rim lighting
+   - Interactive search bar and category filter tabs
+   - Dossier modal with full career chronicles & crown jewel lists
+   ========================================================= */
+
+/* Hero Banner */
+.legends-hero {
+  position: relative;
+  padding: 100px 0 50px;
+  background: radial-gradient(circle at 50% 20%, rgba(197, 152, 67, 0.12) 0%, rgba(11, 9, 7, 0.98) 75%),
+              linear-gradient(180deg, #130f0c 0%, #0b0907 100%);
+  border-bottom: 1px solid var(--border-soft);
+  text-align: center;
+  overflow: hidden;
+}
+
+.legends-hero::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(232, 198, 130, 0.08), transparent 60%);
+  pointer-events: none;
+}
+
+.legends-hero-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.legends-hero h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 500;
+  color: var(--text-main);
+  line-height: 1.15;
+  margin: 12px 0 16px;
+  letter-spacing: -0.5px;
+}
+
+.legends-hero h1 em {
+  font-style: italic;
+  color: var(--amber-soft);
+  font-weight: 400;
+}
+
+.legends-hero-desc {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 960px;
+  margin: 0 auto 34px;
+}
+
+/* Stats Ribbon */
+.legends-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  background: rgba(19, 15, 12, 0.75);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 22px 36px;
+  backdrop-filter: blur(12px);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.legends-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.legends-stat-num {
+  font-family: var(--font-heading);
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: var(--amber-soft);
+  line-height: 1;
+}
+
+.legends-stat-label {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Filter Bar */
+.legends-filter-bar {
+  margin-bottom: 36px;
+}
+
+.legends-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.legends-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+}
+
+.legends-search-box .search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--amber);
+  pointer-events: none;
+}
+
+.legends-search-box input {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  background: rgba(19, 15, 12, 0.9);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  transition: all 0.25s ease;
+}
+
+.legends-search-box input:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 16px rgba(197, 152, 67, 0.2);
+}
+
+.legends-count-badge {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: rgba(19, 15, 12, 0.8);
+  border: 1px solid var(--border-soft);
+  padding: 8px 16px;
+  border-radius: 999px;
+}
+
+.legends-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-soft);
+  padding-bottom: 16px;
+}
+
+.legend-tab-btn {
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.legend-tab-btn:hover {
+  color: var(--text-main);
+  border-color: rgba(197, 152, 67, 0.4);
+  background: rgba(197, 152, 67, 0.05);
+}
+
+.legend-tab-btn.active {
+  color: #0b0907;
+  background: linear-gradient(135deg, var(--amber-soft) 0%, var(--amber) 100%);
+  border-color: var(--amber);
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(197, 152, 67, 0.3);
+}
+
+/* Grid Layout */
+.legends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 36px;
+}
+
+/* Card Styling */
+.legend-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+  position: relative;
+}
+
+.legend-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Card Portrait Header */
+.legend-portrait-wrap {
+  position: relative;
+  width: 100%;
+  height: 310px;
+  overflow: hidden;
+  background: #080605;
+}
+
+.legend-portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: contrast(102%) brightness(95%);
+}
+
+.legend-card:hover .legend-portrait-img {
+  transform: scale(1.05);
+  filter: contrast(105%) brightness(102%);
+}
+
+.legend-portrait-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11,9,7,0.1) 0%, rgba(11,9,7,0.4) 60%, rgba(26,20,16,1) 100%);
+  pointer-events: none;
+}
+
+.legend-tag-row {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+  gap: 8px;
+}
+
+.legend-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(11, 9, 7, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-soft);
+  color: var(--amber-soft);
+}
+
+.legend-era-badge {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(197, 152, 67, 0.15);
+  border: 1px solid rgba(197, 152, 67, 0.3);
+  color: var(--amber-soft);
+  font-weight: 600;
+}
+
+/* Card Body */
+.legend-card-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.legend-header {
+  margin-bottom: 14px;
+}
+
+.legend-name {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+
+.legend-subtitle {
+  font-size: 0.86rem;
+  color: var(--amber);
+  font-style: italic;
+}
+
+.legend-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 14px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.legend-meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-meta-k {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.legend-meta-v {
+  font-size: 0.84rem;
+  color: var(--text-main);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Quote */
+.legend-quote {
+  font-family: var(--font-heading);
+  font-size: 0.98rem;
+  font-style: italic;
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding: 12px 16px;
+  background: rgba(197, 152, 67, 0.05);
+  border-left: 2px solid var(--amber);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom: 18px;
+}
+
+/* Highlight List (Signature Drinks or Crown Jewels) */
+.legend-highlights-box {
+  margin-bottom: 20px;
+}
+
+.legend-highlights-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--amber-soft);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-item-pill {
+  background: rgba(19, 15, 12, 0.7);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  transition: border-color 0.2s ease;
+}
+
+.legend-item-pill:hover {
+  border-color: rgba(197, 152, 67, 0.35);
+}
+
+.legend-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.legend-item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.legend-item-sub {
+  font-size: 0.74rem;
+  color: var(--amber);
+  font-weight: 500;
+}
+
+.legend-item-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* Accolades Chip List */
+.legend-accolades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.legend-accolade-chip {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Card Footer */
+.legend-card-foot {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* Modal Styling */
+.legend-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.legend-modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.legend-modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  max-width: 880px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-modal-head {
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 10;
+}
+
+.legend-modal-close {
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.legend-modal-close:hover {
+  color: var(--text-main);
+  border-color: var(--amber);
+  background: rgba(197, 152, 67, 0.1);
+}
+
+.legend-modal-body {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.legend-modal-foot {
+  padding: 16px 28px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: rgba(19, 15, 12, 0.9);
+}
+
+/* Cross-Navigation Banner */
+.cross-nav-strip {
+  background: linear-gradient(135deg, rgba(197, 152, 67, 0.08) 0%, rgba(19, 15, 12, 0.95) 100%);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  margin-top: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.cross-nav-info h3 {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.cross-nav-info p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  max-width: 600px;
+}
+
+@media (max-width: 768px) {
+  .legends-stats-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .legends-grid {
+    grid-template-columns: 1fr;
+  }
+  .legend-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   KHUNG CHỮ CÁI ĐẦU TÊN (khi chưa có ảnh chân dung hợp lệ)
+   + NHÃN LOẠI ẢNH (tư liệu / minh hoạ)
+   ========================================================= */
+.legend-monogram {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(197, 152, 67, 0.18), transparent 60%),
+    linear-gradient(160deg, var(--bg-elevated), var(--bg-page));
+}
+
+.legend-monogram-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 128px;
+  height: 128px;
+  font-family: var(--font-heading);
+  font-size: 3.2rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--amber-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: rgba(11, 9, 7, 0.55);
+}
+
+.legend-image-label {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  z-index: 2;
+  padding: 3px 10px;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  background: rgba(11, 9, 7, 0.72);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Quán Bar Đêm — Artisan Cocktail Lounge",
+  "short_name": "Quán Bar Đêm",
+  "description": "Thực đơn cocktail, đặt bàn và gọi món của Quán Bar Đêm",
+  "lang": "vi",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0b0907",
+  "theme_color": "#0b0907",
+  "icons": [
+    { "src": "img/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

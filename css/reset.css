@@ -1,0 +1,61 @@
+/* =========================================================
+   RESET.CSS - Đặt lại mặc định trình duyệt
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  line-height: 1.6;
+  color: var(--text-main);
+  background: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.no-scroll {
+  overflow: hidden;
+}
+
+/* Thuộc tính hidden phải luôn ẩn được phần tử, kể cả khi lớp CSS khác
+   đặt display (VD .form-group { display: flex } từng làm các ô "Thời
+   gian đến / Số khách" vẫn hiện dù không chọn "Đặt bàn trước"). */
+[hidden] {
+  display: none !important;
+}
