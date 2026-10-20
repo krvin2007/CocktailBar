@@ -8,10 +8,10 @@
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
-import { can } from "../modules/auth.js";
+import { can, currentAdmin } from "../modules/auth.js";
 import {
   getAllOrders, filterOrders, updateOrderStatus, deleteOrder, confirmPayment,
-  ORDER_STATUS, ORDER_TRANSITIONS,
+  verifyOrderDoorCheck, ORDER_STATUS, ORDER_TRANSITIONS,
 } from "../modules/ordersService.js";
 import { getBankSettings, saveBankSettings, VIETNAM_BANKS } from "../modules/settingsService.js";
 import { ageOf } from "../modules/age.js";
@@ -40,7 +40,7 @@ const bankBtn = document.getElementById("bank-settings-btn");
 const bankForm = document.getElementById("bank-form");
 const bankSubmitBtn = document.getElementById("bank-form-submit");
 
-const COLSPAN = 9;
+const COLSPAN = 10;
 let allOrders = [];
 let currentPage = 1;
 let activeOrder = null;
@@ -55,6 +55,7 @@ function rowHtml(o) {
       <td><strong>${formatMoney(o.total)}</strong></td>
       <td><span class="${classNames("badge", o.statusBadge)}">${o.statusLabel}</span></td>
       <td><span class="${classNames("badge", o.paymentBadge)}">${o.paymentLabel}</span></td>
+      <td><span class="${classNames("badge", o.doorVerificationBadge)}">${o.doorVerificationLabel}</span></td>
       <td class="text-muted text-sm">${formatDateTime(o.createdAt)}</td>
       <td class="cell-actions" style="text-align: right;">
         <button type="button" class="btn btn-ghost btn-sm" data-action="view">
@@ -145,9 +146,104 @@ function openDetail(order) {
     <div class="order-detail-row total-row mt-3">
       <span class="font-bold">Tổng thanh toán</span>
       <strong class="text-amber text-lg">${formatMoney(order.total)}</strong>
+    </div>
+
+    <div class="door-host-admin-panel">
+      <div class="door-host-admin-title">
+        <span>🛡️ Đối chiếu CCCD &amp; Độ tuổi tại cửa (Door Host)</span>
+        <span class="${classNames("badge", order.doorVerificationBadge)}">${order.doorVerificationLabel}</span>
+      </div>
+      <p class="text-sm text-muted mb-2">
+        Ngày sinh khách khai: <strong>${order.birthDate ? `${escapeHtml(formatDate(order.birthDate))} (${ageOf(order.birthDate)} tuổi)` : "Chưa có"}</strong>.
+        ${order.verifiedBy ? `<br>Nhân viên xử lý: <strong>${escapeHtml(order.verifiedBy)}</strong>` : ""}
+        ${order.verificationNote ? `<br>Ghi chú: <em>${escapeHtml(order.verificationNote)}</em>` : ""}
+      </p>
+      ${order.status !== "cancelled" ? `
+        <div class="door-host-admin-actions">
+          <button type="button" class="btn btn-outline btn-sm" id="door-verify-valid-btn" ${order.doorVerification === "verified" ? "disabled" : ""}>
+            ✅ Xác minh CCCD Hợp lệ
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm text-danger" id="door-verify-underage-btn">
+            ❌ Từ chối: Dưới 18 tuổi (Hủy &amp; Hoàn kho)
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm text-danger" id="door-verify-fake-btn">
+            🚫 Từ chối: Thông tin ảo / Bom hàng
+          </button>
+        </div>
+      ` : `<p class="text-xs text-muted mb-0">Đơn đã huỷ - không thể đối chiếu lại.</p>`}
     </div>`;
 
   openModal("order-modal");
+
+  const validBtn = modalBody.querySelector("#door-verify-valid-btn");
+  if (validBtn) {
+    validBtn.onclick = async () => {
+      const staff = currentAdmin();
+      const staffName = staff?.displayName || "Lê Thành Tài";
+      try {
+        await verifyOrderDoorCheck(order.id, {
+          status: "verified",
+          staffName,
+          note: "Đã kiểm tra CCCD/VNeID chính chủ, khách đủ 18 tuổi.",
+        });
+        toast(`Đã xác minh CCCD hợp lệ cho khách ${order.name}.`, "success");
+        closeModal("order-modal");
+        await reloadTable();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    };
+  }
+
+  const underageBtn = modalBody.querySelector("#door-verify-underage-btn");
+  if (underageBtn) {
+    underageBtn.onclick = async () => {
+      const ok = await confirmDialog(
+        `Xác nhận TỪ CHỐI PHỤC VỤ khách ${order.name} do chưa đủ 18 tuổi hoặc khai gian ngày sinh?\n\n• Đơn hàng sẽ bị HỦY.\n• Toàn bộ cocktail đã pha/dự trù sẽ được TỰ ĐỘNG HOÀN KHO.\n• Tài khoản thành viên (nếu có) sẽ bị tạm khóa vi phạm.`,
+        { title: "Từ chối phục vụ (Vi phạm 18+)", okText: "Từ chối & Hủy đơn" }
+      );
+      if (!ok) return;
+      const staff = currentAdmin();
+      const staffName = staff?.displayName || "Lê Thành Tài";
+      try {
+        await verifyOrderDoorCheck(order.id, {
+          status: "rejected_underage",
+          staffName,
+          note: "Từ chối phục vụ: Phát hiện chưa đủ 18 tuổi khi kiểm tra CCCD tại cửa.",
+        });
+        toast(`Đã từ chối phục vụ khách ${order.name} và tự động hoàn kho nguyên liệu.`, "warning");
+        closeModal("order-modal");
+        await reloadTable();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    };
+  }
+
+  const fakeBtn = modalBody.querySelector("#door-verify-fake-btn");
+  if (fakeBtn) {
+    fakeBtn.onclick = async () => {
+      const ok = await confirmDialog(
+        `Xác nhận HỦY ĐƠN do khách cung cấp số điện thoại hoặc thông tin ảo?\n\n• Đơn hàng sẽ bị HỦY.\n• Toàn bộ đồ uống sẽ được TỰ ĐỘNG HOÀN KHO.\n• Tài khoản thành viên (nếu có) sẽ bị tạm khóa.`,
+        { title: "Từ chối thông tin ảo / Bom hàng", okText: "Hủy đơn & Hoàn kho" }
+      );
+      if (!ok) return;
+      const staff = currentAdmin();
+      const staffName = staff?.displayName || "Lê Thành Tài";
+      try {
+        await verifyOrderDoorCheck(order.id, {
+          status: "rejected_fake_info",
+          staffName,
+          note: "Hủy đơn: Không liên lạc được số điện thoại hoặc thông tin giả mạo.",
+        });
+        toast(`Đã hủy đơn ${order.code} do thông tin ảo và hoàn kho thành công.`, "warning");
+        closeModal("order-modal");
+        await reloadTable();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    };
+  }
 }
 
 bodyEl.addEventListener("click", (e) => {

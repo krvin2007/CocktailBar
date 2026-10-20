@@ -5,10 +5,10 @@
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
-import { getAllCustomers, MEMBER_RANKS, rankForPoints, lifetimeOf } from "../modules/customerAuth.js";
+import { getAllCustomers, MEMBER_RANKS, rankForPoints, lifetimeOf, updateCustomerStatus } from "../modules/customerAuth.js";
 import { getAllOrders } from "../modules/ordersService.js";
 import { normalizePhone, formatMoney, formatDate, formatDateTime, debounce, paginate, renderPagination, escapeHtml } from "../modules/utils.js";
-import { openModal, closeModal } from "../modules/ui.js";
+import { openModal, closeModal, toast, confirmDialog } from "../modules/ui.js";
 
 const bodyEl = document.getElementById("customers-body");
 const paginationEl = document.getElementById("pagination");
@@ -54,6 +54,11 @@ function filtered() {
 }
 
 function rowHtml({ customer, rank, orderCount, spent }) {
+  const isBanned = customer.status === "inactive" || customer.status === "banned";
+  const statusBadge = isBanned
+    ? `<span class="badge badge-danger" title="${escapeHtml(customer.banReason || "Tạm khóa do vi phạm 18+")}">🚫 Tạm khóa</span>`
+    : `<span class="badge badge-success">✅ Hoạt động (Đủ 18+)</span>`;
+
   return `
     <tr data-id="${escapeHtml(customer.id)}">
       <td>
@@ -65,7 +70,11 @@ function rowHtml({ customer, rank, orderCount, spent }) {
       <td><strong>${Number(customer.points) || 0}</strong></td>
       <td>${orderCount}</td>
       <td><strong>${formatMoney(spent)}</strong></td>
-      <td class="cell-actions" style="text-align: right;">
+      <td>${statusBadge}</td>
+      <td class="cell-actions" style="text-align: right; display: flex; gap: 6px; justify-content: flex-end;">
+        ${isBanned
+          ? `<button type="button" class="btn btn-ghost btn-sm text-success" data-action="unlock">Mở khóa</button>`
+          : `<button type="button" class="btn btn-ghost btn-sm text-danger" data-action="lock" title="Khóa tài khoản do vi phạm độ tuổi 18+ hoặc khai gian">Khóa vi phạm</button>`}
         <button type="button" class="btn btn-ghost btn-sm" data-action="history">Lịch sử điểm</button>
       </td>
     </tr>`;
@@ -76,7 +85,7 @@ function renderTable() {
   const { items, page, totalPages } = paginate(list, currentPage, 8);
   currentPage = page;
   bodyEl.innerHTML = items.length ? items.map(rowHtml).join("")
-    : `<tr><td colspan="7" class="table-empty py-4 text-center text-muted">${rows.length ? "Không có khách phù hợp với bộ lọc." : "Chưa có khách hàng thành viên nào."}</td></tr>`;
+    : `<tr><td colspan="8" class="table-empty py-4 text-center text-muted">${rows.length ? "Không có khách phù hợp với bộ lọc." : "Chưa có khách hàng thành viên nào."}</td></tr>`;
   renderPagination(paginationEl, page, totalPages, (p) => { currentPage = p; renderTable(); });
 }
 
@@ -114,15 +123,54 @@ async function reload() {
     rows = buildRows(customers, orders);
     renderTable();
   } catch (err) {
-    bodyEl.innerHTML = `<tr><td colspan="7" class="table-empty py-4 text-center text-muted">${escapeHtml(err.message)}</td></tr>`;
+    bodyEl.innerHTML = `<tr><td colspan="8" class="table-empty py-4 text-center text-muted">${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
-bodyEl.addEventListener("click", (e) => {
-  const btn = e.target.closest('button[data-action="history"]');
-  if (!btn) return;
-  const row = rows.find((r) => r.customer.id === btn.closest("tr").dataset.id);
-  if (row) openHistory(row);
+bodyEl.addEventListener("click", async (e) => {
+  const lockBtn = e.target.closest('button[data-action="lock"]');
+  if (lockBtn) {
+    const row = rows.find((r) => r.customer.id === lockBtn.closest("tr").dataset.id);
+    if (!row) return;
+    const ok = await confirmDialog(
+      `Bạn có chắc muốn TẠM KHÓA tài khoản của ${row.customer.name}?\n\n• Lý do: Vi phạm quy định độ tuổi 18+ hoặc cung cấp thông tin sai lệch khi đến quán.\n• Khách sẽ bị từ chối đăng nhập và không thể đặt bàn nữa.`,
+      { title: "Khóa tài khoản vi phạm 18+", okText: "Khóa tài khoản" }
+    );
+    if (!ok) return;
+    try {
+      await updateCustomerStatus(row.customer.id, "inactive", "Tài khoản bị tạm khóa do vi phạm quy định độ tuổi 18+ hoặc khai gian thông tin.");
+      toast(`Đã tạm khóa tài khoản của ${row.customer.name}.`, "warning");
+      await reload();
+    } catch (err) {
+      toast(err.message, "error");
+    }
+    return;
+  }
+
+  const unlockBtn = e.target.closest('button[data-action="unlock"]');
+  if (unlockBtn) {
+    const row = rows.find((r) => r.customer.id === unlockBtn.closest("tr").dataset.id);
+    if (!row) return;
+    const ok = await confirmDialog(
+      `Mở khóa tài khoản cho ${row.customer.name}? Khách hàng sẽ có thể đăng nhập và đặt bàn bình thường.`,
+      { title: "Mở khóa tài khoản", okText: "Mở khóa" }
+    );
+    if (!ok) return;
+    try {
+      await updateCustomerStatus(row.customer.id, "active", "");
+      toast(`Đã mở khóa tài khoản của ${row.customer.name}.`, "success");
+      await reload();
+    } catch (err) {
+      toast(err.message, "error");
+    }
+    return;
+  }
+
+  const historyBtn = e.target.closest('button[data-action="history"]');
+  if (historyBtn) {
+    const row = rows.find((r) => r.customer.id === historyBtn.closest("tr").dataset.id);
+    if (row) openHistory(row);
+  }
 });
 
 if (initAdminLayout("Khách Hàng Thành Viên")) {

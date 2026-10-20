@@ -147,6 +147,11 @@ if (regForm) {
       toast("Mật khẩu xác nhận không trùng khớp.", "warning");
       return;
     }
+    const legalCheckbox = document.getElementById("page-reg-legal");
+    if (legalCheckbox && !legalCheckbox.checked) {
+      toast("Vui lòng xác nhận cam kết đủ 18 tuổi và xuất trình CCCD khi đến quán.", "warning");
+      return;
+    }
 
     const restoreBtn = setButtonLoading(regBtn, "Đang đăng ký...");
     try {

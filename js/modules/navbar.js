@@ -18,6 +18,7 @@ import { rankForPoints, lifetimeOf } from "./customerAuth.js";
 import { ageProblem } from "./age.js";
 import { signIn, currentAdmin, logout as staffLogout, homePageFor } from "./auth.js";
 import { renderChatbotWidget } from "./chatbot.js";
+import { initAgeGate } from "./ageGate.js";
 
 function getNavLinks() {
   return [
@@ -690,6 +691,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderFooter();
   renderFloatingContactWidget();
   renderChatbotWidget();
+  initAgeGate();
   applyI18n();
   // Điểm thưởng / hạng đổi sau mỗi đơn hoàn tất: đối chiếu lại với máy chủ (đổi thì tự vẽ lại menu)
   syncCustomerSession();
@@ -698,4 +700,5 @@ document.addEventListener("DOMContentLoaded", () => {
 if (document.readyState !== "loading") {
   renderFloatingContactWidget();
   renderChatbotWidget();
+  initAgeGate();
 }
