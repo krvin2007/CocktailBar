@@ -276,6 +276,7 @@ export class Order {
     items = [], note = "", status = "pending", paymentStatus = "unpaid",
     createdAt = new Date().toISOString(),
     discounts = [], voucherCode = "", pointsUsed = 0, birthDate = "",
+    doorVerification = "pending", verifiedBy = "", verificationNote = "",
   } = {}) {
     this.id = id;
     this.code = code;
@@ -290,10 +291,33 @@ export class Order {
     this.voucherCode = voucherCode || "";
     this.pointsUsed = Number(pointsUsed) || 0;
     this.birthDate = birthDate || ""; // ngày sinh khách khai (đơn cũ không có) - nhân viên đối chiếu CCCD khi khách đến
+    this.doorVerification = doorVerification || "pending"; // "pending" | "verified" | "rejected_underage" | "rejected_fake_info"
+    this.verifiedBy = verifiedBy || "";
+    this.verificationNote = verificationNote || "";
     this.note = note;
     this.status = status; // đi qua setter -> trạng thái sai sẽ bị từ chối ngay
     this.paymentStatus = Object.hasOwn(PAYMENT_STATUS, paymentStatus) ? paymentStatus : "unpaid";
     this.createdAt = createdAt;
+  }
+
+  get doorVerificationLabel() {
+    const labels = {
+      pending: "Chờ check-in CCCD",
+      verified: "Đã duyệt CCCD 18+",
+      rejected_underage: "Từ chối: Dưới 18t",
+      rejected_fake_info: "Từ chối: Thông tin ảo",
+    };
+    return labels[this.doorVerification] || "Chưa xác minh";
+  }
+
+  get doorVerificationBadge() {
+    const badges = {
+      pending: "badge-door-pending",
+      verified: "badge-door-verified",
+      rejected_underage: "badge-door-rejected",
+      rejected_fake_info: "badge-door-rejected",
+    };
+    return badges[this.doorVerification] || "badge-door-pending";
   }
 
   get paymentLabel() {
@@ -449,6 +473,9 @@ export class Order {
       discounts: this.discounts,
       voucherCode: this.voucherCode,
       pointsUsed: this.pointsUsed,
+      doorVerification: this.doorVerification,
+      verifiedBy: this.verifiedBy,
+      verificationNote: this.verificationNote,
       total: this.total,
       createdAt: this.createdAt,
     };
@@ -898,4 +925,44 @@ export function filterOrders(orders, { status = "all", payment = "all", keyword 
 /** Tải từ API rồi lọc */
 export async function queryOrders(opts = {}) {
   return filterOrders(await getAllOrders(), opts);
+}
+
+/**
+ * Thao tác Lễ tân Door Host / Quản lý (Lê Thành Tài):
+ * - status: "verified" -> Khách xuất trình CCCD chuẩn, đủ 18 tuổi.
+ * - status: "rejected_underage" -> Khách dưới 18 tuổi / khai man -> Hủy đơn, hoàn kho, khóa tài khoản.
+ * - status: "rejected_fake_info" -> Số điện thoại ảo / bom hàng -> Hủy đơn, hoàn kho.
+ */
+export async function verifyOrderDoorCheck(orderId, { status, staffName = "Lê Thành Tài", note = "" } = {}) {
+  const order = await getOrderById(orderId);
+  if (!order) throw new Error("Không tìm thấy đơn hàng.");
+
+  const payload = {
+    doorVerification: status,
+    verifiedBy: staffName,
+    verificationNote: note,
+  };
+
+  if (status === "rejected_underage" || status === "rejected_fake_info") {
+    // Tự động chuyển đơn sang huỷ và hoàn kho nguyên liệu rượu
+    if (order.status !== "cancelled") {
+      await updateOrderStatus(orderId, "cancelled");
+    }
+    // Nếu khách có tài khoản thành viên, tạm khóa do gian lận thông tin
+    if (order.customerId) {
+      try {
+        await api.patch(`/customers/${encodeURIComponent(order.customerId)}`, {
+          status: "inactive",
+          banReason: status === "rejected_underage"
+            ? "Tài khoản bị tạm khóa do khai gian ngày sinh / chưa đủ 18 tuổi khi đối chiếu CCCD tại cửa."
+            : "Tài khoản bị tạm khóa do cung cấp thông tin không có thật.",
+        });
+      } catch (err) {
+        console.warn("[doorCheck] Không khoá được tài khoản khách:", err);
+      }
+    }
+  }
+
+  const saved = await api.patch(`/${COLLECTION}/${encodeURIComponent(orderId)}`, payload);
+  return Order.from(saved);
 }

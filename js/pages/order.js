@@ -506,7 +506,13 @@ function showOrderSuccessModal(order) {
         <div class="receipt-row"><span>${t("order_rc_total", "Tổng thanh toán")}:</span><strong class="text-amber">${formatMoney(order.total)}</strong></div>
       </div>
 
-      <p class="id-check-note">${t("order_id_note", "Quán sẽ <strong>kiểm tra CCCD / giấy tờ tuỳ thân</strong> khi quý khách đến nhận bàn. Chưa đủ 18 tuổi hoặc không xuất trình được giấy tờ, quán xin phép không phục vụ đồ uống có cồn.")}</p>
+      <div class="door-host-notice-card" style="margin: 16px 0; text-align: left;">
+        <div class="notice-icon">🛡️</div>
+        <div class="notice-content">
+          <div class="notice-title">QUY ĐỊNH CHECK-IN TẠI CỬA (DOOR HOST)</div>
+          <p class="notice-text">Quý khách vui lòng mang theo <strong>CCCD hoặc mở ứng dụng VNeID chính chủ</strong> để đối chiếu độ tuổi trước khi nhận bàn. Mọi trường hợp dưới 18 tuổi hoặc khai báo sai lệch sẽ bị từ chối phục vụ và hủy bàn theo quy định pháp luật.</p>
+        </div>
+      </div>
 
       <div class="modal-actions-stacked" style="display: flex; flex-direction: column; gap: 10px;">
         ${order.needsPayment ? `
@@ -562,11 +568,17 @@ function lookupResultHtml(o) {
         ${o.serviceDetails().map(([label, value]) => `<p><strong>${label}:</strong> ${escapeHtml(value)}</p>`).join("")}
         ${o.isTableOnly ? "" : `<p><strong>${t("order_rc_items", "Món đã gọi")}:</strong> ${items}</p>`}
         <p><strong>${t("order_rc_created", "Đặt lúc")}:</strong> ${formatDateTime(o.createdAt)}</p>
-        ${o.discountTotal > 0 ? `<p><strong>${t("order_discount_label", "Ưu đãi")}:</strong> −${formatMoney(o.discountTotal)} (${o.discounts.map((d) => escapeHtml(d.label)).join(", ")})</p>` : ""}
         ${o.isTableOnly ? "" : `
         <p><strong>${t("order_rc_amount", "Tổng tiền")}:</strong> <strong class="text-amber">${formatMoney(o.total)}</strong></p>
         <p><strong>${t("order_rc_payment", "Thanh toán")}:</strong> <span class="badge ${o.paymentBadge}">${paymentText(o)}</span></p>`}
-        ${o.holdsStock ? `<p class="id-check-note">${t("order_id_note", "Quán sẽ <strong>kiểm tra CCCD / giấy tờ tuỳ thân</strong> khi quý khách đến nhận bàn. Chưa đủ 18 tuổi hoặc không xuất trình được giấy tờ, quán xin phép không phục vụ đồ uống có cồn.")}</p>` : ""}
+        ${o.holdsStock ? `
+        <div class="door-host-notice-card" style="margin: 14px 0; text-align: left;">
+          <div class="notice-icon">🛡️</div>
+          <div class="notice-content">
+            <div class="notice-title">QUY ĐỊNH CHECK-IN TẠI CỬA (DOOR HOST)</div>
+            <p class="notice-text">Quý khách vui lòng mang theo <strong>CCCD hoặc mở ứng dụng VNeID chính chủ</strong> để đối chiếu độ tuổi trước khi nhận bàn. Mọi trường hợp dưới 18 tuổi hoặc thông tin sai lệch sẽ bị từ chối phục vụ.</p>
+          </div>
+        </div>` : ""}
         <div class="lookup-actions mt-3">
           ${showQrBtn ? `
             <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="lookup-qr-btn">

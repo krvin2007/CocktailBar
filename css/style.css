@@ -4952,3 +4952,246 @@ textarea {
   .rank-card { padding: 20px 18px; }
   .rank-card-points { text-align: left; }
 }
+
+/* =========================================================
+   AGE GATE MODAL (18+) & DOOR HOST VERIFICATION SYSTEM
+   Tuân thủ Luật Phòng chống tác hại của rượu, bia 2019
+   ========================================================= */
+body.age-gate-locked {
+  overflow: hidden !important;
+}
+
+.age-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(11, 9, 7, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: ageGateFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.age-gate-overlay.age-gate-closing {
+  animation: ageGateFadeOut 0.35s ease forwards;
+}
+
+@keyframes ageGateFadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ageGateFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.97); }
+}
+
+.age-gate-card {
+  max-width: 520px;
+  width: 100%;
+  background: linear-gradient(150deg, #1b140e 0%, #100c09 100%);
+  border: 1px solid rgba(197, 152, 67, 0.4);
+  border-radius: var(--radius-md);
+  padding: 36px 30px 28px;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 36px rgba(197, 152, 67, 0.15);
+  position: relative;
+}
+
+.age-gate-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 2px solid var(--amber);
+  color: var(--amber);
+  font-size: 1.75rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  margin: 0 auto 16px;
+  background: rgba(197, 152, 67, 0.1);
+  box-shadow: 0 0 24px rgba(197, 152, 67, 0.35);
+  animation: pulseAmber 2.5s infinite;
+}
+
+.age-gate-title {
+  font-family: var(--font-heading);
+  font-size: 1.65rem;
+  color: var(--cream);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.age-gate-brand {
+  font-size: 0.78rem;
+  color: var(--amber);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.age-gate-law-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  margin-bottom: 22px;
+  text-align: left;
+}
+
+.age-gate-law-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--amber);
+  margin-bottom: 6px;
+}
+
+.age-gate-text {
+  font-size: 0.84rem;
+  color: var(--text-main);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.age-gate-subtext {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+.age-gate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.age-gate-btn-accept {
+  width: 100%;
+  justify-content: center;
+  font-size: 0.98rem;
+  font-weight: 600;
+  padding: 14px 20px;
+}
+
+.age-gate-btn-reject {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  justify-content: center;
+}
+
+.age-gate-btn-reject:hover {
+  color: var(--text-muted);
+}
+
+.age-gate-underage-box {
+  padding: 12px 6px;
+  text-align: center;
+}
+
+.age-gate-underage-icon {
+  font-size: 2.4rem;
+  margin-bottom: 8px;
+}
+
+.age-gate-underage-title {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: var(--danger);
+  margin-bottom: 10px;
+}
+
+.age-gate-underage-msg {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Khung lưu ý Lễ tân Door Host trên Hóa đơn & Tra cứu đơn */
+.door-host-notice-card {
+  background: rgba(197, 152, 67, 0.08);
+  border: 1px solid rgba(197, 152, 67, 0.35);
+  border-left: 4px solid var(--amber);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin: 18px 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.door-host-notice-card .notice-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.door-host-notice-card .notice-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--amber-soft);
+  margin-bottom: 4px;
+}
+
+.door-host-notice-card .notice-text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Badges cho trạng thái đối chiếu CCCD (Door Check) */
+.badge-door-pending {
+  background: rgba(229, 167, 62, 0.15);
+  color: var(--warning);
+  border: 1px solid rgba(229, 167, 62, 0.35);
+}
+
+.badge-door-verified {
+  background: rgba(76, 183, 121, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(76, 183, 121, 0.35);
+}
+
+.badge-door-rejected {
+  background: rgba(226, 92, 80, 0.15);
+  color: var(--danger);
+  border: 1px solid rgba(226, 92, 80, 0.35);
+}
+
+/* Thao tác Door Host trong Modal Admin Orders */
+.door-host-admin-panel {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(197, 152, 67, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-top: 18px;
+}
+
+.door-host-admin-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--amber);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.door-host-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+

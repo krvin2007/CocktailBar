@@ -265,6 +265,13 @@ export async function customerLogin(identifier, password) {
       return { success: false, message: "Không tìm thấy tài khoản với thông tin đã nhập." };
     }
 
+    if (customer.status === "inactive" || customer.status === "banned") {
+      return {
+        success: false,
+        message: customer.banReason || "Tài khoản của quý khách đã bị tạm khóa do vi phạm quy định độ tuổi 18+ hoặc khai gian thông tin. Vui lòng liên hệ Quản lý Lê Thành Tài.",
+      };
+    }
+
     const passwordCheck = verifyPassword(p, customer.password);
     if (!passwordCheck.ok) {
       return { success: false, message: "Mật khẩu xác thực chưa chính xác." };
@@ -347,6 +354,9 @@ export async function customerRegister({ name, phone, email, password, birthDate
       email: cleanEmail,
       birthDate: cleanBirth,
       password: hashPassword(cleanPass),
+      status: "active",
+      legalAgreed: true,
+      idVerified: false,
       points: 20, // Tặng ngay 20 điểm chào mừng
       lifetimePoints: 20,
       tier: tierForPoints(20),
@@ -403,6 +413,18 @@ export function isCustomerLoggedIn() {
 export function customerLogout() {
   removeItem(SESSION_KEY);
   dispatchAuthChange(null);
+}
+
+/**
+ * Cập nhật trạng thái khách hàng (active / inactive do vi phạm 18+ hoặc thông tin ảo)
+ * Dùng bởi Quản lý quán (Lê Thành Tài) trong admin-customers
+ */
+export async function updateCustomerStatus(customerId, status, reason = "") {
+  return await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, {
+    status,
+    banReason: reason,
+    statusUpdatedAt: new Date().toISOString(),
+  });
 }
 
 /** Phát sự kiện thay đổi phiên đăng nhập khách hàng để các thành phần trên trang cập nhật */
