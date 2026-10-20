@@ -344,10 +344,24 @@
   .lounge-zone-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .lounge-mode-switch {
-    flex-wrap: wrap;
-    max-width: calc(100% - 32px);
-    border-radius: 16px;
+  .lounge3d-viewport-box {
+    min-height: 400px;
+  }
+  .glider-scene-card {
+    width: 90%;
+  }
+  .glider-nav-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .glider-nav-prev { left: 8px; }
+  .glider-nav-next { right: 8px; }
+  .scene-card-title {
+    font-size: 1rem;
+  }
+  .hotspot-label {
+    font-size: 0.62rem;
+    padding: 2px 7px;
   }
 }
 
