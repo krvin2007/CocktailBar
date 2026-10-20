@@ -5195,3 +5195,148 @@ body.age-gate-locked {
   margin-top: 12px;
 }
 
+/* =========================================================
+   HỆ THỐNG CHUYỂN ĐỘNG 3D MOTION TOÀN DIỆN (100% CSS 3D & VANILLA JS)
+   - 3D Tilt Card & Dynamic Glare
+   - Hero 3D Parallax Depth
+   - Ambient 3D Amber Dust Canvas
+   - Scroll 3D Reveal
+   - 3D Interactive Buttons
+   ========================================================= */
+
+/* Canvas hạt bụi vàng 3 chiều */
+.ambient-3d-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.82;
+}
+
+/* 3D Tilt trên các thẻ */
+.card-3d-tilt-target {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.14s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.25s ease;
+}
+
+.card-3d-tilt-target:hover {
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.85), 0 0 28px rgba(197, 152, 67, 0.22) !important;
+}
+
+/* Lớp lóa sáng phản chiếu ánh sáng 3D */
+.card-3d-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  mix-blend-mode: overlay;
+  transition: opacity 0.2s ease;
+  will-change: opacity, background;
+}
+
+/* Chiều sâu đa tầng cho các thành phần con của thẻ */
+.card-3d-tilt-target .drink-card-image-wrap,
+.card-3d-tilt-target .spirit-card-img-wrap,
+.card-3d-tilt-target .bartender-card-img-wrap,
+.card-3d-tilt-target .collector-card-img-wrap {
+  transform: translateZ(16px);
+  transform-style: preserve-3d;
+  transition: transform 0.22s ease;
+}
+
+.card-3d-tilt-target .drink-card-name,
+.card-3d-tilt-target .spirit-card-name,
+.card-3d-tilt-target .bartender-card-name,
+.card-3d-tilt-target .collector-card-name {
+  transform: translateZ(24px);
+}
+
+.card-3d-tilt-target .drink-badge,
+.card-3d-tilt-target .spirit-badge {
+  transform: translateZ(32px);
+}
+
+.card-3d-tilt-target .drink-card-price,
+.card-3d-tilt-target .spirit-card-price {
+  transform: translateZ(20px);
+}
+
+/* Hero 3D Parallax Scene */
+.hero-3d-scene {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  overflow: hidden;
+}
+
+.hero-3d-scene .hero-content,
+.hero-3d-scene .page-hero-inner {
+  transform-style: preserve-3d;
+}
+
+.hero-3d-scene .hero-backdrop,
+.hero-3d-scene .hero-bg {
+  will-change: transform;
+  transition: transform 0.12s linear;
+}
+
+.hero-3d-scene .hero-tag,
+.hero-3d-scene .hero-title,
+.hero-3d-scene .hero-lead,
+.hero-3d-scene .hero-actions,
+.hero-3d-scene .hero-stats {
+  will-change: transform;
+  transition: transform 0.12s linear;
+}
+
+/* Scroll 3D Reveal */
+.scroll-3d-item {
+  opacity: 0;
+  transform: perspective(1000px) rotateX(12deg) translateY(36px) scale(0.96);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-3d-item.in-view-3d {
+  opacity: 1;
+  transform: perspective(1000px) rotateX(0deg) translateY(0) scale(1);
+}
+
+/* 3D Button Dynamics */
+.btn {
+  transform-style: preserve-3d;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px) translateZ(8px);
+}
+
+.btn:active {
+  transform: translateY(1px) translateZ(-4px);
+}
+
+/* Giảm chuyển động theo yêu cầu trợ năng */
+@media (prefers-reduced-motion: reduce) {
+  .card-3d-tilt-target {
+    transform: none !important;
+  }
+  .card-3d-glare {
+    display: none !important;
+  }
+  .ambient-3d-canvas {
+    display: none !important;
+  }
+  .scroll-3d-item {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+
