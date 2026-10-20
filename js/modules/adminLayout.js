@@ -93,13 +93,13 @@ export function initAdminLayout(pageTitle = "") {
   const sidebar = document.getElementById("admin-sidebar");
   if (sidebar) {
     sidebar.innerHTML = `
-      <div class="admin-brand">
+      <a href="index.html" class="admin-brand" title="${t("admin_back_home", "Quay lại trang chủ quán bar")}">
         <span class="admin-brand-icon">${ICONS.cocktail(20)}</span>
         <div>
           <div class="admin-brand-name">${t("brand_title", "Quán Bar Đêm")}</div>
           <div class="admin-brand-badge">${t("admin_brand_badge", "Bảng điều hành")}</div>
         </div>
-      </div>
+      </a>
 
       <nav class="admin-nav">
         ${menu.map((item) => `

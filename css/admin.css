@@ -31,6 +31,24 @@
   align-items: center;
   gap: 12px;
   padding: 0 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.admin-brand:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.admin-brand:hover .admin-brand-icon {
+  background: rgba(197, 152, 67, 0.22);
+  border-color: var(--amber);
+  box-shadow: 0 0 14px rgba(197, 152, 67, 0.35);
+}
+
+.admin-brand:hover .admin-brand-name {
+  color: var(--amber-soft);
 }
 
 .admin-brand-icon {
