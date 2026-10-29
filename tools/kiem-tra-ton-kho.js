@@ -988,6 +988,43 @@ check("replyToMessage tự động đánh dấu read = true", repliedMsg.read, t
 check("replyToMessage lưu người phản hồi", repliedMsg.repliedBy, "Lê Thành Tài");
 check("replyToMessage có repliedAt thời gian hợp lệ", Boolean(repliedMsg.repliedAt), true);
 
+/* ---------------- [43] Vé điện tử gửi về email khách (Cinema E-Ticket) ---------------- */
+section("[43] Vé điện tử gửi về email khách (Cinema E-Ticket)");
+const emailService = await import(mod("emailService.js"));
+fakeDb.emails = [];
+const sampleOrderForTicket = {
+  id: "order_ticket_test",
+  code: "DH0099",
+  name: "Khách Vé Phim",
+  phone: "0901234567",
+  email: "long.nguyen@gmail.com",
+  serviceType: "booking",
+  bookingTime: "2026-10-30T20:30:00.000Z",
+  guestCount: 2,
+  items: [
+    { drinkId: "d1", name: "Negroni Classico", qty: 2, price: 125000 },
+  ],
+  total: 250000,
+  subtotal: 250000,
+  discounts: [],
+  status: "pending",
+  paymentStatus: "paid",
+};
+const barcodeSvg = emailService.generateBarcodeSvg(sampleOrderForTicket.code);
+check("Mã vạch barcode SVG chứa thẻ rect và mã đơn",
+  barcodeSvg.includes("<svg") && barcodeSvg.includes("<rect") && barcodeSvg.includes("DH0099"),
+  true);
+const ticketHtml = emailService.buildCinemaTicketHtml(sampleOrderForTicket, { toEmail: "long.nguyen@gmail.com" });
+check("Vé điện tử chứa đúng mã vé, email và nhãn Cinema E-Ticket",
+  ticketHtml.includes("DH0099") && ticketHtml.includes("long.nguyen@gmail.com") && ticketHtml.includes("CINEMA E-TICKET"),
+  true);
+const sentMail = await emailService.sendOrderConfirmationEmail(sampleOrderForTicket, { email: "long.nguyen@gmail.com" });
+check("sendOrderConfirmationEmail gửi đúng địa chỉ email đăng ký", sentMail.to, "long.nguyen@gmail.com");
+check("sendOrderConfirmationEmail tạo đúng loại order_ticket", sentMail.type, "order_ticket");
+check("sendOrderConfirmationEmail lưu mã đơn chính xác", sentMail.orderCode, "DH0099");
+const retrievedMails = await emailService.getEmailsByRecipient("long.nguyen@gmail.com");
+check("getEmailsByRecipient lấy đúng email đã gửi", retrievedMails.length >= 1, true);
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0

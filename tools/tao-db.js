@@ -51,6 +51,7 @@ const db = {
   customers: withHashedPassword(plain(SEED_CUSTOMERS)), // thiếu bảng này thì đăng ký/đăng nhập khách và tích điểm đều hỏng
   vouchers: plain(SEED_VOUCHERS),
   messages: [],
+  emails: [],
   spirits: plain(SPIRITS_COLLECTION),
   bartenders: plain(BARTENDERS_COLLECTION),
   collectors: plain(COLLECTORS_COLLECTION),
