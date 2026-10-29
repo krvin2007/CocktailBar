@@ -34,6 +34,18 @@ const formCategorySelect = document.getElementById("drink-form-category");
 const modalTitle = document.getElementById("drink-modal-title");
 const submitBtn = document.getElementById("drink-form-submit");
 
+/* Thành phần Upload hình ảnh món */
+const fileInput = document.getElementById("drink-file-input");
+const imageHiddenInput = document.getElementById("drink-form-image");
+const dropzone = document.getElementById("drink-upload-dropzone");
+const uploadPrompt = document.getElementById("drink-upload-prompt");
+const previewWrap = document.getElementById("drink-preview-wrap");
+const previewImg = document.getElementById("drink-image-preview");
+const reselectBtn = document.getElementById("btn-reselect-image");
+const toggleUrlBtn = document.getElementById("btn-toggle-url");
+const manualUrlInput = document.getElementById("drink-url-manual");
+const imageStatus = document.getElementById("drink-image-status");
+
 /** Danh sách đồ uống tải từ API - tải lại sau mỗi lần thêm/sửa/xoá */
 let allDrinks = [];
 let currentPage = 1;
@@ -124,6 +136,55 @@ function syncStockField() {
   else delete formEl.elements.stock.dataset.rule;
 }
 
+function resizeImageFile(file, maxWidth = 600, maxHeight = 600, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function setImagePreview(src, label = "Đã chọn ảnh") {
+  if (src) {
+    if (imageHiddenInput) imageHiddenInput.value = src;
+    if (manualUrlInput) manualUrlInput.value = src.startsWith("data:") ? "" : src;
+    if (previewImg) previewImg.src = src;
+    if (previewWrap) previewWrap.style.display = "flex";
+    if (uploadPrompt) uploadPrompt.style.display = "none";
+    if (imageStatus) imageStatus.textContent = label;
+  } else {
+    if (imageHiddenInput) imageHiddenInput.value = "";
+    if (manualUrlInput) manualUrlInput.value = "";
+    if (previewImg) previewImg.src = "";
+    if (previewWrap) previewWrap.style.display = "none";
+    if (uploadPrompt) uploadPrompt.style.display = "flex";
+    if (imageStatus) imageStatus.textContent = "Chưa có ảnh nào được chọn";
+  }
+}
+
 function openForCreate() {
   formEl.reset();
   clearFormErrors(formEl);
@@ -134,7 +195,8 @@ function openForCreate() {
   formEl.elements.servingMl.value = "0";
   formEl.elements.paused.checked = false;
   formEl.elements.stock.dataset.initial = "20";
-  formEl.elements.image.value = "";
+  setImagePreview("");
+  if (fileInput) fileInput.value = "";
   syncStockField();
   modalTitle.textContent = "Thêm đồ uống mới";
   openModal("drink-modal");
@@ -146,7 +208,8 @@ function openForEdit(drink) {
   formEl.elements.id.value = drink.id;
   formEl.elements.name.value = drink.name;
   formEl.elements.category.value = drink.category;
-  formEl.elements.image.value = drink.image || "";
+  setImagePreview(drink.image || "", drink.image ? "Đang sử dụng ảnh của món" : "");
+  if (fileInput) fileInput.value = "";
   formEl.elements.price.value = drink.price;
   formEl.elements.stock.value = drink.stock;
   formEl.elements.abv.value = drink.abv;
@@ -276,6 +339,69 @@ function bindEvents() {
   document.getElementById("add-drink-btn").addEventListener("click", openForCreate);
   document.getElementById("drink-modal-close").addEventListener("click", () => closeModal("drink-modal"));
   document.getElementById("drink-form-cancel").addEventListener("click", () => closeModal("drink-modal"));
+
+  /* Sự kiện Chọn File & Kéo thả hình ảnh */
+  if (dropzone && fileInput) {
+    dropzone.addEventListener("click", (e) => {
+      if (e.target.closest("#btn-reselect-image")) return;
+      fileInput.click();
+    });
+    if (reselectBtn) {
+      reselectBtn.addEventListener("click", () => fileInput.click());
+    }
+
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        toast("Vui lòng chọn một file hình ảnh (JPG, PNG, WEBP).", "error");
+        return;
+      }
+      try {
+        const resized = await resizeImageFile(file);
+        setImagePreview(resized, `Đã tải: ${file.name}`);
+        toast(`Đã tải ảnh món "${file.name}"!`, "success");
+      } catch (err) {
+        toast(`Không thể xử lý ảnh: ${err.message}`, "error");
+      }
+    });
+
+    dropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+    dropzone.addEventListener("dragleave", () => {
+      dropzone.classList.remove("dragover");
+    });
+    dropzone.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragover");
+      const file = e.dataTransfer.files?.[0];
+      if (!file || !file.type.startsWith("image/")) {
+        toast("Vui lòng kéo thả một file hình ảnh.", "error");
+        return;
+      }
+      try {
+        const resized = await resizeImageFile(file);
+        setImagePreview(resized, `Đã tải: ${file.name}`);
+        toast(`Đã nạp ảnh món "${file.name}"!`, "success");
+      } catch (err) {
+        toast(`Không thể xử lý ảnh: ${err.message}`, "error");
+      }
+    });
+  }
+
+  if (toggleUrlBtn && manualUrlInput) {
+    toggleUrlBtn.addEventListener("click", () => {
+      const isHidden = manualUrlInput.style.display === "none";
+      manualUrlInput.style.display = isHidden ? "block" : "none";
+      if (isHidden) manualUrlInput.focus();
+    });
+    manualUrlInput.addEventListener("input", (e) => {
+      const val = e.target.value.trim();
+      setImagePreview(val, val ? "Đã nhập liên kết ảnh" : "Chưa có ảnh nào được chọn");
+    });
+  }
 }
 
 // Chưa đăng nhập -> initAdminLayout chuyển hướng và trả false: dừng, không gọi API

@@ -90,9 +90,42 @@
           <label>Danh mục <span class="req">*</span></label>
           <select name="category" data-rule="required" id="drink-form-category"></select>
         </div>
-        <div class="form-group">
-          <label>Đường dẫn hình ảnh (Ảnh thật)</label>
-          <input type="text" name="image" placeholder="VD: img/drinks/mojito.jpg">
+        <div class="form-group full">
+          <label>Hình ảnh món đồ uống <span class="req">*</span></label>
+          <div class="drink-image-upload-wrap">
+            <input type="file" id="drink-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;">
+            <input type="text" name="image" id="drink-form-image" data-rule="required" placeholder="Đường dẫn ảnh hoặc tải ảnh từ máy" style="display: none;">
+            
+            <div class="drink-upload-dropzone" id="drink-upload-dropzone" role="button" tabindex="0" title="Bấm để chọn file ảnh hoặc kéo thả ảnh vào đây">
+              <div class="drink-upload-prompt" id="drink-upload-prompt">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--amber-soft); margin-bottom: 4px;">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <div style="font-weight: 500; color: var(--cream); font-size: 0.88rem;">Bấm để chọn file ảnh từ máy tính (hoặc kéo thả vào đây)</div>
+                <div class="text-xs text-muted" style="margin-top: 2px;">Hỗ trợ định dạng JPG, PNG, WEBP (tự động tối ưu hoá dung lượng)</div>
+              </div>
+
+              <div class="drink-preview-wrap" id="drink-preview-wrap" style="display: none;">
+                <img id="drink-image-preview" src="" alt="Ảnh món đồ uống" class="drink-preview-img">
+                <div class="drink-preview-meta">
+                  <span class="drink-preview-tag">Đã chọn ảnh</span>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-reselect-image" style="font-size: 0.75rem; padding: 3px 8px; color: var(--amber-soft);">
+                    Chọn file khác
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+              <small class="text-xs text-muted" id="drink-image-status">Chưa có ảnh nào được chọn</small>
+              <button type="button" id="btn-toggle-url" style="background: none; border: none; font-size: 0.76rem; color: var(--amber-soft); cursor: pointer; text-decoration: underline;">
+                Hoặc nhập URL / đường dẫn ảnh
+              </button>
+            </div>
+            <input type="text" id="drink-url-manual" placeholder="VD: img/drinks/mojito.jpg hoặc https://..." style="display: none; margin-top: 6px; font-size: 0.82rem; padding: 7px 10px;">
+          </div>
         </div>
 
         <div class="form-group">
