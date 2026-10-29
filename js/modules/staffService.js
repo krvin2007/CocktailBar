@@ -119,6 +119,7 @@ export const SELF_REGISTER_ROLES = ["bartender", "waiter", "cashier"];
 export class Staff {
   // Trạng thái công tác là trường private, chỉ đổi qua setter có kiểm tra
   #status;
+  #customPermissions = null;
 
   constructor({
     id,
@@ -133,6 +134,7 @@ export class Staff {
     password = "",
     staffCode = "",
     createdAt = "",
+    customPermissions = null,
   } = {}) {
     this.id = id;
     this.name = name;
@@ -146,6 +148,25 @@ export class Staff {
     this.password = password || "";
     this.staffCode = staffCode || (id ? `NV${String(id).replace(/\D/g, "").padStart(3, "0")}` : "");
     this.createdAt = createdAt || new Date().toISOString();
+    this.customPermissions = customPermissions;
+  }
+
+  get customPermissions() {
+    return this.#customPermissions;
+  }
+
+  set customPermissions(value) {
+    if (value === null || typeof value === "undefined") {
+      this.#customPermissions = null;
+    } else if (Array.isArray(value)) {
+      this.#customPermissions = [...new Set(value)];
+    } else {
+      throw new Error("Quyền riêng của nhân sự phải là mảng hoặc null (kế thừa vai trò)");
+    }
+  }
+
+  get hasCustomPermissions() {
+    return Array.isArray(this.#customPermissions);
   }
 
   get status() {
@@ -217,6 +238,7 @@ export class Staff {
       startDate: this.startDate,
       status: this.status,
       createdAt: this.createdAt,
+      customPermissions: this.customPermissions,
     };
   }
 
@@ -324,6 +346,13 @@ export async function updateStaff(id, changes) {
     throw new Error(`Trạng thái nhân viên không hợp lệ: "${body.status}"`);
   }
   const saved = await api.patch(`/${COLLECTION}/${encodeURIComponent(id)}`, body);
+  return Staff.from(saved);
+}
+
+/** Cập nhật quyền riêng của nhân sự trên máy chủ API */
+export async function updateStaffPermissions(id, permissions) {
+  const customPermissions = Array.isArray(permissions) ? [...new Set(permissions)] : null;
+  const saved = await api.patch(`/${COLLECTION}/${encodeURIComponent(id)}`, { customPermissions });
   return Staff.from(saved);
 }
 

@@ -140,6 +140,26 @@ export const ICONS = {
   sparkle: (size = 16, cls = "") => `
     <svg class="ui-icon ${cls}" width="${size}" height="${size}" ${SVG_ATTRS}>
       <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+    </svg>`,
+
+  shield: (size = 16, cls = "") => `
+    <svg class="ui-icon ${cls}" width="${size}" height="${size}" ${SVG_ATTRS}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>`,
+
+  key: (size = 16, cls = "") => `
+    <svg class="ui-icon ${cls}" width="${size}" height="${size}" ${SVG_ATTRS}>
+      <path d="m21 2-2 2m-1.5 1.5L19 7l-2 2-2-2-5.5 5.5a5.5 5.5 0 1 1-2.12-2.12L13 5l2 2 1.5-1.5z"/><circle cx="7.5" cy="16.5" r="1.5"/>
+    </svg>`,
+
+  lock: (size = 16, cls = "") => `
+    <svg class="ui-icon ${cls}" width="${size}" height="${size}" ${SVG_ATTRS}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>`,
+
+  unlock: (size = 16, cls = "") => `
+    <svg class="ui-icon ${cls}" width="${size}" height="${size}" ${SVG_ATTRS}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>
     </svg>`
 };
 

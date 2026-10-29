@@ -16,6 +16,7 @@ const PREFIX = "quanbar_";
 /** Đọc một khoá, trả về giá trị mặc định nếu chưa có hoặc lỗi */
 export function getItem(key, fallback) {
   try {
+    if (typeof localStorage === "undefined") return fallback;
     const raw = localStorage.getItem(PREFIX + key);
     return raw === null ? fallback : JSON.parse(raw);
   } catch (err) {
@@ -27,6 +28,7 @@ export function getItem(key, fallback) {
 /** Ghi một khoá, trả về true/false báo thành công hay không */
 export function setItem(key, value) {
   try {
+    if (typeof localStorage === "undefined") return false;
     localStorage.setItem(PREFIX + key, JSON.stringify(value));
     return true;
   } catch (err) {
@@ -38,6 +40,7 @@ export function setItem(key, value) {
 /** Xoá một khoá */
 export function removeItem(key) {
   try {
+    if (typeof localStorage === "undefined") return;
     localStorage.removeItem(PREFIX + key);
   } catch (err) {
     console.warn(`[storage] Không xoá được khoá "${key}":`, err);
