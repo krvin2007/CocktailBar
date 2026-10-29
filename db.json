@@ -1204,6 +1204,84 @@
       "total": 128250,
       "createdAt": "2026-10-29T07:48:35.582Z",
       "tableNumber": ""
+    },
+    {
+      "id": "order_mvt9hde8sisnd5",
+      "code": "DH0011",
+      "name": "Nguyễn Hoàng Long",
+      "phone": "0909123456",
+      "email": "long.nguyen@gmail.com",
+      "serviceType": "dine-in",
+      "customerId": "cust-001",
+      "birthDate": "1992-05-14",
+      "items": [
+        {
+          "drinkId": "d20",
+          "name": "Serendipity Champagne Ritz",
+          "price": 155000,
+          "image": "img/drinks/serendipity.jpg",
+          "qty": 1
+        }
+      ],
+      "note": "",
+      "status": "pending",
+      "paymentStatus": "unpaid",
+      "subtotal": 155000,
+      "discounts": [
+        {
+          "type": "rank",
+          "label": "Thành viên Vàng -5%",
+          "percent": 5,
+          "amount": 7750
+        }
+      ],
+      "voucherCode": "",
+      "pointsUsed": 0,
+      "doorVerification": "pending",
+      "verifiedBy": "",
+      "verificationNote": "",
+      "total": 147250,
+      "createdAt": "2026-10-29T08:08:28.689Z",
+      "tableNumber": ""
+    },
+    {
+      "id": "order_mvt9i5r4vsyn2s",
+      "code": "DH0012",
+      "name": "Nguyễn Hoàng Long",
+      "phone": "0909123456",
+      "email": "long.nguyen@gmail.com",
+      "serviceType": "dine-in",
+      "customerId": "cust-001",
+      "birthDate": "1992-05-14",
+      "items": [
+        {
+          "drinkId": "d13",
+          "name": "Boulevardier Parisien",
+          "price": 135000,
+          "image": "img/drinks/boulevardier.jpg",
+          "qty": 1
+        }
+      ],
+      "note": "",
+      "status": "pending",
+      "paymentStatus": "unpaid",
+      "subtotal": 135000,
+      "discounts": [
+        {
+          "type": "rank",
+          "label": "Thành viên Vàng -5%",
+          "percent": 5,
+          "amount": 6750
+        }
+      ],
+      "voucherCode": "",
+      "pointsUsed": 0,
+      "doorVerification": "pending",
+      "verifiedBy": "",
+      "verificationNote": "",
+      "total": 128250,
+      "createdAt": "2026-10-29T08:09:05.440Z",
+      "tableNumber": ""
     }
   ],
   "staff": [
@@ -1345,7 +1423,18 @@
       "active": true
     }
   ],
-  "messages": [],
+  "messages": [
+    {
+      "id": "msg_mvt9k2lp5r38cx",
+      "name": "Lê Thành Tài",
+      "phone": "0397062429",
+      "email": "krvin2007@gmail.com",
+      "subject": "Khác",
+      "message": "uống nước đêm",
+      "read": true,
+      "createdAt": "2026-10-29T08:10:34.669Z"
+    }
+  ],
   "spirits": [
     {
       "id": "sp-macallan-18",

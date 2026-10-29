@@ -5,6 +5,8 @@
    - thanh tiến độ tới hạng kế tiếp
    - bậc thang các hạng
    - lịch sử điểm (mỗi đơn hoàn tất = 1 dòng)
+   - danh sách đơn hàng & trạng thái thanh toán
+   - tin nhắn liên hệ & phản hồi chính thức từ quán
    ========================================================= */
 
 import "../modules/navbar.js";
@@ -96,7 +98,39 @@ function orderRowHtml(o) {
     </tr>`;
 }
 
-function render(customer, myOrders = []) {
+function messageCardHtml(m) {
+  const replyHtml = m.reply ? `
+    <div style="margin-top: 10px; background: rgba(34, 197, 94, 0.08); border-left: 3px solid #22c55e; padding: 10px 14px; border-radius: 4px;">
+      <div style="font-size: 0.8rem; color: #4ade80; font-weight: 600; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
+        <span>✓ Phản hồi từ quán (${escapeHtml(m.repliedBy || "Quản trị viên")}):</span>
+        <span class="text-muted" style="font-weight: normal; font-size: 0.75rem;">${m.repliedAt ? formatDateTime(m.repliedAt) : ""}</span>
+      </div>
+      <div style="color: var(--cream); font-size: 0.92rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(m.reply)}</div>
+    </div>` : `
+    <div style="margin-top: 8px; font-size: 0.8rem; color: var(--amber-soft); display: flex; align-items: center; gap: 6px;">
+      <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--amber);"></span>
+      Quán đã tiếp nhận lời nhắn của bạn và đang chuẩn bị phản hồi.
+    </div>`;
+
+  return `
+    <div class="account-message-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+        <div>
+          <strong style="color: var(--cream); font-size: 0.95rem;">${escapeHtml(m.subject || "Liên hệ & Góp ý")}</strong>
+          <span class="text-xs text-muted" style="margin-left: 8px;">${m.createdAt ? formatDateTime(m.createdAt) : ""}</span>
+        </div>
+        <div>
+          ${m.reply ? '<span class="badge badge-success">Đã có phản hồi</span>' : '<span class="badge badge-warning">Đang xử lý</span>'}
+        </div>
+      </div>
+      <div style="color: rgba(255,255,255,0.78); font-size: 0.9rem; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;">
+        "${escapeHtml(m.message || "")}"
+      </div>
+      ${replyHtml}
+    </div>`;
+}
+
+function render(customer, myOrders = [], myMessages = []) {
   currentCustomerOrders = myOrders;
   const points = Number(customer.points) || 0;       // số dư dùng được
   const lifetime = lifetimeOf(customer);              // tích luỹ trọn đời - dùng để xét hạng (không giảm khi dùng điểm)
@@ -158,6 +192,23 @@ function render(customer, myOrders = []) {
       </table>
     </div>` : `<p class="text-muted" style="margin-bottom: 28px;">Bạn chưa có đơn đặt hàng nào.</p>`}
 
+    <!-- KHỐI TIN NHẮN & PHẢN HỒI TỪ QUÁN -->
+    <h4 class="account-subtitle" style="display: flex; align-items: center; justify-content: space-between;">
+      <span>Ý kiến &amp; Phản hồi từ Quán Bar</span>
+      <span class="text-xs text-muted" style="font-weight: normal;">${myMessages.length} tin nhắn</span>
+    </h4>
+    ${myMessages.length ? `
+    <div class="account-messages-wrap" style="margin-bottom: 28px;">
+      ${myMessages.map(messageCardHtml).join("")}
+      <div style="text-align: right; margin-top: 8px;">
+        <a href="contact.html" class="btn btn-ghost btn-sm" style="font-size: 0.8rem;">+ Gửi thêm ý kiến / góp ý mới</a>
+      </div>
+    </div>` : `
+    <div style="margin-bottom: 28px; padding: 14px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1);">
+      <p class="text-muted text-sm" style="margin-bottom: 6px;">Bạn chưa gửi câu hỏi hoặc ý kiến đóng góp nào tới quán.</p>
+      <a href="contact.html" style="color: var(--amber); font-size: 0.85rem; text-decoration: underline;">Gửi lời nhắn / đóng góp ý kiến ngay</a>
+    </div>`}
+
     <h4 class="account-subtitle">${t("acc_ladder", "Các hạng thành viên")}</h4>
     <ol class="rank-ladder">${ladder}</ol>
     <p class="text-xs text-muted account-rule">${t("acc_rule", "Quy đổi: mỗi {vnd} của đơn hoàn tất = 1 điểm. Điểm chỉ được cộng khi quán xác nhận đơn Hoàn tất; đơn bị huỷ không được tính.").replace("{vnd}", formatMoney(POINT_VALUE_VND))}</p>
@@ -186,14 +237,24 @@ async function init() {
 
   bodyEl.innerHTML = loadingHtml(t("acc_loading", "Đang tải thông tin thành viên..."));
   try {
-    const [customer, rawOrders] = await Promise.all([
+    const [customer, rawOrders, rawMessages] = await Promise.all([
       api.get(`/customers/${encodeURIComponent(session.id)}`),
       api.get("/orders").catch(() => []),
+      api.get("/messages").catch(() => []),
     ]);
     const orders = (Array.isArray(rawOrders) ? rawOrders : [])
       .filter((o) => (o.customerId && String(o.customerId) === String(customer.id)) || (o.phone && o.phone === customer.phone))
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    render(customer, orders);
+
+    const messages = (Array.isArray(rawMessages) ? rawMessages : [])
+      .filter((m) => {
+        const matchPhone = m.phone && customer.phone && String(m.phone).trim() === String(customer.phone).trim();
+        const matchEmail = m.email && customer.email && String(m.email).trim().toLowerCase() === String(customer.email).trim().toLowerCase();
+        return matchPhone || matchEmail;
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    render(customer, orders, messages);
   } catch (err) {
     bodyEl.innerHTML = err.status === 404
       ? errorHtml(t("acc_not_found", "Không tìm thấy hồ sơ thành viên. Vui lòng đăng nhập lại."))
