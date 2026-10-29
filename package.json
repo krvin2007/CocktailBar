@@ -12,6 +12,7 @@
     "images": "node tools/tao-anh.js",
     "check": "node tools/kiem-tra-module.js",
     "test": "node tools/kiem-tra-ton-kho.js && node tools/test-chatbot.js",
+    "health": "node tools/kiem-tra-toan-dien.js",
     "lint": "node --max-old-space-size=4096 node_modules/eslint/bin/eslint.js js tools"
   },
   "devDependencies": {
