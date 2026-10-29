@@ -30,6 +30,8 @@ const cartListEl = document.getElementById("cart-list");
 const sumCountEl = document.getElementById("sum-count");
 const sumTotalEl = document.getElementById("sum-total");
 const sumFinalEl = document.getElementById("sum-final");
+const slipPayBtn = document.getElementById("slip-pay-btn");
+const slipPayVal = document.getElementById("slip-pay-val");
 const promoLinesEl = document.getElementById("promo-lines");
 const voucherInput = document.getElementById("voucher-input");
 const voucherMsgEl = document.getElementById("voucher-msg");
@@ -56,75 +58,185 @@ const statusText = (o) => t(`order_status_${o.status}`, o.statusLabel);
 const serviceText = (o) => t(`order_service_${o.serviceType.replace("-", "_")}`, o.serviceLabel);
 const paymentText = (o) => t(`order_payment_${o.paymentStatus}`, o.paymentLabel);
 
-/**
- * Nút gửi đổi theo tình huống:
- * - Gọi món tại bàn: phải có món -> giỏ trống thì khoá nút.
- * - Đặt bàn trước: luôn gửi được (gọi món trước là tuỳ chọn).
- */
-function updateSubmitState() {
-  const hasItems = getCart().length > 0;
-  submitBtn.disabled = !hasItems && !isBooking();
-  // Tìm lại mỗi lần: setButtonLoading() thay innerHTML của nút nên phần tử cũ không còn trên trang
-  const submitLabel = document.getElementById("submit-order-label");
-  if (!submitLabel) return;
-  submitLabel.textContent = !isBooking()
-    ? t("order_btn_order", "Xác Nhận Gọi Món")
-    : hasItems ? t("order_btn_book_order", "Xác Nhận Đặt Bàn & Gọi Món") : t("order_btn_book", "Xác Nhận Giữ Bàn");
-}
-
 /** Tồn kho mới nhất của từng món (id -> stock), cập nhật mỗi lần đối chiếu với API */
 let stockById = new Map();
-
+let currentUnpaidOrders = [];
 let currentUnpaidOrder = null;
+
+/** Tập hợp các key món bị bỏ tích chọn (mặc định tất cả món đều checked) */
+const uncheckedItemKeys = new Set();
+
+/**
+ * Lấy danh sách kết hợp gồm cả món của các đơn trước chưa thanh toán
+ * và các món mới được chọn thêm vào giỏ hàng.
+ */
+function getCombinedItems() {
+  const list = [];
+
+  // 1. Món từ TẤT CẢ các đơn cũ chưa thanh toán của khách
+  const unpaidList = currentUnpaidOrders.length > 0 ? currentUnpaidOrders : (currentUnpaidOrder ? [currentUnpaidOrder] : []);
+  unpaidList.forEach((order) => {
+    if (!Array.isArray(order.items)) return;
+    const unpaidSub = Number(order.subtotal) || Number(order.total) || 1;
+    const unpaidTot = Number(order.total) || unpaidSub;
+    const ratio = unpaidTot / unpaidSub;
+
+    order.items.forEach((it, idx) => {
+      const key = `unpaid_${order.id}_${it.drinkId || it.id || idx}`;
+      const qty = Number(it.qty) || 1;
+      const basePrice = Number(it.price) || 0;
+      const finalPrice = Math.round(basePrice * qty * ratio);
+      const isChecked = !uncheckedItemKeys.has(key);
+
+      list.push({
+        key,
+        drinkId: it.drinkId || it.id || `unpaid_drink_${idx}`,
+        name: it.name || "Cocktail",
+        qty,
+        price: basePrice,
+        finalPrice,
+        image: it.image || "",
+        isUnpaid: true,
+        orderCode: order.code,
+        orderId: order.id,
+        sourceTag: `Đơn cũ ${order.code}`,
+        checked: isChecked,
+      });
+    });
+  });
+
+  // 2. Món mới trong giỏ hàng
+  const cart = getCart();
+  cart.forEach((it) => {
+    const key = `cart_${it.drinkId}`;
+    const qty = Number(it.qty) || 1;
+    const price = Number(it.price) || 0;
+    const isChecked = !uncheckedItemKeys.has(key);
+
+    list.push({
+      key,
+      drinkId: it.drinkId,
+      name: it.name,
+      qty,
+      price,
+      finalPrice: price * qty,
+      image: it.image || "",
+      isUnpaid: false,
+      sourceTag: "Món mới chọn",
+      checked: isChecked,
+    });
+  });
+
+  return list;
+}
+
+/**
+ * Tính toán tổng số ly, tạm tính và thành tiền của tất cả các món đang được tích chọn
+ */
+function getActiveCheckoutSummary() {
+  const allItems = getCombinedItems();
+  const checked = allItems.filter((it) => it.checked);
+  const count = checked.reduce((sum, it) => sum + (Number(it.qty) || 1), 0);
+  const subtotal = checked.reduce((sum, it) => sum + ((Number(it.price) || 0) * (Number(it.qty) || 1)), 0);
+  const total = checked.reduce((sum, it) => sum + it.finalPrice, 0);
+  return { allItems, checked, count, subtotal, total };
+}
+
+/**
+ * Cập nhật trạng thái và nhãn nút bấm xác nhận/thanh toán
+ */
+function updateSubmitState() {
+  const { checked, count, total } = getActiveCheckoutSummary();
+  const hasItems = count > 0;
+  submitBtn.disabled = !hasItems && !isBooking();
+
+  const submitLabel = document.getElementById("submit-order-label");
+  if (!submitLabel) return;
+
+  const hasUnpaid = checked.some((i) => i.isUnpaid);
+  const hasCart = checked.some((i) => !i.isUnpaid);
+
+  if (hasUnpaid && hasCart) {
+    submitLabel.textContent = `Xác Nhận & Thanh Toán Chung (${formatMoney(total)})`;
+  } else if (hasUnpaid) {
+    const codes = [...new Set(checked.filter((i) => i.isUnpaid).map((i) => i.orderCode))].join(", ");
+    submitLabel.textContent = `Thanh Toán Đơn Chờ ${codes} (${formatMoney(total)})`;
+  } else if (hasCart) {
+    submitLabel.textContent = isBooking()
+      ? t("order_btn_book_order", "Xác Nhận Đặt Bàn & Gọi Món")
+      : `Xác Nhận Gọi Món (${formatMoney(total)})`;
+  } else {
+    submitLabel.textContent = isBooking()
+      ? t("order_btn_book", "Xác Nhận Giữ Bàn")
+      : t("order_btn_order", "Xác Nhận Gọi Món");
+  }
+}
 
 /**
  * Mở mã QR cho khách thanh toán MBBank. Hỗ trợ hiển thị toàn bộ món
- * (bao gồm món từ đơn trước chưa thanh toán và món mới trong giỏ)
+ * (bao gồm món từ các đơn trước chưa thanh toán và món mới trong giỏ)
  * kèm ô tích chọn (checkbox) để khách chọn món thanh toán tùy ý.
  */
 function openCustomerPayment(order, afterReport, allItems = null) {
-  openVietQRPaymentModal(order, {
-    confirmLabel: "Tôi Đã Chuyển Khoản Xong",
-    allItems,
-    onConfirm: async (payload) => {
-      const selectedItems = payload?.selectedItems || allItems || order?.items || [];
-      const hasUnpaid = payload?.hasUnpaidSelected ?? true;
-      const hasCart = payload?.hasCartSelected ?? false;
+  const targetOrder = order || currentUnpaidOrder || currentUnpaidOrders[0] || null;
+  const itemsToPass = allItems || getCombinedItems();
 
-      // 1. Cập nhật trạng thái chuyển khoản cho đơn cũ nếu có tích chọn
-      if (hasUnpaid && order?.id) {
-        await reportTransferSent(order.id);
+  openVietQRPaymentModal(targetOrder, {
+    confirmLabel: "Tôi Đã Chuyển Khoản Xong",
+    allItems: itemsToPass,
+    onConfirm: async (payload) => {
+      const selectedItems = payload?.selectedItems || itemsToPass.filter((i) => i.checked);
+      const hasUnpaid = selectedItems.some((it) => it.isUnpaid);
+      const hasCart = selectedItems.some((it) => !it.isUnpaid);
+
+      // 1. Cập nhật trạng thái chuyển khoản cho các đơn cũ nếu có tích chọn
+      if (hasUnpaid) {
+        const unpaidOrderIds = [...new Set(selectedItems.filter((i) => i.isUnpaid && (i.orderId || targetOrder?.id || currentUnpaidOrder?.id)).map((i) => i.orderId || targetOrder?.id || currentUnpaidOrder?.id))];
+        for (const oId of unpaidOrderIds) {
+          try {
+            await reportTransferSent(oId);
+          } catch (err) {
+            console.warn("Không thể cập nhật báo chuyển khoản cho đơn cũ:", err);
+          }
+        }
       }
 
-      // 2. Nếu có tích chọn món mới từ giỏ hàng: tạo đơn và làm sạch giỏ
+      // 2. Nếu có tích chọn món mới từ giỏ hàng: tạo đơn mới và làm sạch giỏ
       if (hasCart) {
         const cartItems = selectedItems.filter((it) => !it.isUnpaid);
         if (cartItems.length > 0) {
           const customer = getCurrentCustomer();
-          if (customer) {
-            try {
-              await createOrder({
-                name: customer.name,
-                phone: customer.phone,
-                email: customer.email || "",
-                serviceType: "dine-in",
-                customerId: customer.id,
-                items: cartItems.map((i) => ({ drinkId: i.drinkId, name: i.name, price: i.price, qty: i.qty, image: i.image })),
-                note: `Thanh toán cùng đợt với đơn ${order?.code || ""}`,
-              });
-            } catch (err) {
-              console.warn("Không thể lưu đơn gộp cho giỏ hàng:", err);
+          const targetEmail = customer?.email || formEl.elements.email?.value || "";
+          const birthDate = customer?.birthDate || formEl.elements.birthDate?.value || "2000-01-01";
+          try {
+            const unpaidCodes = [...new Set(selectedItems.filter((i) => i.isUnpaid && i.orderCode).map((i) => i.orderCode))];
+            const newOrderRes = await createOrder({
+              name: customer?.name || formEl.elements.name?.value || "Khách hàng",
+              phone: customer?.phone || formEl.elements.phone?.value || "0900000000",
+              email: targetEmail,
+              birthDate,
+              serviceType: formEl.elements.serviceType?.value || "dine-in",
+              customerId: customer?.id || "",
+              tableNumber: formEl.elements.tableNumber?.value || "",
+              items: cartItems.map((i) => ({ drinkId: i.drinkId, name: i.name, price: i.price, qty: i.qty, image: i.image })),
+              paymentStatus: "awaiting",
+              note: unpaidCodes.length > 0 ? `Thanh toán chung đợt với đơn ${unpaidCodes.join(", ")}` : "",
+            });
+            if (newOrderRes?.order) {
+              await sendOrderConfirmationEmail(newOrderRes.order, customer);
             }
+          } catch (err) {
+            console.warn("Không thể lưu đơn gộp cho giỏ hàng:", err);
           }
-          clearCart();
-          renderCart();
+          cartItems.forEach((i) => removeFromCart(i.drinkId));
           refreshCartBadge();
         }
       }
 
-      toast(`Đã ghi nhận thanh toán MBBank cho các món đã tích chọn! Quán sẽ đối chiếu sao kê và phục vụ.`, "success");
-      if (afterReport) afterReport(order);
-      checkAndRenderUnpaidOrderBanner();
+      toast(`Đã ghi nhận thanh toán MBBank cho các món đã chọn! Quán sẽ kiểm tra và phục vụ quý khách.`, "success");
+      await checkAndRenderUnpaidOrderBanner();
+      renderCart();
+      if (afterReport) afterReport(targetOrder);
     },
   });
 }
@@ -137,6 +249,7 @@ async function checkAndRenderUnpaidOrderBanner() {
   const customer = getCurrentCustomer();
   // Nếu chưa đăng nhập tài khoản: KHÔNG bao giờ hiển thị đơn hàng
   if (!customer) {
+    currentUnpaidOrders = [];
     currentUnpaidOrder = null;
     unpaidBannerWrap.innerHTML = "";
     unpaidBannerWrap.hidden = true;
@@ -146,27 +259,30 @@ async function checkAndRenderUnpaidOrderBanner() {
   try {
     const all = await getAllOrders();
     // Chỉ tìm đơn của CHÍNH tài khoản đang đăng nhập
-    const unpaidOrder = all.find((o) => (o.customerId === customer.id || o.phone === customer.phone) && o.status !== "cancelled" && o.paymentStatus === "unpaid" && o.total > 0);
+    const unpaidOrders = all.filter((o) => (o.customerId === customer.id || o.phone === customer.phone) && o.status !== "cancelled" && o.paymentStatus === "unpaid" && o.total > 0);
 
-    currentUnpaidOrder = unpaidOrder || null;
+    currentUnpaidOrders = unpaidOrders;
+    currentUnpaidOrder = unpaidOrders[0] || null;
 
-    if (!unpaidOrder) {
+    if (unpaidOrders.length === 0) {
       unpaidBannerWrap.innerHTML = "";
       unpaidBannerWrap.hidden = true;
       return;
     }
 
-    const items = Array.isArray(unpaidOrder.items) ? unpaidOrder.items : [];
-    const hasItems = items.length > 0;
-    const discountSum = Array.isArray(unpaidOrder.discounts)
-      ? unpaidOrder.discounts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0)
-      : 0;
+    const allUnpaidItems = unpaidOrders.flatMap((o) => Array.isArray(o.items) ? o.items.map((it) => ({ ...it, orderCode: o.code })) : []);
+    const totalAmount = unpaidOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    const totalDiscounts = unpaidOrders.reduce((sum, o) => {
+      const dSum = Array.isArray(o.discounts) ? o.discounts.reduce((s, d) => s + (Number(d.amount) || 0), 0) : 0;
+      return sum + dSum;
+    }, 0);
+    const codesText = unpaidOrders.map((o) => o.code).join(", ");
 
     const cart = getCart();
     const hasCartItems = cart.length > 0;
 
-    const itemsHtml = hasItems
-      ? items.map((it) => {
+    const itemsHtml = allUnpaidItems.length > 0
+      ? allUnpaidItems.map((it) => {
         const itemTotal = (Number(it.price) || 0) * (Number(it.qty) || 1);
         const hasImg = it.image && (it.image.includes("/") || it.image.startsWith("http"));
         return `
@@ -177,7 +293,7 @@ async function checkAndRenderUnpaidOrderBanner() {
                 ${escapeHtml(it.name)}
               </div>
               <div style="font-size: 0.76rem; color: var(--muted); margin-top: 2px; display: flex; align-items: center; justify-content: space-between;">
-                <span>Số lượng: <strong style="color: var(--amber-soft); font-weight: 600;">x${it.qty || 1}</strong></span>
+                <span>Số lượng: <strong style="color: var(--amber-soft); font-weight: 600;">x${it.qty || 1}</strong> <span style="font-size: 0.68rem; opacity: 0.7;">(${escapeHtml(it.orderCode)})</span></span>
                 <strong style="color: var(--cream); font-weight: 600;">${formatMoney(itemTotal)}</strong>
               </div>
             </div>
@@ -196,14 +312,13 @@ async function checkAndRenderUnpaidOrderBanner() {
             </div>
             <div>
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 0.92rem; color: var(--cream); font-weight: 600;">Bạn có đơn hàng đang chờ thanh toán:</span>
-                <strong class="text-amber font-mono" style="font-size: 1.05rem; letter-spacing: 0.5px;">${escapeHtml(unpaidOrder.code)}</strong>
+                <span style="font-size: 0.92rem; color: var(--cream); font-weight: 600;">Bạn có ${unpaidOrders.length > 1 ? `${unpaidOrders.length} đơn hàng` : "đơn hàng"} đang chờ thanh toán:</span>
+                <strong class="text-amber font-mono" style="font-size: 1.05rem; letter-spacing: 0.5px;">${escapeHtml(codesText)}</strong>
                 <span class="badge badge-danger" style="font-size: 0.72rem; padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4);">Chưa thanh toán</span>
               </div>
               <p class="text-xs text-muted" style="margin: 4px 0 0 0;">
-                Tổng tiền cần thanh toán: <strong class="text-amber" style="font-size: 0.95rem;">${formatMoney(unpaidOrder.total)}</strong>
-                ${discountSum > 0 ? `<span style="color: var(--amber-soft); margin-left: 6px;">(Đã giảm ${formatMoney(discountSum)})</span>` : ""}
-                · Hình thức: <strong style="color: var(--amber-soft);">${escapeHtml(serviceText(unpaidOrder))}</strong>
+                Tổng tiền cần thanh toán: <strong class="text-amber" style="font-size: 0.95rem;">${formatMoney(totalAmount)}</strong>
+                ${totalDiscounts > 0 ? `<span style="color: var(--amber-soft); margin-left: 6px;">(Đã giảm ${formatMoney(totalDiscounts)})</span>` : ""}
                 · Vui lòng thanh toán để Bartender bắt đầu pha chế món cho quý khách.
               </p>
               ${hasCartItems ? `
@@ -228,7 +343,7 @@ async function checkAndRenderUnpaidOrderBanner() {
         <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(239, 68, 68, 0.28);">
           <div style="font-size: 0.78rem; color: #fca5a5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-            <span>Danh sách món chưa thanh toán (${items.length} món):</span>
+            <span>Danh sách món chưa thanh toán (${allUnpaidItems.length} món):</span>
           </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px;">
             ${itemsHtml}
@@ -237,38 +352,24 @@ async function checkAndRenderUnpaidOrderBanner() {
       </div>`;
 
     document.getElementById("banner-pay-btn")?.addEventListener("click", () => {
-      const currentCart = getCart();
-      const combinedItems = [
-        ...items.map((it) => ({
-          ...it,
-          isUnpaid: true,
-          orderCode: unpaidOrder.code,
-          orderId: unpaidOrder.id,
-          sourceTag: `Đơn cũ ${unpaidOrder.code}`,
-          finalPrice: (Number(it.price) || 0) * (Number(it.qty) || 1),
-          checked: true,
-        })),
-        ...currentCart.map((it) => ({
-          ...it,
-          isUnpaid: false,
-          sourceTag: "Món mới chọn",
-          finalPrice: (Number(it.price) || 0) * (Number(it.qty) || 1),
-          checked: true,
-        })),
-      ];
-
-      openCustomerPayment(unpaidOrder, () => {
+      openCustomerPayment(unpaidOrders[0], () => {
         checkAndRenderUnpaidOrderBanner();
-      }, combinedItems);
+      });
     });
 
     document.getElementById("banner-cancel-btn")?.addEventListener("click", async () => {
-      const ok = await confirmDialog(`Quý khách có chắc chắn muốn huỷ đơn hàng ${unpaidOrder.code}?`);
+      const msg = unpaidOrders.length > 1
+        ? `Quý khách có chắc chắn muốn huỷ ${unpaidOrders.length} đơn hàng chưa thanh toán (${codesText})?`
+        : `Quý khách có chắc chắn muốn huỷ đơn hàng ${unpaidOrders[0].code}?`;
+      const ok = await confirmDialog(msg);
       if (!ok) return;
       try {
-        await cancelByCustomer(unpaidOrder.code, unpaidOrder.phone);
-        toast(`Đã huỷ đơn hàng ${unpaidOrder.code}.`, "info");
-        checkAndRenderUnpaidOrderBanner();
+        for (const o of unpaidOrders) {
+          await cancelByCustomer(o.code, o.phone);
+        }
+        toast(`Đã huỷ đơn hàng chưa thanh toán.`, "info");
+        await checkAndRenderUnpaidOrderBanner();
+        renderCart();
       } catch (err) {
         toast(err.message, "error");
       }
@@ -282,10 +383,57 @@ async function checkAndRenderUnpaidOrderBanner() {
     console.error("Không thể tải thông tin đơn chờ thanh toán:", err);
   }
 }
+      unpaidBannerWrap.innerHTML = "";
+      unpaidBannerWrap.hidden = true;
+    });
+  } catch (err) {
+    console.error("Không thể tải thông tin đơn chờ thanh toán:", err);
+  }
+}
 
 /* ---------------- Giỏ hàng ---------------- */
 
-function cartItemHtml(item, currentPricing = pricing) {
+function unpaidCartItemHtml(it, idx, order, isChecked = true) {
+  const o = order || currentUnpaidOrder || {};
+  const itemKey = `unpaid_${o.id || "0"}_${it.drinkId || it.id || idx}`;
+  const qty = Number(it.qty) || 1;
+  const basePrice = Number(it.price) || 0;
+  const itemSubtotal = basePrice * qty;
+
+  const unpaidSub = Number(o.subtotal) || Number(o.total) || 1;
+  const unpaidTot = Number(o.total) || unpaidSub;
+  const ratio = unpaidTot / unpaidSub;
+  const finalPrice = Math.round(itemSubtotal * ratio);
+
+  const hasImg = it.image && (it.image.includes("/") || it.image.startsWith("http"));
+  const imageHtml = hasImg
+    ? `<img src="${escapeHtml(it.image)}" alt="${escapeHtml(it.name)}" class="cart-item-img">`
+    : `<div class="cart-fallback-icon">${ICONS.cocktail(20)}</div>`;
+
+  return `
+    <div class="cart-item cart-item-unpaid" data-key="${itemKey}" style="display: flex; align-items: center; gap: 10px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.28); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+      <label style="display: flex; align-items: center; margin: 0; cursor: pointer;" title="Tích chọn để thanh toán món này">
+        <input type="checkbox" class="item-select-checkbox" data-key="${itemKey}" ${isChecked ? "checked" : ""} style="accent-color: var(--amber); width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+      </label>
+      <div class="cart-item-thumb">${imageHtml}</div>
+      <div class="cart-item-info" style="flex: 1; min-width: 0;">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <p class="cart-item-name" style="margin: 0; font-weight: 700; color: #fff;">${escapeHtml(it.name)}</p>
+          <span class="badge badge-danger" style="font-size: 0.65rem; padding: 1px 6px;">Đơn trước ${escapeHtml(o.code || "")}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px;">
+          <span class="text-amber font-bold" style="font-size: 0.95rem;">${formatMoney(finalPrice)}</span>
+          ${finalPrice < itemSubtotal ? `<span style="font-size: 0.75rem; text-decoration: line-through; opacity: 0.5;">${formatMoney(itemSubtotal)}</span>` : ""}
+          <span class="text-xs text-muted">(Đang chờ thanh toán)</span>
+        </div>
+      </div>
+      <div class="cart-item-qty" style="padding: 4px 10px; font-weight: 700; color: var(--amber-soft); background: rgba(0, 0, 0, 0.3); border-radius: 6px;">
+        x${qty}
+      </div>
+    </div>`;
+}
+
+function cartItemHtml(item, currentPricing = pricing, isChecked = true) {
   const maxQty = stockById.get(item.drinkId) ?? item.qty;
   const isImage = item.image && (item.image.includes("/") || item.image.startsWith("http"));
   const imageHtml = isImage
@@ -313,11 +461,19 @@ function cartItemHtml(item, currentPricing = pricing) {
     }
   }
 
+  const itemKey = `cart_${item.drinkId}`;
+
   return `
-    <div class="cart-item" data-id="${item.drinkId}" data-max="${maxQty}">
+    <div class="cart-item" data-id="${item.drinkId}" data-key="${itemKey}" data-max="${maxQty}" style="display: flex; align-items: center; gap: 10px;">
+      <label style="display: flex; align-items: center; margin: 0; cursor: pointer;" title="Tích chọn để thanh toán món này">
+        <input type="checkbox" class="item-select-checkbox" data-key="${itemKey}" ${isChecked ? "checked" : ""} style="accent-color: var(--amber); width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+      </label>
       <div class="cart-item-thumb">${imageHtml}</div>
-      <div class="cart-item-info">
-        <p class="cart-item-name">${escapeHtml(item.name)}</p>
+      <div class="cart-item-info" style="flex: 1; min-width: 0;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <p class="cart-item-name" style="margin: 0;">${escapeHtml(item.name)}</p>
+          <span class="badge badge-info" style="font-size: 0.62rem; padding: 1px 5px; width: fit-content;">Món mới</span>
+        </div>
         ${priceHtml}
       </div>
       <div class="cart-item-qty">
@@ -331,55 +487,19 @@ function cartItemHtml(item, currentPricing = pricing) {
     </div>`;
 }
 
-/** Vẽ giỏ hàng từ localStorage (không gọi API - dùng sau mỗi lần +/-) */
+/** Vẽ giỏ hàng kết hợp cả món đơn trước chưa thanh toán và món mới trong giỏ */
 function renderCart() {
-  const cart = getCart();
+  const combined = getCombinedItems();
+  const unpaidItems = combined.filter((i) => i.isUnpaid);
+  const cartItems = combined.filter((i) => !i.isUnpaid);
+  const checkedItems = combined.filter((i) => i.checked);
 
-  const emptyText = isBooking()
-    ? t("order_empty_booking", "Chưa chọn món nào - không sao, quý khách vẫn có thể chỉ giữ bàn. Muốn quầy bar chuẩn bị sẵn khi đến? Hãy chọn món từ thực đơn.")
-    : t("order_empty_dinein", "Hãy chọn ly cocktail yêu thích từ thực đơn để gọi món tại bàn.");
+  if (combined.length === 0) {
+    const emptyText = isBooking()
+      ? t("order_empty_booking", "Chưa chọn món nào - không sao, quý khách vẫn có thể chỉ giữ bàn. Muốn quầy bar chuẩn bị sẵn khi đến? Hãy chọn món từ thực đơn.")
+      : t("order_empty_dinein", "Hãy chọn ly cocktail yêu thích từ thực đơn để gọi món tại bàn.");
 
-  let unpaidGroupHtml = "";
-  if (currentUnpaidOrder && Array.isArray(currentUnpaidOrder.items) && currentUnpaidOrder.items.length > 0) {
-    unpaidGroupHtml = `
-      <div class="cart-unpaid-reminder" style="margin-bottom: 16px; padding: 12px 14px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-sm);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="badge badge-danger" style="font-size: 0.7rem;">Đơn trước chưa thanh toán</span>
-            <strong class="text-amber font-mono" style="font-size: 0.92rem;">${escapeHtml(currentUnpaidOrder.code)}</strong>
-          </div>
-          <span class="text-xs text-muted" style="font-weight: 500;">Tổng tiền: <strong class="text-amber">${formatMoney(currentUnpaidOrder.total)}</strong></span>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          ${currentUnpaidOrder.items.map((it) => `
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 6px 10px; background: rgba(0, 0, 0, 0.35); border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
-              <span style="color: var(--cream);">${escapeHtml(it.name)} <strong style="color: var(--amber-soft);">x${it.qty || 1}</strong></span>
-              <span class="text-amber font-semibold">${formatMoney((Number(it.price) || 0) * (Number(it.qty) || 1))}</span>
-            </div>
-          `).join("")}
-        </div>
-        ${cart.length > 0 ? `
-        <div style="margin-top: 8px; font-size: 0.75rem; color: var(--amber-soft); text-align: right;">
-          💡 Khi thanh toán sẽ hiện mục tích chọn để bạn trả chung hoặc chọn riêng từng món!
-        </div>` : ""}
-      </div>
-    `;
-  }
-
-  const newItemsHeader = (currentUnpaidOrder && cart.length > 0)
-    ? `<div style="font-size: 0.8rem; font-weight: 600; color: var(--cream); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Món mới chọn trong giỏ:</div>`
-    : "";
-
-  const cartContent = cart.length
-    ? `${newItemsHeader}${cart.map((i) => cartItemHtml(i, pricing)).join("")}`
-    : (unpaidGroupHtml ? `
-      <div class="empty-state cart-empty" style="padding: 16px;">
-        <p class="text-muted" style="margin-bottom: 10px;">Quý khách có thể chọn thêm món mới từ thực đơn hoặc thanh toán đơn trước.</p>
-        <a href="menu.html" class="btn btn-outline btn-sm">
-          ${ICONS.arrowRight(14)} <span>Chọn thêm món từ thực đơn</span>
-        </a>
-      </div>
-    ` : `
+    cartListEl.innerHTML = `
       <div class="empty-state cart-empty">
         <div class="empty-icon">${ICONS.shoppingBag(36)}</div>
         <h4>${t("order_empty_title", "Danh sách thức uống đang trống")}</h4>
@@ -387,17 +507,84 @@ function renderCart() {
         <a href="menu.html" class="btn btn-primary mt-2">
           ${ICONS.arrowRight(14)} <span>${t("order_empty_btn", "Khám phá thực đơn")}</span>
         </a>
-      </div>
-    `);
+      </div>`;
 
-  cartListEl.innerHTML = unpaidGroupHtml + cartContent;
+    if (sumCountEl) sumCountEl.textContent = "0 ly";
+    if (sumTotalEl) sumTotalEl.textContent = "0₫";
+    if (sumFinalEl) sumFinalEl.textContent = "0₫";
+    if (slipPayBtn) slipPayBtn.style.display = "none";
+    updateSubmitState();
+    return;
+  }
 
-  const { total, count } = getCartSummary();
+  // Thanh checklist trên đầu
+  const allChecked = checkedItems.length === combined.length && combined.length > 0;
+  const checklistHeaderHtml = `
+    <div class="cart-checklist-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 8px; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--amber-soft); font-weight: 700; font-size: 0.82rem; text-transform: uppercase; margin: 0;">
+        <input type="checkbox" id="cart-toggle-all" ${allChecked ? "checked" : ""} style="accent-color: var(--amber); width: 17px; height: 17px; cursor: pointer;">
+        <span>Tích chọn món để thanh toán (<span id="cart-checked-count">${checkedItems.length}</span>/${combined.length})</span>
+      </label>
+      <span class="text-xs text-muted">Bỏ tích món chưa muốn trả đợt này</span>
+    </div>`;
+
+  let unpaidSectionHtml = "";
+  if (unpaidItems.length > 0) {
+    const unpaidList = currentUnpaidOrders.length > 0 ? currentUnpaidOrders : (currentUnpaidOrder ? [currentUnpaidOrder] : []);
+    const unpaidCodes = unpaidList.map((o) => o.code).join(", ");
+    unpaidSectionHtml = `
+      <div class="unpaid-cart-group" style="margin-bottom: 16px;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: #fca5a5; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+          <span>MÓN TỪ ĐƠN CHƯA THANH TOÁN (${escapeHtml(unpaidCodes)}):</span>
+          <span style="font-size: 0.75rem; color: var(--muted); font-weight: normal;">${unpaidItems.length} món</span>
+        </div>
+        ${unpaidList.map((order) => {
+          const items = Array.isArray(order.items) ? order.items : [];
+          return items.map((it, idx) => unpaidCartItemHtml(it, idx, order, !uncheckedItemKeys.has(`unpaid_${order.id}_${it.drinkId || it.id || idx}`))).join("");
+        }).join("")}
+      </div>`;
+  }
+
+  let cartSectionHtml = "";
+  if (cartItems.length > 0) {
+    const cartHeader = unpaidItems.length > 0
+      ? `<div style="font-size: 0.8rem; font-weight: 700; color: var(--amber-soft); margin-bottom: 8px; text-transform: uppercase;">Món mới chọn từ thực đơn:</div>`
+      : "";
+    const cart = getCart();
+    cartSectionHtml = `
+      <div class="new-cart-group">
+        ${cartHeader}
+        ${cart.map((it) => cartItemHtml(it, pricing, !uncheckedItemKeys.has(`cart_${it.drinkId}`))).join("")}
+      </div>`;
+  } else if (unpaidItems.length > 0) {
+    cartSectionHtml = `
+      <div style="padding: 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px; text-align: center; margin-top: 8px;">
+        <span class="text-xs text-muted">Bạn có thể chọn thêm món mới từ thực đơn để thanh toán chung cùng đơn này!</span>
+        <div style="margin-top: 6px;">
+          <a href="menu.html" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">+ Chọn thêm món mới</a>
+        </div>
+      </div>`;
+  }
+
+  cartListEl.innerHTML = checklistHeaderHtml + unpaidSectionHtml + cartSectionHtml;
+
+  // Cập nhật số liệu trên Phiếu đặt chỗ (Reservation Slip)
+  const { count, subtotal, total } = getActiveCheckoutSummary();
   if (sumCountEl) sumCountEl.textContent = `${count} ly`;
-  if (sumTotalEl) sumTotalEl.textContent = formatMoney(total);
-  if (sumFinalEl && !pricing) sumFinalEl.textContent = formatMoney(total); // tạm hiện bằng tạm tính, ngay sau đó refreshPricing() cập nhật
+  if (sumTotalEl) sumTotalEl.textContent = formatMoney(subtotal);
+  if (sumFinalEl) sumFinalEl.textContent = formatMoney(total);
+
+  // Nút thanh toán trực tiếp trên Reservation Slip
+  if (slipPayBtn) {
+    if (count > 0 && total > 0) {
+      slipPayBtn.style.display = "flex";
+      if (slipPayVal) slipPayVal.textContent = formatMoney(total);
+    } else {
+      slipPayBtn.style.display = "none";
+    }
+  }
+
   updateSubmitState();
-  refreshPricing();
 }
 
 /* ---------------- Ưu đãi: giảm theo hạng, mã giảm giá, dùng điểm ---------------- */
@@ -421,13 +608,24 @@ function setPromoMessage(el, text, kind = "") {
 
 /** Vẽ phần ưu đãi từ kết quả tính giá */
 function renderPricing(result, customer) {
-  sumFinalEl.textContent = formatMoney(result.total);
+  pricing = result;
+
+  const { total, count } = getActiveCheckoutSummary();
+  if (currentUnpaidOrder) {
+    sumFinalEl.textContent = formatMoney(total);
+  } else {
+    sumFinalEl.textContent = formatMoney(result.total);
+  }
+
   promoLinesEl.innerHTML = result.discounts.map(discountLineHtml).join("");
 
-  // Cập nhật giá trên từng món theo mức giảm mới nhất ("giá theo")
-  const cart = getCart();
-  if (cart.length && cartListEl) {
-    cartListEl.innerHTML = cart.map((i) => cartItemHtml(i, result)).join("");
+  if (slipPayBtn) {
+    if (count > 0 && total > 0) {
+      slipPayBtn.style.display = "flex";
+      if (slipPayVal) slipPayVal.textContent = formatMoney(total);
+    } else {
+      slipPayBtn.style.display = "none";
+    }
   }
 
   const voucherAmount = result.discounts.find((d) => d.type === "voucher")?.amount || 0;
@@ -455,7 +653,7 @@ function renderPricing(result, customer) {
  */
 async function refreshPricing() {
   const requestId = ++pricingRequestId;
-  const subtotal = getCartSummary().total;
+  const { subtotal } = getActiveCheckoutSummary();
   const customer = getCurrentCustomer();
   try {
     const code = promo.voucher.trim();
@@ -465,7 +663,7 @@ async function refreshPricing() {
       customerId: customer?.id || "",
       voucherCode: code,
       pointsToUse: promo.points,
-      phone: formEl.elements.phone.value,
+      phone: formEl.elements.phone?.value || "",
       orders,
     });
     if (requestId !== pricingRequestId) return null;
@@ -582,6 +780,39 @@ cartListEl.addEventListener("click", async (e) => {
   renderCart();
 });
 
+cartListEl.addEventListener("change", (e) => {
+  if (e.target.matches("#cart-toggle-all")) {
+    const isChecked = e.target.checked;
+    const all = getCombinedItems();
+    all.forEach((it) => {
+      if (isChecked) uncheckedItemKeys.delete(it.key);
+      else uncheckedItemKeys.add(it.key);
+    });
+    renderCart();
+    return;
+  }
+
+  if (e.target.matches(".item-select-checkbox")) {
+    const key = e.target.dataset.key;
+    if (e.target.checked) uncheckedItemKeys.delete(key);
+    else uncheckedItemKeys.add(key);
+    renderCart();
+  }
+});
+
+if (slipPayBtn) {
+  slipPayBtn.addEventListener("click", () => {
+    const { checked } = getActiveCheckoutSummary();
+    if (checked.length === 0) {
+      toast("Vui lòng tích chọn ít nhất 1 món để thanh toán.", "warning");
+      return;
+    }
+    openCustomerPayment(currentUnpaidOrder, () => {
+      checkAndRenderUnpaidOrderBanner();
+    });
+  });
+}
+
 /* ---------------- Form đặt bàn / gọi món ---------------- */
 
 /** "YYYY-MM-DDTHH:mm" theo giờ địa phương (toISOString() quy về UTC nên không dùng được) */
@@ -697,9 +928,20 @@ ageCheckbox.addEventListener("change", validateAge);
 formEl.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // Gọi món tại bàn bắt buộc có món; đặt bàn trước thì gọi món là tuỳ chọn
-  if (getCart().length === 0 && !isBooking()) {
+  const { checked, count } = getActiveCheckoutSummary();
+  const hasUnpaid = checked.some((i) => i.isUnpaid);
+
+  // Gọi món tại bàn bắt buộc có món (cũ hoặc mới); đặt bàn trước thì gọi món là tuỳ chọn
+  if (count === 0 && !isBooking()) {
     toast(t("order_err_empty_dinein", "Danh sách món đang trống. Vui lòng chọn món để gọi tại bàn."), "error");
+    return;
+  }
+
+  // Nếu có món từ đơn cũ chưa thanh toán được tích chọn -> thanh toán MBBank (chung hoặc riêng)
+  if (hasUnpaid) {
+    openCustomerPayment(currentUnpaidOrder, () => {
+      checkAndRenderUnpaidOrderBanner();
+    });
     return;
   }
 
@@ -1104,5 +1346,10 @@ window.addEventListener("languagechange", () => {
   if (lastLookedUpOrder && !lookupResultsEl.hidden) lookupResultsEl.innerHTML = lookupResultHtml(lastLookedUpOrder);
 });
 cartListEl.innerHTML = loadingHtml("Đang kiểm tra danh sách món đã chọn...");
-syncAndRenderCart();
-checkAndRenderUnpaidOrderBanner();
+
+async function initOrderPage() {
+  await checkAndRenderUnpaidOrderBanner();
+  await syncAndRenderCart();
+}
+
+initOrderPage();
