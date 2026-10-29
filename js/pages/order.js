@@ -89,6 +89,73 @@ function openCustomerPayment(order, afterReport) {
   });
 }
 
+const unpaidBannerWrap = document.getElementById("active-unpaid-banner-wrap");
+const LATEST_ORDER_KEY = "quanbar_latest_order";
+
+async function checkAndRenderUnpaidOrderBanner() {
+  if (!unpaidBannerWrap) return;
+  try {
+    const customer = getCurrentCustomer();
+    const storedRef = getItem(LATEST_ORDER_KEY, null);
+    const all = await getAllOrders();
+
+    // Tìm đơn mới nhất của khách hàng mà chưa thanh toán và chưa huỷ
+    let unpaidOrder = null;
+    if (customer) {
+      unpaidOrder = all.find((o) => (o.customerId === customer.id || o.phone === customer.phone) && o.status !== "cancelled" && o.paymentStatus === "unpaid" && o.total > 0);
+    }
+    if (!unpaidOrder && storedRef) {
+      unpaidOrder = all.find((o) => o.id === storedRef.id && o.status !== "cancelled" && o.paymentStatus === "unpaid" && o.total > 0);
+    }
+
+    if (!unpaidOrder) {
+      unpaidBannerWrap.innerHTML = "";
+      unpaidBannerWrap.hidden = true;
+      return;
+    }
+
+    unpaidBannerWrap.hidden = false;
+    unpaidBannerWrap.innerHTML = `
+      <div class="active-unpaid-order-banner" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-sm); gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); display: flex; align-items: center; justify-content: center; color: #ef4444; flex-shrink: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 0.85rem; color: var(--cream); font-weight: 500;">Bạn có đơn hàng đang chờ thanh toán:</span>
+              <strong class="text-amber font-mono" style="font-size: 0.95rem;">${escapeHtml(unpaidOrder.code)}</strong>
+              <span class="badge badge-danger" style="font-size: 0.72rem;">Chưa thanh toán</span>
+            </div>
+            <p class="text-xs text-muted" style="margin: 3px 0 0 0;">
+              Tổng tiền: <strong class="text-amber">${formatMoney(unpaidOrder.total)}</strong> · ${escapeHtml(unpaidOrder.serviceLabel || "")} · Quý khách vui lòng thanh toán để quán chuẩn bị phục vụ chu đáo nhất.
+            </p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="banner-pay-btn" style="white-space: nowrap; font-size: 0.8rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Quét mã VietQR thanh toán</span>
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm" id="banner-dismiss-btn" title="Đóng thông báo" style="padding: 4px 8px;">✕</button>
+        </div>
+      </div>`;
+
+    document.getElementById("banner-pay-btn")?.addEventListener("click", () => {
+      openCustomerPayment(unpaidOrder, () => {
+        checkAndRenderUnpaidOrderBanner();
+      });
+    });
+
+    document.getElementById("banner-dismiss-btn")?.addEventListener("click", () => {
+      unpaidBannerWrap.innerHTML = "";
+      unpaidBannerWrap.hidden = true;
+    });
+  } catch (err) {
+    console.error("Không thể tải thông tin đơn chờ thanh toán:", err);
+  }
+}
+
 /* ---------------- Giỏ hàng ---------------- */
 
 function cartItemHtml(item, currentPricing = pricing) {
@@ -514,6 +581,8 @@ formEl.addEventListener("submit", async (e) => {
     syncCustomerSession().catch(() => {}); // điểm vừa trừ -> cập nhật số dư trên thanh menu
     updateConditionalFields();
     fillCustomerInfo(); // reset() vừa xoá form - khách đã đăng nhập thì điền lại tên/SĐT cho lần đặt sau
+    setItem(LATEST_ORDER_KEY, { id: result.order.id, code: result.order.code, phone: result.order.phone });
+    checkAndRenderUnpaidOrderBanner();
     showOrderSuccessModal(result.order);
   } catch (err) {
     toast(err.message, "error");
@@ -789,3 +858,4 @@ window.addEventListener("languagechange", () => {
 });
 cartListEl.innerHTML = loadingHtml("Đang kiểm tra danh sách món đã chọn...");
 syncAndRenderCart();
+checkAndRenderUnpaidOrderBanner();
