@@ -95,7 +95,7 @@ function resetDb() {
   fakeDb.messages = [];
   fakeDb.customers = structuredClone(customerAuth.SEED_CUSTOMERS);
   fakeDb.vouchers = structuredClone(vouchers.SEED_VOUCHERS);
-  fakeDb.settings = { bankId: "MB", bankName: "MBBank", accountNumber: "0901234567", accountName: "QUAN BAR DEM" };
+  fakeDb.settings = { bankId: "MB", bankName: "MBBank", accountNumber: "09042007101207", accountName: "LE THANH TAI" };
   orders.clearCart();
   localStorage.clear();
   serverOnline = true;
