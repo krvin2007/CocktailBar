@@ -1146,7 +1146,7 @@
         }
       ],
       "note": "",
-      "status": "pending",
+      "status": "cancelled",
       "paymentStatus": "unpaid",
       "subtotal": 135000,
       "discounts": [
@@ -1185,7 +1185,7 @@
         }
       ],
       "note": "",
-      "status": "pending",
+      "status": "cancelled",
       "paymentStatus": "unpaid",
       "subtotal": 135000,
       "discounts": [
@@ -1224,7 +1224,7 @@
         }
       ],
       "note": "",
-      "status": "pending",
+      "status": "cancelled",
       "paymentStatus": "unpaid",
       "subtotal": 155000,
       "discounts": [
@@ -1263,7 +1263,7 @@
         }
       ],
       "note": "",
-      "status": "pending",
+      "status": "cancelled",
       "paymentStatus": "unpaid",
       "subtotal": 135000,
       "discounts": [
@@ -1302,7 +1302,7 @@
         }
       ],
       "note": "",
-      "status": "pending",
+      "status": "cancelled",
       "paymentStatus": "unpaid",
       "subtotal": 135000,
       "discounts": [
