@@ -346,7 +346,7 @@ export const TRANSLATIONS = {
     admin_menu_dash: "Tổng quan & Thống kê",
     admin_menu_drinks: "Quản lý thực đơn",
     admin_menu_orders: "Quản lý đơn hàng",
-    admin_menu_staff: "Quản lý nhân viên",
+    admin_menu_staff: "Nhân sự & Phân quyền",
     admin_menu_messages: "Hộp thư liên hệ",
     admin_new_messages: "tin nhắn mới",
     // ----- Trang Đặt bàn, Liên hệ, Chi tiết món -----
@@ -821,7 +821,7 @@ export const TRANSLATIONS = {
     admin_menu_dash: "Dashboard & Analytics",
     admin_menu_drinks: "Menu Management",
     admin_menu_orders: "Order Management",
-    admin_menu_staff: "Staff Management",
+    admin_menu_staff: "Staff & Permissions",
     admin_menu_messages: "Contact Messages",
     admin_new_messages: "new messages",
     // ----- Trang Đặt bàn, Liên hệ, Chi tiết món -----

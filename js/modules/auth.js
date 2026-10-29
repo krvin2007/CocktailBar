@@ -11,7 +11,7 @@
    khác với localStorage (lưu vĩnh viễn) dùng cho phiên khách hàng.
    ========================================================= */
 
-import { getSession, setSession, removeSession } from "./storage.js";
+import { getItem, setItem, removeItem, getSession, setSession, removeSession } from "./storage.js";
 import { api } from "./api.js";
 import { normalizePhone } from "./utils.js";
 import { getAllStaff, Staff } from "./staffService.js";
@@ -120,31 +120,175 @@ export async function login(username, password) {
   }
 }
 
-/* ---------------- Phân quyền theo vai trò ---------------- */
+/* ---------------- Phân quyền theo vai trò (RBAC) ---------------- */
+
+/** Danh mục các nhóm phân quyền trong hệ thống quán bar */
+export const PERMISSION_GROUPS = [
+  { id: "pages", name: "Trang Quản Trị & Giao Diện", icon: "chart", desc: "Quyền truy cập các màn hình quản trị nghiệp vụ" },
+  { id: "orders", name: "Nghiệp Vụ Đơn Hàng & POS", icon: "receipt", desc: "Thao tác trên hoá đơn, thanh toán và xử lý đơn" },
+  { id: "menu", name: "Thực Đơn & Kho Hàng", icon: "cocktail", desc: "Quản lý danh mục đồ uống và điều chỉnh kho" },
+  { id: "customers", name: "Khách Hàng Thành Viên", icon: "user", desc: "Quản lý thông tin, tích điểm và khóa tài khoản" },
+  { id: "vouchers", name: "Mã Ưu Đãi & Khuyến Mãi", icon: "sparkle", desc: "Thiết lập chương trình giảm giá và voucher" },
+  { id: "staff", name: "Nhân Sự & Phân Quyền", icon: "users", desc: "Quản lý hồ sơ nhân viên và thiết lập phân quyền" },
+  { id: "settings", name: "Hệ Thống & Cấu Hình", icon: "shield", desc: "Cấu hình tài khoản ngân hàng và thiết lập hệ thống" },
+];
 
 /**
- * Quyền của từng vai trò. "*" = toàn quyền.
- *   page:<tên>   được vào trang admin-<tên>.html
- *   order:cancel huỷ đơn / khôi phục đơn đã huỷ (có hoàn - trừ tồn kho)
- *   order:delete xoá vĩnh viễn đơn hàng
- *   order:payment xác nhận đã nhận tiền chuyển khoản
- *   settings:bank đổi tài khoản ngân hàng nhận tiền của quán
- * Mọi vai trò vào được trang Đơn hàng đều đổi được tiến độ pha chế
- * (Chờ xử lý -> Đang pha chế -> Hoàn tất).
+ * Danh sách toàn bộ quyền chi tiết (Fine-grained permissions).
+ * "*" = toàn quyền mọi chức năng.
  */
-export const ROLE_PERMISSIONS = {
+export const SYSTEM_PERMISSIONS = [
+  // 1. Phân quyền trang
+  { id: "page:dashboard", group: "pages", label: "Bảng tổng quan (Dashboard)", desc: "Xem báo cáo doanh thu, đơn hàng và biểu đồ thống kê" },
+  { id: "page:menu", group: "pages", label: "Quản lý thực đơn", desc: "Xem danh sách đồ uống, giá bán và công thức pha chế" },
+  { id: "page:orders", group: "pages", label: "Quản lý đơn hàng (POS)", desc: "Xem danh sách và chi tiết các đơn đặt bàn, mang đi, tại quán" },
+  { id: "page:customers", group: "pages", label: "Khách hàng thành viên", desc: "Xem hồ sơ khách hàng, hạng thẻ và lịch sử chi tiêu" },
+  { id: "page:vouchers", group: "pages", label: "Mã giảm giá (Voucher)", desc: "Xem danh sách các voucher và chương trình ưu đãi" },
+  { id: "page:staff", group: "pages", label: "Nhân sự & Phân quyền", desc: "Truy cập giao diện quản lý nhân viên và ma trận phân quyền" },
+  { id: "page:messages", group: "pages", label: "Hộp thư liên hệ", desc: "Xem tin nhắn, đóng góp ý kiến từ khách hàng" },
+
+  // 2. Nghiệp vụ đơn hàng
+  { id: "order:status", group: "orders", label: "Cập nhật tiến độ pha chế", desc: "Chuyển trạng thái đơn: Chờ xử lý -> Đang pha chế -> Hoàn tất" },
+  { id: "order:payment", group: "orders", label: "Xác nhận thanh toán", desc: "Xác nhận tiền mặt hoặc đối soát chuyển khoản VietQR" },
+  { id: "order:cancel", group: "orders", label: "Huỷ & Khôi phục đơn", desc: "Huỷ đơn hàng hoặc khôi phục (tự động hoàn/trừ tồn kho)" },
+  { id: "order:delete", group: "orders", label: "Xoá vĩnh viễn đơn hàng", desc: "Xoá hoàn toàn đơn khỏi cơ sở dữ liệu (nguy cơ cao)", danger: true },
+
+  // 3. Thực đơn & Kho
+  { id: "menu:edit", group: "menu", label: "Thêm/sửa món & Tồn kho", desc: "Thêm món mới, đổi giá bán, cập nhật số lượng tồn kho" },
+
+  // 4. Khách hàng
+  { id: "customer:lock", group: "customers", label: "Khoá / Mở tài khoản khách", desc: "Tạm đình chỉ hoặc kích hoạt lại tài khoản khách" },
+  { id: "customer:points", group: "customers", label: "Điều chỉnh điểm thưởng", desc: "Cộng hoặc trừ điểm tích luỹ của khách hàng" },
+
+  // 5. Khuyến mãi
+  { id: "voucher:edit", group: "vouchers", label: "Thêm & Sửa mã giảm giá", desc: "Tạo voucher mới, sửa % giảm giá hoặc tạm dừng mã" },
+
+  // 6. Nhân sự & Phân quyền
+  { id: "staff:edit", group: "staff", label: "Quản lý hồ sơ nhân viên", desc: "Tiếp nhận nhân sự, sửa thông tin, khoá/mở tài khoản nhân viên" },
+  { id: "staff:permissions", group: "staff", label: "Thiết lập phân quyền", desc: "Chỉnh sửa ma trận phân quyền vai trò & phân quyền riêng", danger: true },
+
+  // 7. Cấu hình
+  { id: "settings:bank", group: "settings", label: "Cấu hình ngân hàng VietQR", desc: "Thay đổi số tài khoản nhận tiền chuyển khoản của quán" },
+];
+
+/** Ma trận phân quyền mặc định chuẩn nghiệp vụ quán bar */
+export const DEFAULT_ROLE_PERMISSIONS = {
   admin: ["*"],
   manager: ["*"],
-  cashier: ["page:dashboard", "page:orders", "page:customers", "order:cancel", "order:payment"],
-  bartender: ["page:orders"],
-  waiter: ["page:orders", "page:messages"],
+  cashier: ["page:dashboard", "page:orders", "page:customers", "order:status", "order:cancel", "order:payment", "customer:points"],
+  bartender: ["page:orders", "order:status"],
+  waiter: ["page:orders", "page:messages", "order:status"],
 };
+
+export const ROLE_PERMISSIONS_STORAGE_KEY = "role_permissions";
+export const STAFF_PERMISSIONS_STORAGE_KEY = "staff_permissions";
+
+/** Đọc ma trận phân quyền vai trò hiện hành từ localStorage (hoặc trả về mặc định) */
+export function getRolePermissions() {
+  const custom = getItem(ROLE_PERMISSIONS_STORAGE_KEY, null);
+  if (!custom || typeof custom !== "object") {
+    return JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
+  }
+  return {
+    ...DEFAULT_ROLE_PERMISSIONS,
+    ...custom,
+    admin: ["*"], // Quản trị viên tối cao luôn toàn quyền
+  };
+}
+
+/** Lưu ma trận phân quyền vai trò vào localStorage */
+export function saveRolePermissions(matrix) {
+  if (!matrix || typeof matrix !== "object") return false;
+  const sanitized = {
+    ...matrix,
+    admin: ["*"],
+  };
+  return setItem(ROLE_PERMISSIONS_STORAGE_KEY, sanitized);
+}
+
+/** Khôi phục ma trận phân quyền vai trò về trạng thái mặc định */
+export function resetRolePermissions() {
+  removeItem(ROLE_PERMISSIONS_STORAGE_KEY);
+  return JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
+}
+
+/** Đọc toàn bộ danh sách phân quyền riêng của nhân viên */
+export function getAllStaffCustomPermissions() {
+  return getItem(STAFF_PERMISSIONS_STORAGE_KEY, {}) || {};
+}
+
+/** Đọc quyền riêng của một nhân viên cụ thể (null nếu thừa hưởng theo vai trò) */
+export function getStaffCustomPermissions(staffId) {
+  if (!staffId) return null;
+  const map = getAllStaffCustomPermissions();
+  const perms = map[String(staffId)];
+  return Array.isArray(perms) ? perms : null;
+}
+
+/** Lưu quyền riêng cho một nhân sự (truyền null nếu muốn đưa về thừa hưởng vai trò) */
+export function saveStaffCustomPermissions(staffId, permissionsOrNull) {
+  if (!staffId) return false;
+  const map = { ...getAllStaffCustomPermissions() };
+  if (permissionsOrNull === null || typeof permissionsOrNull === "undefined") {
+    delete map[String(staffId)];
+  } else if (Array.isArray(permissionsOrNull)) {
+    map[String(staffId)] = [...new Set(permissionsOrNull)];
+  }
+  return setItem(STAFF_PERMISSIONS_STORAGE_KEY, map);
+}
+
+/** Xoá quyền riêng của nhân viên, đưa về thừa hưởng theo vai trò */
+export function clearStaffCustomPermissions(staffId) {
+  return saveStaffCustomPermissions(staffId, null);
+}
+
+/**
+ * Proxy tương thích ngược: ROLE_PERMISSIONS luôn phản ánh ma trận động
+ * nhưng vẫn truy cập được dạng ROLE_PERMISSIONS[role].
+ */
+export const ROLE_PERMISSIONS = new Proxy(DEFAULT_ROLE_PERMISSIONS, {
+  get(target, prop) {
+    if (prop === "toJSON") return () => getRolePermissions();
+    const current = getRolePermissions();
+    if (Object.hasOwn(current, prop)) return current[prop];
+    return target[prop] || [];
+  },
+  ownKeys() {
+    return Reflect.ownKeys(getRolePermissions());
+  },
+  getOwnPropertyDescriptor(target, prop) {
+    const current = getRolePermissions();
+    if (Object.hasOwn(current, prop)) {
+      return {
+        value: current[prop],
+        writable: false,
+        enumerable: true,
+        configurable: true,
+      };
+    }
+    return Reflect.getOwnPropertyDescriptor(target, prop);
+  },
+});
 
 /** Người đang đăng nhập (hoặc user truyền vào) có quyền "permission" không */
 export function can(permission, user = currentAdmin()) {
   if (!user) return false;
-  const perms = ROLE_PERMISSIONS[user.role] || [];
-  return perms.includes("*") || perms.includes(permission);
+  if (user.role === "admin") return true;
+
+  // 1. Nếu nhân viên có thiết lập quyền riêng (Custom Permissions Override)
+  const staffId = user.staffId || user.id;
+  const customPerms = Array.isArray(user.customPermissions)
+    ? user.customPermissions
+    : (staffId ? getStaffCustomPermissions(staffId) : null);
+
+  if (Array.isArray(customPerms)) {
+    return customPerms.includes("*") || customPerms.includes(permission);
+  }
+
+  // 2. Tra cứu theo ma trận vai trò (RBAC)
+  const roleMatrix = getRolePermissions();
+  const rolePerms = roleMatrix[user.role] || [];
+  return rolePerms.includes("*") || rolePerms.includes(permission);
 }
 
 /** "admin-orders.html" -> "page:orders" */

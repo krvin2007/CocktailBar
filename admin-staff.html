@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0b0907">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.json">
-<title>Quản lý nhân sự quầy Bar — Quán Bar Đêm</title>
+<title>Nhân sự &amp; Phân quyền — Quán Bar Đêm</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -29,51 +29,99 @@
 
     <div class="admin-page-header" style="margin-bottom: 16px; padding: 0 4px;">
       <h2 style="font-size: 1.3rem; color: var(--cream); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-        Quản Lý &amp; Cấp Tài Khoản Nhân Sự
+        Nhân Sự &amp; Phân Quyền Hệ Thống
       </h2>
       <p class="text-xs text-muted" style="margin: 0;">
-        Khu vực nội bộ dành cho Ban Quản trị: Xem danh sách, tạo tài khoản và phân quyền cho nhân viên (Bartender, Waiter, Cashier).
+        Khu vực nội bộ dành cho Ban Quản trị: Quản lý hồ sơ nhân viên, cấp tài khoản và thiết lập ma trận phân quyền vai trò (RBAC) linh hoạt.
       </p>
     </div>
 
-    <div class="table-wrap">
-      <div class="table-toolbar">
-        <div class="filters">
-          <div class="search-input-wrap">
-            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="f-keyword" placeholder="Tìm theo tên nhân viên, SĐT...">
+    <!-- TABS ĐIỀU HƯỚNG -->
+    <div class="admin-tabs" id="staff-tab-nav" role="tablist">
+      <button type="button" class="admin-tab active" data-tab="list" role="tab" aria-selected="true" id="tab-btn-list">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Danh Sách Nhân Sự</span>
+      </button>
+      <button type="button" class="admin-tab" data-tab="matrix" role="tab" aria-selected="false" id="tab-btn-matrix">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Ma Trận Phân Quyền Vai Trò (RBAC)</span>
+      </button>
+    </div>
+
+    <!-- PANE 1: DANH SÁCH NHÂN SỰ -->
+    <div class="admin-tab-pane" id="pane-staff-list" role="tabpanel">
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <div class="filters">
+            <div class="search-input-wrap">
+              <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="f-keyword" placeholder="Tìm theo tên nhân viên, SĐT...">
+            </div>
+            <select id="f-role"><option value="all">Tất cả vị trí</option></select>
+            <select id="f-status">
+              <option value="all">Tất cả trạng thái</option>
+              <option value="pending">Chờ duyệt</option>
+              <option value="active">Đang làm việc</option>
+              <option value="inactive">Đã nghỉ việc</option>
+            </select>
           </div>
-          <select id="f-role"><option value="all">Tất cả vị trí</option></select>
-          <select id="f-status">
-            <option value="all">Tất cả trạng thái</option>
-            <option value="pending">Chờ duyệt</option>
-            <option value="active">Đang làm việc</option>
-            <option value="inactive">Đã nghỉ việc</option>
-          </select>
+          <button type="button" class="btn btn-primary" id="add-staff-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Thêm nhân sự mới</span>
+          </button>
         </div>
-        <button type="button" class="btn btn-primary" id="add-staff-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Thêm nhân sự mới</span>
-        </button>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã &amp; Họ tên nhân sự</th>
+              <th>Tài khoản hệ thống</th>
+              <th>Vị trí chuyên môn</th>
+              <th>Ca làm việc</th>
+              <th>Số điện thoại</th>
+              <th>Phân quyền</th>
+              <th>Tình trạng</th>
+              <th style="text-align: right;">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="staff-body"></tbody>
+        </table>
+
+        <div class="table-pagination" id="pagination"></div>
       </div>
+    </div>
 
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Mã &amp; Họ tên nhân sự</th>
-            <th>Tài khoản hệ thống</th>
-            <th>Vị trí chuyên môn</th>
-            <th>Ca làm việc</th>
-            <th>Số điện thoại</th>
-            <th>Ngày tiếp nhận</th>
-            <th>Tình trạng</th>
-            <th style="text-align: right;">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody id="staff-body"></tbody>
-      </table>
+    <!-- PANE 2: MA TRẬN PHÂN QUYỀN VAI TRÒ (RBAC) -->
+    <div class="admin-tab-pane" id="pane-staff-matrix" role="tabpanel" hidden>
+      <div class="perm-matrix-card">
+        <div class="perm-matrix-toolbar">
+          <div>
+            <h3 style="font-size: 1.05rem; color: var(--cream); margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--amber-soft);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Thiết Lập Quyền Hạn Cho Từng Vai Trò
+            </h3>
+            <p class="text-xs text-muted" style="margin: 0;">
+              Tuỳ chỉnh phân quyền chi tiết cho Quản lý, Thu ngân, Pha chế, Phục vụ. Quản trị viên tối cao (Admin) luôn giữ toàn quyền hệ thống.
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-reset-matrix" title="Khôi phục ma trận phân quyền về ban đầu">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>Khôi phục mặc định</span>
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-save-matrix">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Lưu ma trận phân quyền</span>
+            </button>
+          </div>
+        </div>
 
-      <div class="table-pagination" id="pagination"></div>
+        <div class="perm-matrix-table-wrap">
+          <table class="perm-matrix-table" id="rbac-matrix-table">
+            <!-- Được render động từ SYSTEM_PERMISSIONS & PERMISSION_GROUPS -->
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -162,6 +210,45 @@
         <button type="submit" class="btn btn-primary" id="staff-form-submit">Lưu hồ sơ nhân sự</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ---------- Modal phân quyền riêng cho từng nhân viên ---------- -->
+<div class="modal-overlay" id="staff-perm-modal" hidden>
+  <div class="modal-box" style="max-width: 840px;">
+    <div class="modal-head">
+      <div>
+        <h3 id="staff-perm-modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--amber-soft);"><path d="m21 2-2 2m-1.5 1.5L19 7l-2 2-2-2-5.5 5.5a5.5 5.5 0 1 1-2.12-2.12L13 5l2 2 1.5-1.5z"/><circle cx="7.5" cy="16.5" r="1.5"/></svg>
+          Thiết Lập Quyền Riêng Cho Nhân Sự
+        </h3>
+        <p class="text-xs text-muted" id="staff-perm-modal-subtitle" style="margin: 4px 0 0 0;"></p>
+      </div>
+      <button type="button" class="modal-close-x" id="staff-perm-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <div class="perm-modal-mode">
+      <label>
+        <input type="radio" name="permMode" value="inherit" id="perm-mode-inherit" checked>
+        <span>Thừa hưởng quyền theo vai trò chính (<strong id="perm-role-label-preview"></strong>)</span>
+      </label>
+      <label>
+        <input type="radio" name="permMode" value="custom" id="perm-mode-custom">
+        <span>Tùy biến quyền riêng (Chỉ áp dụng riêng cho nhân sự này)</span>
+      </label>
+    </div>
+
+    <div id="staff-perm-checklist-wrap" style="max-height: 440px; overflow-y: auto; padding-right: 4px;">
+      <!-- Danh sách checkbox theo từng nhóm quyền -->
+    </div>
+
+    <div class="form-actions mt-3" style="display: flex; justify-content: space-between; align-items: center;">
+      <button type="button" class="btn btn-ghost" id="staff-perm-btn-cancel">Đóng</button>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="btn btn-ghost" id="staff-perm-btn-revert" title="Huỷ quyền riêng, quay về theo vai trò">Khôi phục về vai trò</button>
+        <button type="button" class="btn btn-primary" id="staff-perm-btn-save">Lưu quyền nhân sự</button>
+      </div>
+    </div>
   </div>
 </div>
 

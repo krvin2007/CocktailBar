@@ -928,6 +928,27 @@ const bookingMinor = booker(5, { birthDate: `${yearNow - 17}-03-03` });
 check("Đặt bàn trước (chỉ giữ bàn, không gọi món) cũng phải đủ 18 tuổi",
   (await messageOf(() => orders.createOrder(bookingMinor))).includes("18 tuổi"), true);
 
+/* ---------------- [40] Hệ thống phân quyền RBAC & Quyền riêng nhân sự ---------------- */
+section("[40] Hệ thống phân quyền RBAC & Quyền riêng nhân sự");
+check("Danh mục quyền hệ thống đầy đủ nhóm", auth.PERMISSION_GROUPS.length >= 6, true);
+check("Số lượng quyền chi tiết đạt chuẩn", auth.SYSTEM_PERMISSIONS.length >= 15, true);
+check("Admin tối cao luôn có mọi quyền",
+  [auth.can("page:staff", { role: "admin" }), auth.can("order:delete", { role: "admin" }), auth.can("settings:bank", { role: "admin" })],
+  [true, true, true]);
+check("Pha chế bình thường không vào được trang Nhân sự",
+  auth.canAccessPage("admin-staff.html", { role: "bartender" }), false);
+check("Pha chế được cấp quyền riêng (customPermissions) -> vào được trang Nhân sự",
+  auth.canAccessPage("admin-staff.html", { role: "bartender", customPermissions: ["page:orders", "page:staff"] }), true);
+check("Quyền riêng thu hồi quyền huỷ đơn của thu ngân",
+  auth.can("order:cancel", { role: "cashier", customPermissions: ["page:dashboard", "page:orders"] }), false);
+const testStaff = new staff.Staff({ id: "s999", name: "Nhân viên Test", role: "waiter" });
+check("Nhân viên mới khởi tạo: không có quyền riêng (kế thừa vai trò)", testStaff.hasCustomPermissions, false);
+testStaff.customPermissions = ["page:orders", "order:status"];
+check("Nhân viên sau khi gán quyền riêng: hasCustomPermissions = true", testStaff.hasCustomPermissions, true);
+check("toJSON() lưu đầy đủ mảng quyền riêng", Array.isArray(testStaff.toJSON().customPermissions), true);
+testStaff.customPermissions = null;
+check("Đưa quyền riêng về null -> trở lại kế thừa vai trò", testStaff.hasCustomPermissions, false);
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0
