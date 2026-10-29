@@ -953,3 +953,69 @@ a.admin-inbox-badge:hover { background: rgba(229, 167, 62, 0.2); }
   margin-top: 3px;
   accent-color: var(--amber-gold);
 }
+
+/* =========================================================
+   DRINK IMAGE UPLOAD COMPONENT
+   ========================================================= */
+.drink-image-upload-wrap {
+  width: 100%;
+}
+
+.drink-upload-dropzone {
+  border: 2px dashed rgba(197, 152, 67, 0.35);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.drink-upload-dropzone:hover,
+.drink-upload-dropzone.dragover {
+  border-color: var(--amber);
+  background: rgba(197, 152, 67, 0.08);
+}
+
+.drink-upload-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.drink-preview-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+}
+
+.drink-preview-img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--amber-soft);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.drink-preview-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.drink-preview-tag {
+  font-size: 0.75rem;
+  color: var(--emerald, #10b981);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
