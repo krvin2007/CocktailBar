@@ -7,7 +7,7 @@
 import "../modules/navbar.js";
 import { refreshCartBadge } from "../modules/navbar.js";
 import {
-  getCart, updateCartQty, removeFromCart, getCartSummary, createOrder, clearCart,
+  getCart, updateCartQty, removeFromCart, createOrder, clearCart,
   syncCartWithCatalog, findOrderByCodeAndPhone, reportTransferSent,
   getRemainingSeats, cancelByCustomer, getAllOrders,
 } from "../modules/ordersService.js";
@@ -376,13 +376,6 @@ async function checkAndRenderUnpaidOrderBanner() {
     });
 
     document.getElementById("banner-dismiss-btn")?.addEventListener("click", () => {
-      unpaidBannerWrap.innerHTML = "";
-      unpaidBannerWrap.hidden = true;
-    });
-  } catch (err) {
-    console.error("Không thể tải thông tin đơn chờ thanh toán:", err);
-  }
-}
       unpaidBannerWrap.innerHTML = "";
       unpaidBannerWrap.hidden = true;
     });
