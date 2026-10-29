@@ -969,6 +969,25 @@ check("Khách có Admin giảm 20%: đơn 200.000đ được giảm 40.000đ",
   [vipQuote.discounts.find((d) => d.type === "rank")?.amount, vipQuote.total],
   [40000, 160000]);
 
+/* ---------------- [42] Phản hồi tin nhắn liên hệ của khách (Reply Messages) ---------------- */
+section("[42] Phản hồi tin nhắn liên hệ của khách (Reply Messages)");
+const msgService = await import(mod("messagesService.js"));
+fakeDb.messages = [
+  { id: "msg_1", name: "Nguyễn Văn A", phone: "090111222", message: "Quán có nhạc sống không?", read: false },
+  { id: "msg_2", name: "Lê Thành Tài", phone: "0397062429", message: "uống nước đêm", read: true, reply: "Hẹn gặp bạn tối nay!" },
+];
+check("Lọc tin nhắn: chưa phản hồi",
+  msgService.filterMessages(fakeDb.messages, { readState: "unreplied" }).map((m) => m.id),
+  ["msg_1"]);
+check("Lọc tin nhắn: đã phản hồi",
+  msgService.filterMessages(fakeDb.messages, { readState: "replied" }).map((m) => m.id),
+  ["msg_2"]);
+const repliedMsg = await msgService.replyToMessage("msg_1", "Dạ có ban nhạc Acoustic từ 20:30 mỗi tối thứ 6 và thứ 7 bạn nhé!", "Lê Thành Tài");
+check("replyToMessage lưu đúng nội dung phản hồi", repliedMsg.reply, "Dạ có ban nhạc Acoustic từ 20:30 mỗi tối thứ 6 và thứ 7 bạn nhé!");
+check("replyToMessage tự động đánh dấu read = true", repliedMsg.read, true);
+check("replyToMessage lưu người phản hồi", repliedMsg.repliedBy, "Lê Thành Tài");
+check("replyToMessage có repliedAt thời gian hợp lệ", Boolean(repliedMsg.repliedAt), true);
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0
