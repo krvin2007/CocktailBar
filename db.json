@@ -1165,6 +1165,45 @@
       "total": 128250,
       "createdAt": "2026-10-29T07:02:34.650Z",
       "tableNumber": ""
+    },
+    {
+      "id": "order_mvt8rsseo0fjch",
+      "code": "DH0010",
+      "name": "Nguyễn Hoàng Long",
+      "phone": "0909123456",
+      "email": "long.nguyen@gmail.com",
+      "serviceType": "dine-in",
+      "customerId": "cust-001",
+      "birthDate": "1992-05-14",
+      "items": [
+        {
+          "drinkId": "d19",
+          "name": "Green Park Basil Velvet",
+          "price": 135000,
+          "image": "img/drinks/green-park.jpg",
+          "qty": 1
+        }
+      ],
+      "note": "",
+      "status": "pending",
+      "paymentStatus": "unpaid",
+      "subtotal": 135000,
+      "discounts": [
+        {
+          "type": "rank",
+          "label": "Thành viên Vàng -5%",
+          "percent": 5,
+          "amount": 6750
+        }
+      ],
+      "voucherCode": "",
+      "pointsUsed": 0,
+      "doorVerification": "pending",
+      "verifiedBy": "",
+      "verificationNote": "",
+      "total": 128250,
+      "createdAt": "2026-10-29T07:48:35.582Z",
+      "tableNumber": ""
     }
   ],
   "staff": [

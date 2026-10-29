@@ -165,7 +165,7 @@ async function checkAndRenderUnpaidOrderBanner() {
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto;">
             <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="banner-pay-btn" style="white-space: nowrap; font-size: 0.82rem; font-weight: 600; padding: 7px 14px;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <span>Quét mã VietQR thanh toán</span>
+              <span>Quét mã QR MBBank thanh toán</span>
             </button>
             <button type="button" class="btn btn-outline btn-sm" id="banner-cancel-btn" style="font-size: 0.78rem; padding: 6px 10px; color: #f87171; border-color: rgba(239,68,68,0.4);" title="Huỷ đơn hàng này">
               Huỷ đơn
