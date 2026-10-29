@@ -78,6 +78,51 @@
   </div>
 </div>
 
+<!-- ---------- Modal thiết lập chiết khấu ưu đãi riêng cho khách ---------- -->
+<div class="modal-overlay" id="discount-modal" hidden>
+  <div class="modal-box" style="max-width: 520px;">
+    <div class="modal-head">
+      <div>
+        <h3 id="discount-modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="color: var(--amber-soft);"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+          Chiết Khấu Ưu Đãi Riêng Cho Khách Hàng
+        </h3>
+        <p class="text-xs text-muted" id="discount-modal-subtitle" style="margin: 4px 0 0 0;"></p>
+      </div>
+      <button type="button" class="modal-close-x" id="discount-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <form id="discount-form" novalidate style="padding-top: 12px;">
+      <input type="hidden" name="customerId" id="discount-form-id">
+
+      <div class="form-group mb-3">
+        <label>Tỷ lệ giảm giá ưu đãi riêng (%) <span class="req">*</span></label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="number" name="customDiscount" id="discount-form-percent" min="0" max="50" step="1" placeholder="VD: 10" style="font-size: 1.1rem; font-weight: 600; width: 120px;" required>
+          <span style="font-weight: 700; color: var(--amber-soft); font-size: 1.1rem;">%</span>
+          <span class="text-xs text-muted">(Nhập 0 nếu huỷ giảm giá riêng, đưa về theo hạng)</span>
+        </div>
+        <small class="text-xs text-muted" style="display: block; margin-top: 4px;">
+          Khi được thiết lập, khách hàng đặt thêm bất kỳ món nào giá cũng tự động giảm theo tỷ lệ này.
+        </small>
+      </div>
+
+      <div class="form-group mb-3">
+        <label>Ghi chú lý do ưu đãi</label>
+        <input type="text" name="discountNote" id="discount-form-note" placeholder="VD: Khách quen VIP, Sinh nhật đặc biệt, Đối tác quán...">
+      </div>
+
+      <div class="form-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+        <button type="button" class="btn btn-ghost" id="discount-modal-cancel">Đóng</button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-ghost" id="discount-btn-clear" title="Huỷ ưu đãi riêng, đưa về theo hạng">Xoá ưu đãi</button>
+          <button type="submit" class="btn btn-primary" id="discount-form-submit">Lưu chiết khấu</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
 <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
 <script type="module" src="js/pages/admin-customers.js"></script>

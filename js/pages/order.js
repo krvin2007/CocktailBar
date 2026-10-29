@@ -21,6 +21,9 @@ import { isWithinOpeningHours, openingHoursText, BOOKING_RULES } from "../module
 import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCurrentCustomer, syncCustomerSession } from "../modules/customerAuth.js";
 import { resolvePricing, POINT_REDEEM_VND, MIN_POINT_REDEEM } from "../modules/promotions.js";
+import { getItem, setItem, removeItem } from "../modules/storage.js";
+
+const APPLIED_VOUCHER_KEY = "applied_voucher";
 
 const cartListEl = document.getElementById("cart-list");
 const sumCountEl = document.getElementById("sum-count");
@@ -88,19 +91,40 @@ function openCustomerPayment(order, afterReport) {
 
 /* ---------------- Giỏ hàng ---------------- */
 
-function cartItemHtml(item) {
+function cartItemHtml(item, currentPricing = pricing) {
   const maxQty = stockById.get(item.drinkId) ?? item.qty;
   const isImage = item.image && (item.image.includes("/") || item.image.startsWith("http"));
   const imageHtml = isImage
     ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="cart-item-img">`
     : `<div class="cart-fallback-icon">${ICONS.cocktail(20)}</div>`;
 
+  let priceHtml = `<p class="cart-item-price">${formatMoney(item.price)}</p>`;
+  if (currentPricing && currentPricing.subtotal > 0 && Array.isArray(currentPricing.discounts) && currentPricing.discounts.length > 0) {
+    const productDiscounts = currentPricing.discounts
+      .filter((d) => d.type === "rank" || d.type === "voucher")
+      .reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+    const rate = productDiscounts / currentPricing.subtotal;
+    if (rate > 0) {
+      const discountedUnit = Math.max(0, Math.round(item.price * (1 - rate)));
+      const percentTag = Math.round(rate * 100);
+      priceHtml = `
+        <div class="cart-item-price-wrap" style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="cart-item-orig-price" style="text-decoration: line-through; opacity: 0.55; font-size: 0.8rem;">${formatMoney(item.price)}</span>
+            <span class="cart-item-price text-amber font-bold" style="font-size: 0.95rem;">${formatMoney(discountedUnit)}</span>
+            <span class="badge badge-warning" style="font-size: 0.65rem; padding: 1px 5px;">-${percentTag}%</span>
+          </div>
+          ${item.qty > 1 ? `<div class="text-xs text-muted">Thành tiền: <strong class="text-amber">${formatMoney(discountedUnit * item.qty)}</strong></div>` : ""}
+        </div>`;
+    }
+  }
+
   return `
     <div class="cart-item" data-id="${item.drinkId}" data-max="${maxQty}">
       <div class="cart-item-thumb">${imageHtml}</div>
       <div class="cart-item-info">
         <p class="cart-item-name">${escapeHtml(item.name)}</p>
-        <p class="cart-item-price">${formatMoney(item.price)}</p>
+        ${priceHtml}
       </div>
       <div class="cart-item-qty">
         <button type="button" data-action="minus" aria-label="Giảm số lượng">−</button>
@@ -121,7 +145,7 @@ function renderCart() {
     ? t("order_empty_booking", "Chưa chọn món nào - không sao, quý khách vẫn có thể chỉ giữ bàn. Muốn quầy bar chuẩn bị sẵn khi đến? Hãy chọn món từ thực đơn.")
     : t("order_empty_dinein", "Hãy chọn ly cocktail yêu thích từ thực đơn để gọi món tại bàn.");
 
-  cartListEl.innerHTML = cart.length ? cart.map(cartItemHtml).join("") : `
+  cartListEl.innerHTML = cart.length ? cart.map((i) => cartItemHtml(i, pricing)).join("") : `
     <div class="empty-state cart-empty">
       <div class="empty-icon">${ICONS.shoppingBag(36)}</div>
       <h4>${t("order_empty_title", "Danh sách thức uống đang trống")}</h4>
@@ -141,7 +165,11 @@ function renderCart() {
 
 /* ---------------- Ưu đãi: giảm theo hạng, mã giảm giá, dùng điểm ---------------- */
 
-const promo = { voucher: "", points: 0 }; // khách đang nhập gì (chưa chắc hợp lệ)
+const savedVoucher = getItem(APPLIED_VOUCHER_KEY, "");
+const promo = { voucher: savedVoucher || "", points: 0 }; // khách đang nhập gì (chưa chắc hợp lệ)
+if (voucherInput && savedVoucher) {
+  voucherInput.value = savedVoucher;
+}
 let pricing = null;                       // kết quả tính giá mới nhất (promotions.resolvePricing)
 let pricingRequestId = 0;
 
@@ -158,6 +186,12 @@ function setPromoMessage(el, text, kind = "") {
 function renderPricing(result, customer) {
   sumFinalEl.textContent = formatMoney(result.total);
   promoLinesEl.innerHTML = result.discounts.map(discountLineHtml).join("");
+
+  // Cập nhật giá trên từng món theo mức giảm mới nhất ("giá theo")
+  const cart = getCart();
+  if (cart.length && cartListEl) {
+    cartListEl.innerHTML = cart.map((i) => cartItemHtml(i, result)).join("");
+  }
 
   const voucherAmount = result.discounts.find((d) => d.type === "voucher")?.amount || 0;
   if (result.voucherError) setPromoMessage(voucherMsgEl, result.voucherError, "error");
@@ -216,10 +250,16 @@ function resetPromo() {
   voucherInput.value = "";
   pointsInput.value = "";
   pricing = null;
+  removeItem(APPLIED_VOUCHER_KEY);
 }
 
 function applyVoucherInput() {
   promo.voucher = voucherInput.value.trim();
+  if (promo.voucher) {
+    setItem(APPLIED_VOUCHER_KEY, promo.voucher);
+  } else {
+    removeItem(APPLIED_VOUCHER_KEY);
+  }
   refreshPricing();
 }
 

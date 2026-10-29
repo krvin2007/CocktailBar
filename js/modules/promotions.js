@@ -61,12 +61,19 @@ export async function resolvePricing({ subtotal, customerId = "", voucherCode = 
   let pointsUsed = 0;
 
   if (base > 0) {
-    // 1. Hạng thành viên
+    // 1. Hạng thành viên hoặc Chiết khấu riêng do Admin cấp
     if (customer) {
+      const adminDiscount = Number(customer.customDiscount) || 0;
       const rank = rankForPoints(lifetimeOf(customer));
-      if (rank.discountPercent > 0) {
-        const amount = Math.floor((base * rank.discountPercent) / 100);
-        discounts.push({ type: "rank", label: `${rank.label} -${rank.discountPercent}%`, percent: rank.discountPercent, amount });
+      const rankDiscount = Number(rank.discountPercent) || 0;
+      const effectivePercent = Math.max(adminDiscount, rankDiscount);
+
+      if (effectivePercent > 0) {
+        const amount = Math.floor((base * effectivePercent) / 100);
+        const label = adminDiscount > rankDiscount
+          ? `Ưu đãi riêng (Admin giảm ${adminDiscount}%)`
+          : `${rank.label} -${rankDiscount}%`;
+        discounts.push({ type: "rank", label, percent: effectivePercent, amount });
         remaining -= amount;
       }
     }

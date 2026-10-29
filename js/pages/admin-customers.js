@@ -5,10 +5,11 @@
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
-import { getAllCustomers, MEMBER_RANKS, rankForPoints, lifetimeOf, updateCustomerStatus } from "../modules/customerAuth.js";
+import { getAllCustomers, MEMBER_RANKS, rankForPoints, lifetimeOf, updateCustomerStatus, updateCustomerDiscount } from "../modules/customerAuth.js";
 import { getAllOrders } from "../modules/ordersService.js";
 import { normalizePhone, formatMoney, formatDate, formatDateTime, debounce, paginate, renderPagination, escapeHtml } from "../modules/utils.js";
 import { openModal, closeModal, toast, confirmDialog } from "../modules/ui.js";
+import { ICONS } from "../modules/icons.js";
 
 const bodyEl = document.getElementById("customers-body");
 const paginationEl = document.getElementById("pagination");
@@ -59,6 +60,11 @@ function rowHtml({ customer, rank, orderCount, spent }) {
     ? `<span class="badge badge-danger" title="${escapeHtml(customer.banReason || "Tạm khóa do vi phạm 18+")}">🚫 Tạm khóa</span>`
     : `<span class="badge badge-success">✅ Hoạt động (Đủ 18+)</span>`;
 
+  const customDiscount = Number(customer.customDiscount) || 0;
+  const discountBadge = customDiscount > 0
+    ? `<div style="margin-top: 4px;"><span class="badge badge-warning" title="${escapeHtml(customer.discountNote || "Admin giảm giá riêng")}">${ICONS.sparkle(12)} Admin -${customDiscount}%</span></div>`
+    : "";
+
   return `
     <tr data-id="${escapeHtml(customer.id)}">
       <td>
@@ -66,16 +72,20 @@ function rowHtml({ customer, rank, orderCount, spent }) {
         <div class="text-xs text-muted">${customer.createdAt ? `Tham gia ${formatDate(customer.createdAt)}` : ""}</div>
       </td>
       <td class="text-sm">${escapeHtml(customer.phone || "")}${customer.email ? `<div class="text-xs text-muted">${escapeHtml(customer.email)}</div>` : ""}</td>
-      <td>${rankBadge(rank)}</td>
+      <td>
+        ${rankBadge(rank)}
+        ${discountBadge}
+      </td>
       <td><strong>${Number(customer.points) || 0}</strong></td>
       <td>${orderCount}</td>
       <td><strong>${formatMoney(spent)}</strong></td>
       <td>${statusBadge}</td>
-      <td class="cell-actions" style="text-align: right; display: flex; gap: 6px; justify-content: flex-end;">
+      <td class="cell-actions" style="text-align: right; display: flex; gap: 6px; justify-content: flex-end; align-items: center; flex-wrap: nowrap;">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="discount" title="Cấp chiết khấu ưu đãi riêng cho khách này">${ICONS.sparkle(14)} Giảm giá</button>
         ${isBanned
           ? `<button type="button" class="btn btn-ghost btn-sm text-success" data-action="unlock">Mở khóa</button>`
-          : `<button type="button" class="btn btn-ghost btn-sm text-danger" data-action="lock" title="Khóa tài khoản do vi phạm độ tuổi 18+ hoặc khai gian">Khóa vi phạm</button>`}
-        <button type="button" class="btn btn-ghost btn-sm" data-action="history">Lịch sử điểm</button>
+          : `<button type="button" class="btn btn-ghost btn-sm text-danger" data-action="lock" title="Khóa tài khoản do vi phạm độ tuổi 18+ hoặc khai gian">Khóa</button>`}
+        <button type="button" class="btn btn-ghost btn-sm" data-action="history">Điểm</button>
       </td>
     </tr>`;
 }
@@ -127,7 +137,25 @@ async function reload() {
   }
 }
 
+function openDiscountModal(customer) {
+  const customDiscount = Number(customer.customDiscount) || 0;
+  document.getElementById("discount-form-id").value = customer.id;
+  document.getElementById("discount-form-percent").value = customDiscount || "";
+  document.getElementById("discount-form-note").value = customer.discountNote || "";
+  document.getElementById("discount-modal-title").innerHTML = `${ICONS.sparkle(18)} Chiết Khấu Ưu Đãi: ${escapeHtml(customer.name)}`;
+  const rank = rankForPoints(lifetimeOf(customer));
+  document.getElementById("discount-modal-subtitle").textContent = `SĐT: ${customer.phone} · Hạng hiện tại: ${rank.label} (Giảm mặc định: ${rank.discountPercent}%)`;
+  openModal("discount-modal");
+}
+
 bodyEl.addEventListener("click", async (e) => {
+  const discountBtn = e.target.closest('button[data-action="discount"]');
+  if (discountBtn) {
+    const row = rows.find((r) => r.customer.id === discountBtn.closest("tr").dataset.id);
+    if (row) openDiscountModal(row.customer);
+    return;
+  }
+
   const lockBtn = e.target.closest('button[data-action="lock"]');
   if (lockBtn) {
     const row = rows.find((r) => r.customer.id === lockBtn.closest("tr").dataset.id);
@@ -179,6 +207,37 @@ if (initAdminLayout("Khách Hàng Thành Viên")) {
   keywordInput.addEventListener("input", debounced);
   [rankSelect, sortSelect].forEach((el) => el.addEventListener("change", () => { currentPage = 1; renderTable(); }));
   document.getElementById("customer-modal-close").addEventListener("click", () => closeModal("customer-modal"));
+  document.getElementById("discount-modal-close")?.addEventListener("click", () => closeModal("discount-modal"));
+  document.getElementById("discount-modal-cancel")?.addEventListener("click", () => closeModal("discount-modal"));
+
+  const discountForm = document.getElementById("discount-form");
+  discountForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const customerId = document.getElementById("discount-form-id").value;
+    const percent = Number(document.getElementById("discount-form-percent").value) || 0;
+    const note = document.getElementById("discount-form-note").value.trim();
+
+    try {
+      await updateCustomerDiscount(customerId, percent, note);
+      toast(percent > 0 ? `Đã thiết lập chiết khấu ${percent}% cho khách hàng!` : "Đã xoá chiết khấu riêng.", "success");
+      closeModal("discount-modal");
+      await reload();
+    } catch (err) {
+      toast(err.message, "error");
+    }
+  });
+
+  document.getElementById("discount-btn-clear")?.addEventListener("click", async () => {
+    const customerId = document.getElementById("discount-form-id").value;
+    try {
+      await updateCustomerDiscount(customerId, 0, "");
+      toast("Đã xoá chiết khấu ưu đãi riêng, đưa về theo hạng.", "info");
+      closeModal("discount-modal");
+      await reload();
+    } catch (err) {
+      toast(err.message, "error");
+    }
+  });
   bodyEl.innerHTML = `<tr><td colspan="7" class="table-empty py-4 text-center text-muted">Đang tải danh sách khách hàng...</td></tr>`;
   reload();
 }

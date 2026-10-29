@@ -9,9 +9,14 @@ import { formatMoney, escapeHtml } from "./utils.js";
 import { ICONS } from "./icons.js";
 import { t } from "./i18n.js";
 import { isSoldOut } from "./drinksService.js";
+import { getCurrentCustomer, getCustomerDiscountPercent } from "./customerAuth.js";
 
 export function drinkCardHtml(drink) {
   const soldout = isSoldOut(drink);
+  const customer = getCurrentCustomer();
+  const discountPercent = getCustomerDiscountPercent(customer);
+  const hasDiscount = discountPercent > 0;
+  const discountedPrice = hasDiscount ? Math.floor((drink.price * (100 - discountPercent)) / 100) : drink.price;
 
   const isImagePath = typeof drink.image === "string" && (drink.image.includes("/") || drink.image.startsWith("http"));
   const imageHtml = isImagePath
@@ -23,6 +28,15 @@ export function drinkCardHtml(drink) {
         ${drink.tasteNotes.slice(0, 3).map((t) => `<span class="taste-pill">${escapeHtml(t)}</span>`).join("")}
        </div>`
     : "";
+
+  const priceHtml = hasDiscount
+    ? `<span class="drink-card-price">
+         <span style="text-decoration: line-through; opacity: 0.55; font-size: 0.82em; margin-right: 4px;">${formatMoney(drink.price)}</span>
+         <span class="text-amber font-bold">${formatMoney(discountedPrice)}</span>
+         <span class="badge badge-warning" style="font-size: 0.65rem; padding: 1px 4px; vertical-align: middle;">-${discountPercent}%</span>
+         ${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}
+       </span>`
+    : `<span class="drink-card-price">${formatMoney(drink.price)}${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}</span>`;
 
   return `
     <a class="drink-card" href="detail.html?id=${drink.id}">
@@ -45,7 +59,7 @@ export function drinkCardHtml(drink) {
         ${tasteTags}
 
         <div class="drink-card-footer">
-          <span class="drink-card-price">${formatMoney(drink.price)}${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}</span>
+          ${priceHtml}
           <div class="drink-card-badges">
             ${drink.abv > 0 ? `<span class="badge-abv" title="${t("abv_tooltip", "Nồng độ cồn")}">${drink.abv}% ABV</span>` : `<span class="badge-zero">0% ABV</span>`}
             <span class="drink-card-rating" title="${t("rating_tooltip", "Đánh giá")}">${ICONS.star(13)} ${drink.rating}</span>

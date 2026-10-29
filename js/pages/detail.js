@@ -11,6 +11,7 @@ import { formatMoney, escapeHtml, getQueryParam, clamp } from "../modules/utils.
 import { toast, loadingHtml, errorHtml, setButtonLoading } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
 import { t } from "../modules/i18n.js";
+import { getCurrentCustomer, getCustomerDiscountPercent } from "../modules/customerAuth.js";
 
 const container = document.getElementById("detail-container");
 const relatedSection = document.getElementById("related-section");
@@ -36,6 +37,10 @@ function renderNotFound() {
 function renderDetail() {
   const soldout = isSoldOut(drink);
   const maxQty = 20;
+  const customer = getCurrentCustomer();
+  const discountPercent = getCustomerDiscountPercent(customer);
+  const hasDiscount = discountPercent > 0;
+  const discountedPrice = hasDiscount ? Math.floor((drink.price * (100 - discountPercent)) / 100) : drink.price;
 
   const isImagePath = typeof drink.image === "string" && (drink.image.includes("/") || drink.image.startsWith("http"));
   const imageHtml = isImagePath
@@ -79,7 +84,14 @@ function renderDetail() {
 
         <h1 class="detail-name">${escapeHtml(drink.name)}</h1>
         <div class="detail-price-row">
-          <span class="detail-price">${formatMoney(drink.price)}${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}</span>
+          ${hasDiscount
+            ? `<span class="detail-price">
+                 <span style="text-decoration: line-through; opacity: 0.55; font-size: 0.85em; margin-right: 6px;">${formatMoney(drink.price)}</span>
+                 <span class="text-amber">${formatMoney(discountedPrice)}</span>
+                 <span class="badge badge-warning" style="font-size: 0.72rem; margin-left: 6px;">Ưu đãi -${discountPercent}%</span>
+                 ${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}
+               </span>`
+            : `<span class="detail-price">${formatMoney(drink.price)}${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}</span>`}
           <span class="detail-price-note">${t("detail_price_note", "Giá đã bao gồm phí phục vụ")}</span>
         </div>
 
