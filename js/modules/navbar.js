@@ -714,8 +714,12 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 if (document.readyState !== "loading") {
+  renderHeader();
+  renderFooter();
   renderFloatingContactWidget();
   renderChatbotWidget();
   initAgeGate();
   init3DMotion();
+  applyI18n();
+  syncCustomerSession();
 }
