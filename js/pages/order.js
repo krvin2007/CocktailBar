@@ -7,7 +7,7 @@
 import "../modules/navbar.js";
 import { refreshCartBadge } from "../modules/navbar.js";
 import {
-  getCart, updateCartQty, removeFromCart, getCartSummary, createOrder,
+  getCart, updateCartQty, removeFromCart, getCartSummary, createOrder, clearCart,
   syncCartWithCatalog, findOrderByCodeAndPhone, reportTransferSent,
   getRemainingSeats, cancelByCustomer, getAllOrders,
 } from "../modules/ordersService.js";
@@ -572,6 +572,8 @@ formEl.addEventListener("submit", async (e) => {
       return;
     }
 
+    clearCart();
+    renderCart();
     refreshCartBadge();
     formEl.reset();
     clearFormErrors(formEl);

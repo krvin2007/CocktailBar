@@ -7,6 +7,7 @@
 import "./ui.js"; // đăng ký banner cảnh báo khi máy chủ API chưa chạy
 import { openModal, closeModal, toast } from "./ui.js";
 import { getCartSummary } from "./ordersService.js";
+import { getItem, removeItem } from "./storage.js";
 import { ICONS } from "./icons.js";
 import { getCurrentLang, setLanguage, toggleLanguage, t, applyI18n } from "./i18n.js";
 import { escapeHtml } from "./utils.js";
@@ -42,14 +43,23 @@ export function renderHeader() {
   const header = document.getElementById("site-header");
   if (!header) return;
 
-  const page = currentPage();
-  const { count } = getCartSummary();
-  const currentLang = getCurrentLang();
-  const navLinks = getNavLinks();
-  // Mỗi trình duyệt chỉ giữ một danh tính: nhân sự/quản trị (phiên admin) hoặc khách hàng
   const staff = currentAdmin();
   const customer = staff ? null : getCurrentCustomer();
   const account = staff || customer;
+
+  // Nếu không có tài khoản nào đăng nhập -> dọn sạch giỏ hàng & vết đơn cũ
+  if (!account) {
+    if (getItem("cart") || getItem("quanbar_latest_order") || getItem("applied_voucher")) {
+      removeItem("cart");
+      removeItem("quanbar_latest_order");
+      removeItem("applied_voucher");
+    }
+  }
+
+  const page = currentPage();
+  const { count } = account ? getCartSummary() : { count: 0 };
+  const currentLang = getCurrentLang();
+  const navLinks = getNavLinks();
 
   const linksHtml = navLinks.map((link) => `
     <li>
@@ -657,19 +667,22 @@ export function renderFloatingContactWidget() {
 
 /** Cập nhật lại số huy hiệu giỏ hàng */
 export function refreshCartBadge() {
-  const badge = document.querySelector('a[href="order.html"] .nav-badge');
-  const cartDot = document.querySelector(".cart-count-dot");
-  const { count } = getCartSummary();
+  const badges = document.querySelectorAll('a[href="order.html"] .nav-badge');
+  const cartDots = document.querySelectorAll(".cart-count-dot");
+  const account = currentAdmin() || getCurrentCustomer();
+  const { count } = account ? getCartSummary() : { count: 0 };
 
-  if (badge) {
-    if (count > 0) badge.textContent = count;
-    else badge.remove();
-  }
+  badges.forEach((b) => {
+    if (count > 0) b.textContent = count;
+    else b.remove();
+  });
 
-  if (cartDot) {
-    if (count > 0) cartDot.textContent = count;
-    else cartDot.remove();
-  } else if (count > 0) {
+  cartDots.forEach((d) => {
+    if (count > 0) d.textContent = count;
+    else d.remove();
+  });
+
+  if (count > 0 && cartDots.length === 0) {
     renderHeader();
   }
 }
@@ -685,6 +698,7 @@ window.addEventListener("languagechange", () => {
 // Lắng nghe sự kiện đăng nhập / đăng xuất của khách hàng
 window.addEventListener("customer-auth-change", () => {
   renderHeader();
+  refreshCartBadge();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
