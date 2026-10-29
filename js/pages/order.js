@@ -74,17 +74,56 @@ function updateSubmitState() {
 /** Tồn kho mới nhất của từng món (id -> stock), cập nhật mỗi lần đối chiếu với API */
 let stockById = new Map();
 
+let currentUnpaidOrder = null;
+
 /**
- * Mở mã QR cho khách. Bấm "Tôi đã chuyển khoản" chỉ BÁO cho quán
- * (paymentStatus -> "awaiting"); thu ngân đối chiếu sao kê rồi mới xác nhận.
+ * Mở mã QR cho khách thanh toán MBBank. Hỗ trợ hiển thị toàn bộ món
+ * (bao gồm món từ đơn trước chưa thanh toán và món mới trong giỏ)
+ * kèm ô tích chọn (checkbox) để khách chọn món thanh toán tùy ý.
  */
-function openCustomerPayment(order, afterReport) {
+function openCustomerPayment(order, afterReport, allItems = null) {
   openVietQRPaymentModal(order, {
     confirmLabel: "Tôi Đã Chuyển Khoản Xong",
-    onConfirm: async () => {
-      const updated = await reportTransferSent(order.id);
-      toast(`Đã báo quán! Thu ngân sẽ đối chiếu khoản chuyển cho đơn ${order.code}.`, "success");
-      if (afterReport) afterReport(updated);
+    allItems,
+    onConfirm: async (payload) => {
+      const selectedItems = payload?.selectedItems || allItems || order?.items || [];
+      const hasUnpaid = payload?.hasUnpaidSelected ?? true;
+      const hasCart = payload?.hasCartSelected ?? false;
+
+      // 1. Cập nhật trạng thái chuyển khoản cho đơn cũ nếu có tích chọn
+      if (hasUnpaid && order?.id) {
+        await reportTransferSent(order.id);
+      }
+
+      // 2. Nếu có tích chọn món mới từ giỏ hàng: tạo đơn và làm sạch giỏ
+      if (hasCart) {
+        const cartItems = selectedItems.filter((it) => !it.isUnpaid);
+        if (cartItems.length > 0) {
+          const customer = getCurrentCustomer();
+          if (customer) {
+            try {
+              await createOrder({
+                name: customer.name,
+                phone: customer.phone,
+                email: customer.email || "",
+                serviceType: "dine-in",
+                customerId: customer.id,
+                items: cartItems.map((i) => ({ drinkId: i.drinkId, name: i.name, price: i.price, qty: i.qty, image: i.image })),
+                note: `Thanh toán cùng đợt với đơn ${order?.code || ""}`,
+              });
+            } catch (err) {
+              console.warn("Không thể lưu đơn gộp cho giỏ hàng:", err);
+            }
+          }
+          clearCart();
+          renderCart();
+          refreshCartBadge();
+        }
+      }
+
+      toast(`Đã ghi nhận thanh toán MBBank cho các món đã tích chọn! Quán sẽ đối chiếu sao kê và phục vụ.`, "success");
+      if (afterReport) afterReport(order);
+      checkAndRenderUnpaidOrderBanner();
     },
   });
 }
@@ -97,6 +136,7 @@ async function checkAndRenderUnpaidOrderBanner() {
   const customer = getCurrentCustomer();
   // Nếu chưa đăng nhập tài khoản: KHÔNG bao giờ hiển thị đơn hàng
   if (!customer) {
+    currentUnpaidOrder = null;
     unpaidBannerWrap.innerHTML = "";
     unpaidBannerWrap.hidden = true;
     return;
@@ -106,6 +146,8 @@ async function checkAndRenderUnpaidOrderBanner() {
     const all = await getAllOrders();
     // Chỉ tìm đơn của CHÍNH tài khoản đang đăng nhập
     const unpaidOrder = all.find((o) => (o.customerId === customer.id || o.phone === customer.phone) && o.status !== "cancelled" && o.paymentStatus === "unpaid" && o.total > 0);
+
+    currentUnpaidOrder = unpaidOrder || null;
 
     if (!unpaidOrder) {
       unpaidBannerWrap.innerHTML = "";
@@ -118,6 +160,9 @@ async function checkAndRenderUnpaidOrderBanner() {
     const discountSum = Array.isArray(unpaidOrder.discounts)
       ? unpaidOrder.discounts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0)
       : 0;
+
+    const cart = getCart();
+    const hasCartItems = cart.length > 0;
 
     const itemsHtml = hasItems
       ? items.map((it) => {
@@ -160,6 +205,10 @@ async function checkAndRenderUnpaidOrderBanner() {
                 · Hình thức: <strong style="color: var(--amber-soft);">${escapeHtml(serviceText(unpaidOrder))}</strong>
                 · Vui lòng thanh toán để Bartender bắt đầu pha chế món cho quý khách.
               </p>
+              ${hasCartItems ? `
+              <div style="margin-top: 6px; padding: 5px 10px; background: rgba(197, 152, 67, 0.15); border-radius: 6px; border: 1px solid rgba(197, 152, 67, 0.3); font-size: 0.78rem; color: var(--amber-soft);">
+                ⭐ Bạn đang chọn thêm <strong>${cart.length} món mới</strong> trong giỏ hàng. Khi thanh toán sẽ hiện đầy đủ cả món cũ và món mới kèm mục tích chọn món!
+              </div>` : ""}
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto;">
@@ -187,9 +236,29 @@ async function checkAndRenderUnpaidOrderBanner() {
       </div>`;
 
     document.getElementById("banner-pay-btn")?.addEventListener("click", () => {
+      const currentCart = getCart();
+      const combinedItems = [
+        ...items.map((it) => ({
+          ...it,
+          isUnpaid: true,
+          orderCode: unpaidOrder.code,
+          orderId: unpaidOrder.id,
+          sourceTag: `Đơn cũ ${unpaidOrder.code}`,
+          finalPrice: (Number(it.price) || 0) * (Number(it.qty) || 1),
+          checked: true,
+        })),
+        ...currentCart.map((it) => ({
+          ...it,
+          isUnpaid: false,
+          sourceTag: "Món mới chọn",
+          finalPrice: (Number(it.price) || 0) * (Number(it.qty) || 1),
+          checked: true,
+        })),
+      ];
+
       openCustomerPayment(unpaidOrder, () => {
         checkAndRenderUnpaidOrderBanner();
-      });
+      }, combinedItems);
     });
 
     document.getElementById("banner-cancel-btn")?.addEventListener("click", async () => {
@@ -269,15 +338,58 @@ function renderCart() {
     ? t("order_empty_booking", "Chưa chọn món nào - không sao, quý khách vẫn có thể chỉ giữ bàn. Muốn quầy bar chuẩn bị sẵn khi đến? Hãy chọn món từ thực đơn.")
     : t("order_empty_dinein", "Hãy chọn ly cocktail yêu thích từ thực đơn để gọi món tại bàn.");
 
-  cartListEl.innerHTML = cart.length ? cart.map((i) => cartItemHtml(i, pricing)).join("") : `
-    <div class="empty-state cart-empty">
-      <div class="empty-icon">${ICONS.shoppingBag(36)}</div>
-      <h4>${t("order_empty_title", "Danh sách thức uống đang trống")}</h4>
-      <p class="text-muted">${emptyText}</p>
-      <a href="menu.html" class="btn btn-primary mt-2">
-        ${ICONS.arrowRight(14)} <span>${t("order_empty_btn", "Khám phá thực đơn")}</span>
-      </a>
-    </div>`;
+  let unpaidGroupHtml = "";
+  if (currentUnpaidOrder && Array.isArray(currentUnpaidOrder.items) && currentUnpaidOrder.items.length > 0) {
+    unpaidGroupHtml = `
+      <div class="cart-unpaid-reminder" style="margin-bottom: 16px; padding: 12px 14px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-danger" style="font-size: 0.7rem;">Đơn trước chưa thanh toán</span>
+            <strong class="text-amber font-mono" style="font-size: 0.92rem;">${escapeHtml(currentUnpaidOrder.code)}</strong>
+          </div>
+          <span class="text-xs text-muted" style="font-weight: 500;">Tổng tiền: <strong class="text-amber">${formatMoney(currentUnpaidOrder.total)}</strong></span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          ${currentUnpaidOrder.items.map((it) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 6px 10px; background: rgba(0, 0, 0, 0.35); border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="color: var(--cream);">${escapeHtml(it.name)} <strong style="color: var(--amber-soft);">x${it.qty || 1}</strong></span>
+              <span class="text-amber font-semibold">${formatMoney((Number(it.price) || 0) * (Number(it.qty) || 1))}</span>
+            </div>
+          `).join("")}
+        </div>
+        ${cart.length > 0 ? `
+        <div style="margin-top: 8px; font-size: 0.75rem; color: var(--amber-soft); text-align: right;">
+          💡 Khi thanh toán sẽ hiện mục tích chọn để bạn trả chung hoặc chọn riêng từng món!
+        </div>` : ""}
+      </div>
+    `;
+  }
+
+  const newItemsHeader = (currentUnpaidOrder && cart.length > 0)
+    ? `<div style="font-size: 0.8rem; font-weight: 600; color: var(--cream); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Món mới chọn trong giỏ:</div>`
+    : "";
+
+  const cartContent = cart.length
+    ? `${newItemsHeader}${cart.map((i) => cartItemHtml(i, pricing)).join("")}`
+    : (unpaidGroupHtml ? `
+      <div class="empty-state cart-empty" style="padding: 16px;">
+        <p class="text-muted" style="margin-bottom: 10px;">Quý khách có thể chọn thêm món mới từ thực đơn hoặc thanh toán đơn trước.</p>
+        <a href="menu.html" class="btn btn-outline btn-sm">
+          ${ICONS.arrowRight(14)} <span>Chọn thêm món từ thực đơn</span>
+        </a>
+      </div>
+    ` : `
+      <div class="empty-state cart-empty">
+        <div class="empty-icon">${ICONS.shoppingBag(36)}</div>
+        <h4>${t("order_empty_title", "Danh sách thức uống đang trống")}</h4>
+        <p class="text-muted">${emptyText}</p>
+        <a href="menu.html" class="btn btn-primary mt-2">
+          ${ICONS.arrowRight(14)} <span>${t("order_empty_btn", "Khám phá thực đơn")}</span>
+        </a>
+      </div>
+    `);
+
+  cartListEl.innerHTML = unpaidGroupHtml + cartContent;
 
   const { total, count } = getCartSummary();
   if (sumCountEl) sumCountEl.textContent = `${count} ly`;
@@ -686,7 +798,7 @@ function showOrderSuccessModal(order) {
         ${order.needsPayment ? `
         <button type="button" class="btn btn-primary btn-block btn-vqr-pay" id="success-open-vietqr-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span>${t("order_qr_now", "Quét Mã VietQR Chuyển Khoản Ngay")} (${formatMoney(order.total)})</span>
+          <span>${t("order_qr_now", "Quét Mã QR MBBank Chuyển Khoản Ngay")} (${formatMoney(order.total)})</span>
         </button>` : ""}
         <button type="button" class="btn btn-ghost btn-block" id="success-close-btn">${t("order_close", "Đã hiểu & Đóng")}</button>
       </div>
@@ -697,7 +809,31 @@ function showOrderSuccessModal(order) {
   host.querySelector("#success-close-btn").addEventListener("click", close);
   host.querySelector("#success-open-vietqr-btn")?.addEventListener("click", () => {
     close();
-    openCustomerPayment(order);
+    if (currentUnpaidOrder && currentUnpaidOrder.id !== order.id && Array.isArray(currentUnpaidOrder.items) && currentUnpaidOrder.items.length > 0) {
+      const combined = [
+        ...currentUnpaidOrder.items.map((it) => ({
+          ...it,
+          isUnpaid: true,
+          orderCode: currentUnpaidOrder.code,
+          orderId: currentUnpaidOrder.id,
+          sourceTag: `Đơn cũ ${currentUnpaidOrder.code}`,
+          finalPrice: (Number(it.price) || 0) * (Number(it.qty) || 1),
+          checked: true,
+        })),
+        ...order.items.map((it) => ({
+          ...it,
+          isUnpaid: false,
+          orderCode: order.code,
+          orderId: order.id,
+          sourceTag: `Đơn mới ${order.code}`,
+          finalPrice: (Number(it.price) || 0) * (Number(it.qty) || 1),
+          checked: true,
+        })),
+      ];
+      openCustomerPayment(order, null, combined);
+    } else {
+      openCustomerPayment(order);
+    }
   });
   host.addEventListener("click", (e) => { if (e.target === host) close(); });
 }
@@ -751,7 +887,7 @@ function lookupResultHtml(o) {
           ${showQrBtn ? `
             <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="lookup-qr-btn">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <span>${t("order_lookup_qr", "Mở Mã VietQR Chuyển Khoản")} (${formatMoney(o.total)})</span>
+              <span>${t("order_lookup_qr", "Mở Mã QR MBBank Chuyển Khoản")} (${formatMoney(o.total)})</span>
             </button>` : ""}
           ${cancelHtml}
         </div>
