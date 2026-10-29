@@ -949,6 +949,26 @@ check("toJSON() lưu đầy đủ mảng quyền riêng", Array.isArray(testStaf
 testStaff.customPermissions = null;
 check("Đưa quyền riêng về null -> trở lại kế thừa vai trò", testStaff.hasCustomPermissions, false);
 
+/* ---------------- [41] Chiết khấu ưu đãi riêng cho khách & giá theo ưu đãi ---------------- */
+section("[41] Chiết khấu ưu đãi riêng cho khách & giá theo ưu đãi");
+const custAuth = await import(mod("customerAuth.js"));
+check("getCustomerDiscountPercent khi khách không có ưu đãi", custAuth.getCustomerDiscountPercent(null), 0);
+const vipCustomer = { id: "c_vip", points: 0, customDiscount: 15 };
+check("getCustomerDiscountPercent lấy đúng customDiscount từ Admin", custAuth.getCustomerDiscountPercent(vipCustomer), 15);
+fakeDb.customers.push({
+  id: "cust-vip-test",
+  name: "Khách VIP",
+  phone: "0999888777",
+  points: 10,
+  lifetimePoints: 10,
+  customDiscount: 20,
+  status: "active",
+});
+const vipQuote = await promotions.resolvePricing({ subtotal: 200000, customerId: "cust-vip-test", orders: [] });
+check("Khách có Admin giảm 20%: đơn 200.000đ được giảm 40.000đ",
+  [vipQuote.discounts.find((d) => d.type === "rank")?.amount, vipQuote.total],
+  [40000, 160000]);
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0

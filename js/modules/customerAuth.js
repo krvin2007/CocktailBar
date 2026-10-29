@@ -84,6 +84,18 @@ export function tierForPoints(points) {
 }
 
 /**
+ * Tổng % giảm giá dành cho khách hàng:
+ * Lấy mức cao nhất giữa chiết khấu do Admin cấp riêng (customDiscount) và giảm giá theo hạng.
+ */
+export function getCustomerDiscountPercent(customer) {
+  if (!customer) return 0;
+  const adminDiscount = Number(customer.customDiscount) || 0;
+  const rank = rankForPoints(lifetimeOf(customer));
+  const rankDiscount = Number(rank.discountPercent) || 0;
+  return Math.max(adminDiscount, rankDiscount);
+}
+
+/**
  * Tiến độ lên hạng: hạng hiện tại, hạng kế tiếp, còn thiếu bao nhiêu điểm, % quãng đường
  * từ mốc hạng hiện tại tới mốc hạng kế (hạng cao nhất -> next = null, percent = 100).
  */
@@ -220,9 +232,18 @@ export async function syncCustomerSession() {
     return { customer: session, changed: false };
   }
 
-  const fresh = { ...session, name: record.name, tier: record.tier || session.tier, points: record.points || 0, lifetimePoints: lifetimeOf(record) };
+  const fresh = {
+    ...session,
+    name: record.name,
+    tier: record.tier || session.tier,
+    points: record.points || 0,
+    lifetimePoints: lifetimeOf(record),
+    customDiscount: Number(record.customDiscount) || 0,
+    discountNote: record.discountNote || "",
+  };
   const changed = fresh.name !== session.name || fresh.tier !== session.tier || fresh.points !== session.points
-    || fresh.lifetimePoints !== session.lifetimePoints;
+    || fresh.lifetimePoints !== session.lifetimePoints || fresh.customDiscount !== session.customDiscount
+    || fresh.discountNote !== session.discountNote;
   if (changed) {
     setItem(SESSION_KEY, fresh);
     dispatchAuthChange(fresh);
@@ -290,6 +311,8 @@ export async function customerLogin(identifier, password) {
       tier: customer.tier || "Thành viên Mới",
       points: customer.points || 0,
       lifetimePoints: lifetimeOf(customer),
+      customDiscount: Number(customer.customDiscount) || 0,
+      discountNote: customer.discountNote || "",
       loginAt: new Date().toISOString(),
     };
 
@@ -424,6 +447,20 @@ export async function updateCustomerStatus(customerId, status, reason = "") {
     status,
     banReason: reason,
     statusUpdatedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Cập nhật chiết khấu ưu đãi riêng cho khách hàng (dành cho Admin / Quản lý)
+ * @param {string} customerId
+ * @param {number} customDiscount Tỷ lệ giảm giá % (0 - 100)
+ * @param {string} [discountNote] Lý do ưu đãi riêng
+ */
+export async function updateCustomerDiscount(customerId, customDiscount, discountNote = "") {
+  const discount = Math.max(0, Math.min(100, Math.round(Number(customDiscount) || 0)));
+  return await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, {
+    customDiscount: discount,
+    discountNote: String(discountNote || "").trim(),
   });
 }
 
