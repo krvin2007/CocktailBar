@@ -542,7 +542,7 @@ function renderRbacMatrix() {
 
 async function handleSaveMatrix() {
   if (!can("staff:permissions")) {
-    toast("Bạn không có quyền cập nhật ma trận phân quyền hệ thống.", "error");
+    toast("Bạn không có quyền cập nhật phân quyền hệ thống.", "error");
     return;
   }
 
@@ -564,24 +564,24 @@ async function handleSaveMatrix() {
   });
 
   saveRolePermissions(newMatrix);
-  toast("Đã lưu ma trận phân quyền vai trò (RBAC) thành công!", "success");
+  toast("Đã lưu thiết lập phân quyền thành công!", "success");
 }
 
 async function handleResetMatrix() {
   if (!can("staff:permissions")) {
-    toast("Bạn không có quyền khôi phục ma trận phân quyền.", "error");
+    toast("Bạn không có quyền khôi phục phân quyền.", "error");
     return;
   }
 
   const ok = await confirmDialog(
-    "Bạn có chắc chắn muốn khôi phục ma trận phân quyền vai trò về cấu hình gốc mặc định của quán?",
-    { title: "Khôi phục ma trận mặc định", okText: "Khôi phục" },
+    "Bạn có chắc chắn muốn khôi phục phân quyền về cấu hình gốc mặc định của quán?",
+    { title: "Khôi phục phân quyền mặc định", okText: "Khôi phục" },
   );
   if (!ok) return;
 
   resetRolePermissions();
   renderRbacMatrix();
-  toast("Đã khôi phục ma trận phân quyền về mặc định thành công!", "success");
+  toast("Đã khôi phục phân quyền về mặc định thành công!", "success");
 }
 
 /* =========================================================
@@ -703,6 +703,6 @@ async function handleRevertStaffPermissions() {
 if (initAdminLayout("Quản Lý Nhân Sự")) {
   fillSelects();
   bindEvents();
-  bodyEl.innerHTML = `<tr><td colspan="8" class="table-empty py-4 text-center text-muted">Đang tải danh sách nhân sự...</td></tr>`;
+  bodyEl.innerHTML = `<tr><td colspan="7" class="table-empty py-4 text-center text-muted">Đang tải danh sách nhân sự...</td></tr>`;
   reloadTable();
 }
