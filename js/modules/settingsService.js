@@ -39,8 +39,8 @@ export const VIETNAM_BANKS = [
 export const DEFAULT_SETTINGS = {
   bankId: "MB",
   bankName: "MBBank — Ngân hàng Quân Đội",
-  accountNumber: "0901234567",
-  accountName: "QUAN BAR DEM",
+  accountNumber: "09042007101207",
+  accountName: "LE THANH TAI",
 };
 
 /** Đọc cấu hình tài khoản nhận tiền (máy chủ -> bản đệm -> mặc định) */

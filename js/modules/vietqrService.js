@@ -87,7 +87,7 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
         <!-- Cột 1: Thẻ hiển thị mã QR -->
         <div class="vietqr-qr-panel">
           <div class="vietqr-img-frame">
-            <img src="${qrUrl}" alt="Mã QR Chuyển khoản VietQR đơn hàng ${escapeHtml(order.code)}" class="vietqr-image" loading="eager">
+            <img src="${qrUrl}" alt="Mã QR Chuyển khoản VietQR đơn hàng ${escapeHtml(order.code)}" class="vietqr-image" loading="eager" onerror="this.onerror=null;this.src='img/vietqr.jpg';">
             <div class="vietqr-scan-line"></div>
           </div>
 
