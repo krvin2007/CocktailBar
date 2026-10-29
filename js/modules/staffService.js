@@ -125,7 +125,7 @@ export class Staff {
     id,
     name,
     role,
-    shift,
+    shift = "",
     phone,
     email = "",
     startDate,
@@ -198,7 +198,7 @@ export class Staff {
   }
 
   get shiftLabel() {
-    return STAFF_SHIFTS[this.shift] || this.shift;
+    return STAFF_SHIFTS[this.shift] || this.shift || "";
   }
 
   /** Số tháng đã làm việc tính từ ngày vào làm (0 nếu ngày vào làm ở tương lai) */

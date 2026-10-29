@@ -15,7 +15,7 @@ import { passwordProblem } from "../modules/passwords.js";
 import {
   getAllStaff, filterStaff, addStaff, updateStaff, deleteStaff, updateStaffPermissions,
   isPhoneTaken, isUsernameTaken, isEmailTaken, generateStaffCode,
-  STAFF_ROLES, STAFF_SHIFTS,
+  STAFF_ROLES,
 } from "../modules/staffService.js";
 import { debounce, paginate, renderPagination, escapeHtml } from "../modules/utils.js";
 import { validateForm, clearFormErrors, setFieldError } from "../modules/validation.js";
@@ -30,7 +30,6 @@ const statusFilter = document.getElementById("f-status");
 
 const formEl = document.getElementById("staff-form");
 const formRoleSelect = document.getElementById("staff-form-role");
-const formShiftSelect = document.getElementById("staff-form-shift");
 const formCodeInput = document.getElementById("staff-form-code");
 const formUsernameInput = document.getElementById("staff-form-username");
 const formPasswordInput = document.getElementById("staff-form-password");
@@ -76,9 +75,6 @@ function fillSelects() {
     roleFilter.insertAdjacentHTML("beforeend", `<option value="${value}">${label}</option>`);
     formRoleSelect.insertAdjacentHTML("beforeend", `<option value="${value}">${label}</option>`);
   });
-  Object.entries(STAFF_SHIFTS).forEach(([value, label]) => {
-    formShiftSelect.insertAdjacentHTML("beforeend", `<option value="${value}">${label}</option>`);
-  });
 }
 
 function rowHtml(s) {
@@ -104,7 +100,6 @@ function rowHtml(s) {
     : '<span class="text-xs text-muted">Chưa cấp</span>'}
       </td>
       <td><span class="text-sm font-medium">${s.roleLabel}</span></td>
-      <td><span class="text-sm text-muted">${s.shiftLabel}</span></td>
       <td><span class="text-sm">${escapeHtml(s.phone)}</span></td>
       <td>${permBadge}</td>
       <td>
@@ -175,7 +170,6 @@ function openForEdit(staff) {
   formEl.elements.name.value = staff.name;
   if (formUsernameInput) formUsernameInput.value = staff.username || "";
   formEl.elements.role.value = staff.role;
-  formEl.elements.shift.value = staff.shift;
   formEl.elements.phone.value = staff.phone;
   formEl.elements.email.value = staff.email || "";
   formEl.elements.startDate.value = staff.startDate;
@@ -325,7 +319,7 @@ formEl.addEventListener("submit", async (e) => {
     name: data.name,
     username: data.username || (data.phone ? `nv_${data.phone.slice(-4)}` : ""),
     role: data.role,
-    shift: data.shift,
+    shift: existingStaff?.shift || "",
     phone: data.phone,
     email: data.email || "",
     startDate: data.startDate,
@@ -641,7 +635,7 @@ function openPermissionsModal(staff) {
   const isCustom = Array.isArray(staffCustom);
 
   permModalTitle.innerHTML = `${ICONS.key(18)} Thiết Lập Quyền Riêng: ${escapeHtml(staff.name)}`;
-  permModalSubtitle.textContent = `Mã: ${staff.displayStaffCode} · Vị trí: ${staff.roleLabel} · Ca: ${staff.shiftLabel}`;
+  permModalSubtitle.textContent = `Mã: ${staff.displayStaffCode} · Vị trí: ${staff.roleLabel}`;
   if (permRolePreview) permRolePreview.textContent = staff.roleLabel;
 
   if (isCustom) {
