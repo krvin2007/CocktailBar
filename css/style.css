@@ -5183,4 +5183,60 @@ body.age-gate-locked {
   }
 }
 
+/* =========================================================
+   19. VÉ ĐIỆN TỬ RẠP CHIẾU PHIM (CINEMA E-TICKET STYLING)
+   ========================================================= */
+.cinema-ticket-card {
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+@media (max-width: 600px) {
+  .cinema-ticket-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .cinema-ticket-stub {
+    border-left: none !important;
+    border-top: 2px dashed rgba(212, 175, 55, 0.35) !important;
+  }
+  .cinema-ticket-stub::before,
+  .cinema-ticket-stub::after {
+    display: none !important;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #cinema-ticket-modal,
+  #cinema-ticket-modal * {
+    visibility: visible;
+  }
+  #cinema-ticket-modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: transparent !important;
+  }
+  .modal-head,
+  .ticket-modal-actions,
+  .ticket-email-status-banner {
+    display: none !important;
+  }
+  .cinema-ticket-card {
+    box-shadow: none !important;
+    border: 1px solid #333 !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+  .cinema-ticket-header,
+  .cinema-ticket-main,
+  .cinema-ticket-stub {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
+
 

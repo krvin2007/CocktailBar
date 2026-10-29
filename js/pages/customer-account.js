@@ -18,6 +18,7 @@ import { escapeHtml, formatMoney, formatDateTime } from "../modules/utils.js";
 import { t } from "../modules/i18n.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
 import { reportTransferSent } from "../modules/ordersService.js";
+import { openCinemaTicketModal } from "../modules/emailService.js";
 
 const bodyEl = document.getElementById("account-body");
 let currentCustomerOrders = [];
@@ -86,6 +87,11 @@ function orderRowHtml(o) {
     }
   }
 
+  const ticketBtnHtml = `
+    <button type="button" class="btn btn-ghost btn-sm btn-view-account-ticket" data-id="${escapeHtml(o.id)}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap; color: var(--amber-soft); margin-right: 4px;" title="Xem vé điện tử giống vé xem phim">
+      🎟️ Vé điện tử
+    </button>`;
+
   return `
     <tr>
       <td class="text-sm font-mono"><strong class="text-amber">${code}</strong></td>
@@ -94,7 +100,7 @@ function orderRowHtml(o) {
       <td class="text-sm font-bold text-amber">${total}</td>
       <td>${statusHtml}</td>
       <td>${paymentBadgeHtml}</td>
-      <td style="text-align: right; white-space: nowrap;">${payBtnHtml || "—"}</td>
+      <td style="text-align: right; white-space: nowrap;">${ticketBtnHtml}${payBtnHtml}</td>
     </tr>`;
 }
 
@@ -263,6 +269,17 @@ async function init() {
 }
 
 bodyEl.addEventListener("click", (e) => {
+  const ticketBtn = e.target.closest(".btn-view-account-ticket");
+  if (ticketBtn) {
+    const orderId = ticketBtn.dataset.id;
+    const order = currentCustomerOrders.find((o) => o.id === orderId);
+    if (order) {
+      const session = getCurrentCustomer();
+      openCinemaTicketModal(order, { toEmail: session?.email || order.email });
+    }
+    return;
+  }
+
   const btn = e.target.closest(".btn-pay-account-order");
   if (!btn) return;
   const orderId = btn.dataset.id;

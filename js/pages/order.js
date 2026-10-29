@@ -22,6 +22,7 @@ import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCurrentCustomer, syncCustomerSession } from "../modules/customerAuth.js";
 import { resolvePricing, POINT_REDEEM_VND, MIN_POINT_REDEEM } from "../modules/promotions.js";
 import { getItem, setItem, removeItem } from "../modules/storage.js";
+import { sendOrderConfirmationEmail, openCinemaTicketModal } from "../modules/emailService.js";
 
 const APPLIED_VOUCHER_KEY = "applied_voucher";
 
@@ -719,15 +720,16 @@ formEl.addEventListener("submit", async (e) => {
 
   const restoreButton = setButtonLoading(submitBtn, "Đang gửi đơn đến quán...");
   try {
+    const customer = getCurrentCustomer();
     const result = await createOrder({
       birthDate: data.birthDate,
       voucherCode: latest?.voucherCode || "",
       pointsToUse: latest?.pointsUsed || 0,
       name: data.name,
       phone: data.phone,
-      email: data.email || "",
+      email: String(data.email || customer?.email || "").trim(),
       serviceType: data.serviceType,
-      customerId: getCurrentCustomer()?.id || "", // khách đã đăng nhập -> được tích điểm khi đơn hoàn tất
+      customerId: customer?.id || "", // khách đã đăng nhập -> được tích điểm khi đơn hoàn tất
       tableNumber: data.serviceType === "dine-in" ? data.tableNumber || "" : "",
       bookingTime: data.serviceType === "booking" ? data.bookingTime : "",
       guestCount: data.serviceType === "booking" ? Number(data.guestCount) : null,
@@ -754,6 +756,18 @@ formEl.addEventListener("submit", async (e) => {
     fillCustomerInfo(); // reset() vừa xoá form - khách đã đăng nhập thì điền lại tên/SĐT cho lần đặt sau
     setItem(LATEST_ORDER_KEY, { id: result.order.id, code: result.order.code, phone: result.order.phone });
     checkAndRenderUnpaidOrderBanner();
+
+    // Tự động gửi Vé Điện Tử (Cinema E-Ticket) về Email tài khoản khách đã đăng ký
+    try {
+      await sendOrderConfirmationEmail(result.order, customer);
+      const sentTarget = result.order.email || customer?.email;
+      if (sentTarget) {
+        toast(`🎟️ Đã gửi Vé Điện Tử xác nhận về email: ${sentTarget}`, "success");
+      }
+    } catch (eMailErr) {
+      console.warn("Không thể gửi email vé điện tử:", eMailErr);
+    }
+
     showOrderSuccessModal(result.order);
   } catch (err) {
     toast(err.message, "error");
@@ -768,11 +782,30 @@ formEl.addEventListener("submit", async (e) => {
 function showOrderSuccessModal(order) {
   const host = document.createElement("div");
   host.className = "modal-overlay show";
+  const customer = getCurrentCustomer();
+  const ticketEmail = order.email || customer?.email || "Email tài khoản";
+
   host.innerHTML = `
     <div class="modal-box modal-success-order" role="dialog" aria-modal="true">
       <div class="success-icon-wrap">${ICONS.checkCircle(40)}</div>
       <h3 class="modal-success-title">${order.isTableOnly ? t("order_success_table", "Giữ bàn thành công!") : t("order_success", "Đặt chỗ thành công!")}</h3>
       <p class="modal-success-sub">${t("order_success_sub", "Hãy lưu lại mã đơn - cần mã này cùng số điện thoại để tra cứu hoặc huỷ đặt chỗ.")}</p>
+
+      <!-- THÔNG BÁO VÉ ĐIỆN TỬ GỬI VỀ MAIL NHƯ VÉ XEM PHIM -->
+      <div class="ticket-email-alert" style="margin: 14px 0; background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 8px; padding: 12px 14px; text-align: left;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">🎟️</span>
+            <div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: #f7d794;">Vé Điện Tử (Cinema E-Ticket) đã gửi về mail:</div>
+              <div style="font-size: 0.82rem; color: #4ade80; font-family: monospace;">${escapeHtml(ticketEmail)}</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-success-view-ticket" style="white-space: nowrap; font-size: 0.78rem; padding: 6px 12px;">
+            🎟️ Mở Vé Điện Tử
+          </button>
+        </div>
+      </div>
 
       <div class="order-receipt-card">
         <div class="receipt-row"><span>${t("order_rc_code", "Mã đặt chỗ")}:</span><strong class="receipt-code">${escapeHtml(order.code)}</strong></div>
@@ -807,6 +840,9 @@ function showOrderSuccessModal(order) {
   document.body.appendChild(host);
   const close = () => host.remove();
   host.querySelector("#success-close-btn").addEventListener("click", close);
+  host.querySelector("#btn-success-view-ticket")?.addEventListener("click", () => {
+    openCinemaTicketModal(order, { toEmail: ticketEmail });
+  });
   host.querySelector("#success-open-vietqr-btn")?.addEventListener("click", () => {
     close();
     if (currentUnpaidOrder && currentUnpaidOrder.id !== order.id && Array.isArray(currentUnpaidOrder.items) && currentUnpaidOrder.items.length > 0) {
@@ -889,6 +925,9 @@ function lookupResultHtml(o) {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
               <span>${t("order_lookup_qr", "Mở Mã QR MBBank Chuyển Khoản")} (${formatMoney(o.total)})</span>
             </button>` : ""}
+          <button type="button" class="btn btn-secondary btn-sm" id="lookup-ticket-btn" style="display: inline-flex; align-items: center; gap: 5px;">
+            <span>🎟️</span> <span>Xem Vé Điện Tử</span>
+          </button>
           ${cancelHtml}
         </div>
       </div>
@@ -926,6 +965,11 @@ if (lookupResultsEl) {
         lastLookedUpOrder = updated;
         lookupResultsEl.innerHTML = lookupResultHtml(updated);
       });
+    }
+
+    const ticketBtn = e.target.closest("#lookup-ticket-btn");
+    if (ticketBtn && lastLookedUpOrder) {
+      openCinemaTicketModal(lastLookedUpOrder);
     }
 
     const cancelBtn = e.target.closest("#lookup-cancel-btn");
