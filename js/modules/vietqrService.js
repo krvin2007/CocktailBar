@@ -76,31 +76,31 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
     <div class="modal-box modal-vietqr" role="dialog" aria-modal="true">
       <div class="vietqr-head">
         <div class="vietqr-head-brand">
-          <span class="vietqr-badge">NAPAS 247 · VIETQR CHUẨN QUỐC GIA</span>
-          <h3 class="vietqr-title">Thanh Toán Chuyển Khoản Ngân Hàng</h3>
-          <p class="vietqr-sub">Mở bất kỳ ứng dụng ngân hàng hoặc ví điện tử để quét mã thanh toán tức thì</p>
+          <span class="vietqr-badge">MBBANK · NGÂN HÀNG QUÂN ĐỘI</span>
+          <h3 class="vietqr-title">Thanh Toán Chuyển Khoản MBBank</h3>
+          <p class="vietqr-sub">Mở App MBBank hoặc bất kỳ ứng dụng ngân hàng / ví điện tử để quét mã MB</p>
         </div>
         <button type="button" class="modal-close-x" id="vqr-close-x" aria-label="Đóng">&times;</button>
       </div>
 
       <div class="vietqr-body-grid">
-        <!-- Cột 1: Thẻ hiển thị mã QR -->
+        <!-- Cột 1: Thẻ hiển thị mã QR MBBank -->
         <div class="vietqr-qr-panel">
           <div class="vietqr-img-frame">
-            <img src="${qrUrl}" alt="Mã QR Chuyển khoản VietQR đơn hàng ${escapeHtml(order.code)}" class="vietqr-image" loading="eager" onerror="this.onerror=null;this.src='img/vietqr.jpg';">
+            <img src="img/mb-qr.jpg" alt="Mã QR MBBank đơn hàng ${escapeHtml(order.code)}" class="vietqr-image" loading="eager" onerror="this.onerror=null;this.src='${qrUrl}';">
             <div class="vietqr-scan-line"></div>
           </div>
 
           <div class="vietqr-qr-actions">
-            <a href="${qrUrl}" download="VietQR_${escapeHtml(order.code)}.png" target="_blank" class="btn btn-outline btn-sm btn-block" title="Lưu mã QR về điện thoại hoặc máy tính">
+            <a href="img/mb-qr.jpg" download="MBBank_QR_${escapeHtml(order.code)}.jpg" target="_blank" class="btn btn-outline btn-sm btn-block" title="Lưu mã QR MBBank về điện thoại hoặc máy tính">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              <span>Tải Mã QR Về Máy</span>
+              <span>Tải Mã QR MB Về Máy</span>
             </a>
           </div>
 
           <div class="vietqr-security-note">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Quét mã tự động điền đúng số tiền &amp; nội dung, không sợ chuyển nhầm</span>
+            <span>Tài khoản MBBank chính thức của quán: Lê Thành Tài</span>
           </div>
         </div>
 

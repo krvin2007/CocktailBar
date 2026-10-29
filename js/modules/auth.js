@@ -149,7 +149,7 @@ export const SYSTEM_PERMISSIONS = [
 
   // 2. Nghiệp vụ đơn hàng
   { id: "order:status", group: "orders", label: "Cập nhật tiến độ pha chế", desc: "Chuyển trạng thái đơn: Chờ xử lý -> Đang pha chế -> Hoàn tất" },
-  { id: "order:payment", group: "orders", label: "Xác nhận thanh toán", desc: "Xác nhận tiền mặt hoặc đối soát chuyển khoản VietQR" },
+  { id: "order:payment", group: "orders", label: "Xác nhận thanh toán", desc: "Xác nhận tiền mặt hoặc đối soát chuyển khoản MBBank" },
   { id: "order:cancel", group: "orders", label: "Huỷ & Khôi phục đơn", desc: "Huỷ đơn hàng hoặc khôi phục (tự động hoàn/trừ tồn kho)" },
   { id: "order:delete", group: "orders", label: "Xoá vĩnh viễn đơn hàng", desc: "Xoá hoàn toàn đơn khỏi cơ sở dữ liệu (nguy cơ cao)", danger: true },
 
@@ -168,7 +168,7 @@ export const SYSTEM_PERMISSIONS = [
   { id: "staff:permissions", group: "staff", label: "Thiết lập phân quyền", desc: "Chỉnh sửa ma trận phân quyền vai trò & phân quyền riêng", danger: true },
 
   // 7. Cấu hình
-  { id: "settings:bank", group: "settings", label: "Cấu hình ngân hàng VietQR", desc: "Thay đổi số tài khoản nhận tiền chuyển khoản của quán" },
+  { id: "settings:bank", group: "settings", label: "Cấu hình ngân hàng MBBank", desc: "Thay đổi số tài khoản nhận tiền chuyển khoản của quán" },
 ];
 
 /** Ma trận phân quyền mặc định chuẩn nghiệp vụ quán bar */

@@ -79,7 +79,7 @@ function orderRowHtml(o) {
     if (o.status !== "cancelled" && Number(o.total) > 0) {
       payBtnHtml = `
         <button type="button" class="btn btn-primary btn-sm btn-pay-account-order" data-id="${escapeHtml(o.id)}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">
-          Thanh toán VietQR
+          Thanh toán MBBank
         </button>`;
     }
   }
