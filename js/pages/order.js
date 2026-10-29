@@ -113,30 +113,76 @@ async function checkAndRenderUnpaidOrderBanner() {
       return;
     }
 
+    const items = Array.isArray(unpaidOrder.items) ? unpaidOrder.items : [];
+    const hasItems = items.length > 0;
+    const discountSum = Array.isArray(unpaidOrder.discounts)
+      ? unpaidOrder.discounts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0)
+      : 0;
+
+    const itemsHtml = hasItems
+      ? items.map((it) => {
+        const itemTotal = (Number(it.price) || 0) * (Number(it.qty) || 1);
+        const hasImg = it.image && (it.image.includes("/") || it.image.startsWith("http"));
+        return `
+          <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-sm);">
+            ${hasImg ? `<img src="${escapeHtml(it.image)}" alt="${escapeHtml(it.name)}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(197, 152, 67, 0.35); flex-shrink: 0;" onerror="this.onerror=null;this.replaceWith(document.createElement('div'))">` : `<div style="width: 44px; height: 44px; border-radius: 6px; background: rgba(197, 152, 67, 0.15); display: flex; align-items: center; justify-content: center; color: var(--amber-soft); flex-shrink: 0;">${ICONS.cocktail(20)}</div>`}
+            <div style="min-width: 0; flex: 1;">
+              <div style="font-size: 0.88rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(it.name)}">
+                ${escapeHtml(it.name)}
+              </div>
+              <div style="font-size: 0.76rem; color: var(--muted); margin-top: 2px; display: flex; align-items: center; justify-content: space-between;">
+                <span>Số lượng: <strong style="color: var(--amber-soft); font-weight: 600;">x${it.qty || 1}</strong></span>
+                <strong style="color: var(--cream); font-weight: 600;">${formatMoney(itemTotal)}</strong>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("")
+      : `<div style="font-size: 0.82rem; color: var(--muted); font-style: italic;">Đơn giữ chỗ đặt bàn trước (không gọi trước món).</div>`;
+
     unpaidBannerWrap.hidden = false;
     unpaidBannerWrap.innerHTML = `
-      <div class="active-unpaid-order-banner" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-sm); gap: 16px; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); display: flex; align-items: center; justify-content: center; color: #ef4444; flex-shrink: 0;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
-          <div>
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <span style="font-size: 0.85rem; color: var(--cream); font-weight: 500;">Bạn có đơn hàng đang chờ thanh toán:</span>
-              <strong class="text-amber font-mono" style="font-size: 0.95rem;">${escapeHtml(unpaidOrder.code)}</strong>
-              <span class="badge badge-danger" style="font-size: 0.72rem;">Chưa thanh toán</span>
+      <div class="active-unpaid-order-banner" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: var(--radius-sm); padding: 16px 18px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 260px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.18); display: flex; align-items: center; justify-content: center; color: #ef4444; flex-shrink: 0; margin-top: 2px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <p class="text-xs text-muted" style="margin: 3px 0 0 0;">
-              Tổng tiền: <strong class="text-amber">${formatMoney(unpaidOrder.total)}</strong> · ${escapeHtml(unpaidOrder.serviceLabel || "")} · Quý khách vui lòng thanh toán để quán chuẩn bị phục vụ chu đáo nhất.
-            </p>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 0.92rem; color: var(--cream); font-weight: 600;">Bạn có đơn hàng đang chờ thanh toán:</span>
+                <strong class="text-amber font-mono" style="font-size: 1.05rem; letter-spacing: 0.5px;">${escapeHtml(unpaidOrder.code)}</strong>
+                <span class="badge badge-danger" style="font-size: 0.72rem; padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4);">Chưa thanh toán</span>
+              </div>
+              <p class="text-xs text-muted" style="margin: 4px 0 0 0;">
+                Tổng tiền cần thanh toán: <strong class="text-amber" style="font-size: 0.95rem;">${formatMoney(unpaidOrder.total)}</strong>
+                ${discountSum > 0 ? `<span style="color: var(--amber-soft); margin-left: 6px;">(Đã giảm ${formatMoney(discountSum)})</span>` : ""}
+                · Hình thức: <strong style="color: var(--amber-soft);">${escapeHtml(serviceText(unpaidOrder))}</strong>
+                · Vui lòng thanh toán để Bartender bắt đầu pha chế món cho quý khách.
+              </p>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto;">
+            <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="banner-pay-btn" style="white-space: nowrap; font-size: 0.82rem; font-weight: 600; padding: 7px 14px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span>Quét mã VietQR thanh toán</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="banner-cancel-btn" style="font-size: 0.78rem; padding: 6px 10px; color: #f87171; border-color: rgba(239,68,68,0.4);" title="Huỷ đơn hàng này">
+              Huỷ đơn
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm" id="banner-dismiss-btn" title="Đóng thông báo" style="padding: 4px 8px; color: var(--muted);">✕</button>
           </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="banner-pay-btn" style="white-space: nowrap; font-size: 0.8rem;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            <span>Quét mã VietQR thanh toán</span>
-          </button>
-          <button type="button" class="btn btn-ghost btn-sm" id="banner-dismiss-btn" title="Đóng thông báo" style="padding: 4px 8px;">✕</button>
+
+        <!-- DANH SÁCH MÓN CHƯA THANH TOÁN (HIỂN THỊ RÕ RÀNG CHI TIẾT MÓN CHO KHÁCH BIẾT) -->
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(239, 68, 68, 0.28);">
+          <div style="font-size: 0.78rem; color: #fca5a5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <span>Danh sách món chưa thanh toán (${items.length} món):</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px;">
+            ${itemsHtml}
+          </div>
         </div>
       </div>`;
 
@@ -144,6 +190,18 @@ async function checkAndRenderUnpaidOrderBanner() {
       openCustomerPayment(unpaidOrder, () => {
         checkAndRenderUnpaidOrderBanner();
       });
+    });
+
+    document.getElementById("banner-cancel-btn")?.addEventListener("click", async () => {
+      const ok = await confirmDialog(`Quý khách có chắc chắn muốn huỷ đơn hàng ${unpaidOrder.code}?`);
+      if (!ok) return;
+      try {
+        await cancelByCustomer(unpaidOrder.code, unpaidOrder.phone);
+        toast(`Đã huỷ đơn hàng ${unpaidOrder.code}.`, "info");
+        checkAndRenderUnpaidOrderBanner();
+      } catch (err) {
+        toast(err.message, "error");
+      }
     });
 
     document.getElementById("banner-dismiss-btn")?.addEventListener("click", () => {

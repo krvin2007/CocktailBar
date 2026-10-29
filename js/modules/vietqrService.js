@@ -139,6 +139,23 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
             </div>
           </div>
 
+          ${Array.isArray(order.items) && order.items.length > 0 ? `
+          <div class="vqr-items-box" style="margin-top: 10px; padding: 10px 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); max-height: 120px; overflow-y: auto;">
+            <div style="font-size: 0.72rem; color: var(--amber-soft); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+              Danh sách món cần thanh toán (${order.items.length} món):
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              ${order.items.map((it) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; gap: 8px;">
+                  <span style="color: var(--cream); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${escapeHtml(it.name)} <strong style="color: var(--amber-soft);">x${it.qty}</strong>
+                  </span>
+                  <span style="color: var(--muted); font-size: 0.78rem; white-space: nowrap;">${formatMoney((it.price || 0) * (it.qty || 1))}</span>
+                </div>
+              `).join("")}
+            </div>
+          </div>` : ""}
+
           ${onConfirm ? `
           <div class="vietqr-footer-actions">
             <button type="button" class="btn btn-primary btn-block btn-lg" id="vqr-confirm-btn">

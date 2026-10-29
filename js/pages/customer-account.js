@@ -56,9 +56,9 @@ function historyRowHtml(entry) {
 function orderRowHtml(o) {
   const code = escapeHtml(o.code || "");
   const total = formatMoney(o.total || 0);
-  const itemsText = Array.isArray(o.items) && o.items.length
-    ? o.items.map((i) => `${escapeHtml(i.name)} (x${i.qty})`).join(", ")
-    : "Đặt bàn";
+  const itemsHtml = Array.isArray(o.items) && o.items.length
+    ? o.items.map((i) => `<div style="line-height: 1.4;"><strong style="color: var(--cream);">${escapeHtml(i.name)}</strong> <span style="color: var(--amber-soft); font-weight: 600;">x${i.qty}</span></div>`).join("")
+    : `<span class="text-muted font-italic">Đặt bàn</span>`;
 
   const statusBadges = {
     pending: `<span class="badge badge-warning">Chờ xử lý</span>`,
@@ -88,7 +88,7 @@ function orderRowHtml(o) {
     <tr>
       <td class="text-sm font-mono"><strong class="text-amber">${code}</strong></td>
       <td class="text-sm">${o.createdAt ? formatDateTime(o.createdAt) : "—"}</td>
-      <td class="text-sm" style="max-width: 220px;" title="${escapeHtml(itemsText)}">${escapeHtml(itemsText)}</td>
+      <td class="text-sm" style="min-width: 180px;">${itemsHtml}</td>
       <td class="text-sm font-bold text-amber">${total}</td>
       <td>${statusHtml}</td>
       <td>${paymentBadgeHtml}</td>
