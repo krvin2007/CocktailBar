@@ -57,7 +57,7 @@ const COPY_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
  * @param {function} [options.onConfirm] async (order) => {...} chạy khi bấm nút xác nhận.
  *   Không truyền onConfirm thì KHÔNG vẽ nút (tránh nút bấm không có chức năng).
  */
-export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã Chuyển Khoản Xong", onConfirm } = {}) {
+export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã Chuyển Khoản Xong", onConfirm, allItems = null } = {}) {
   let bank;
   try {
     bank = await getBankSettings();
@@ -66,8 +66,39 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
     return null;
   }
 
-  const transferContent = `BAR ${order.code}`.toUpperCase();
-  const qrUrl = generateVietQRUrl(bank, { amount: order.total, memo: transferContent });
+  // Chuẩn bị danh sách món: ưu tiên allItems nếu có, nếu không lấy từ order.items
+  const rawItems = Array.isArray(allItems) && allItems.length > 0
+    ? allItems
+    : (Array.isArray(order?.items) ? order.items : []);
+
+  const items = rawItems.map((it) => {
+    const qty = Number(it.qty) || 1;
+    const price = Number(it.price) || 0;
+    const finalPrice = it.finalPrice !== undefined ? Number(it.finalPrice) : (price * qty);
+    return {
+      id: it.id || it.drinkId || it.name,
+      drinkId: it.drinkId || it.id,
+      name: it.name || "Đồ uống",
+      qty,
+      price,
+      finalPrice,
+      image: it.image || "",
+      isUnpaid: Boolean(it.isUnpaid),
+      orderCode: it.orderCode || (it.isUnpaid ? order?.code : "") || "",
+      orderId: it.orderId || (it.isUnpaid ? order?.id : "") || "",
+      sourceTag: it.sourceTag || (it.isUnpaid ? `Đơn cũ ${it.orderCode || order?.code}` : "Món mới chọn"),
+      checked: it.checked !== false,
+    };
+  });
+
+  const calcTotal = () => {
+    if (items.length === 0) return Number(order?.total) || 0;
+    return items.filter((it) => it.checked).reduce((sum, it) => sum + it.finalPrice, 0);
+  };
+
+  let currentTotal = calcTotal();
+  const transferContent = `BAR ${order?.code || "ORDER"}`.toUpperCase();
+  const qrUrl = generateVietQRUrl(bank, { amount: currentTotal, memo: transferContent });
 
   const host = document.createElement("div");
   host.className = "modal-overlay show vietqr-modal-overlay";
@@ -87,12 +118,12 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
         <!-- Cột 1: Thẻ hiển thị mã QR MBBank -->
         <div class="vietqr-qr-panel">
           <div class="vietqr-img-frame">
-            <img src="img/mb-qr.jpg" alt="Mã QR MBBank đơn hàng ${escapeHtml(order.code)}" class="vietqr-image" loading="eager" onerror="this.onerror=null;this.src='${qrUrl}';">
+            <img src="img/mb-qr.jpg" alt="Mã QR MBBank đơn hàng ${escapeHtml(order?.code || '')}" class="vietqr-image" loading="eager" onerror="this.onerror=null;this.src='${qrUrl}';">
             <div class="vietqr-scan-line"></div>
           </div>
 
           <div class="vietqr-qr-actions">
-            <a href="img/mb-qr.jpg" download="MBBank_QR_${escapeHtml(order.code)}.jpg" target="_blank" class="btn btn-outline btn-sm btn-block" title="Lưu mã QR MBBank về điện thoại hoặc máy tính">
+            <a href="img/mb-qr.jpg" download="MBBank_QR_${escapeHtml(order?.code || 'ORDER')}.jpg" target="_blank" class="btn btn-outline btn-sm btn-block" title="Lưu mã QR MBBank về điện thoại hoặc máy tính">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               <span>Tải Mã QR MB Về Máy</span>
             </a>
@@ -108,7 +139,7 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
         <div class="vietqr-info-panel">
           <div class="vietqr-amount-banner">
             <span class="vqr-amount-label">Số tiền cần thanh toán</span>
-            <strong class="vqr-amount-value">${formatMoney(order.total)}</strong>
+            <strong class="vqr-amount-value" id="vqr-amount-val">${formatMoney(currentTotal)}</strong>
             <button type="button" class="btn-copy-chip" id="vqr-copy-amount" title="Sao chép số tiền">
               <span>Sao chép</span>
             </button>
@@ -139,19 +170,38 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
             </div>
           </div>
 
-          ${Array.isArray(order.items) && order.items.length > 0 ? `
-          <div class="vqr-items-box" style="margin-top: 10px; padding: 10px 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); max-height: 120px; overflow-y: auto;">
-            <div style="font-size: 0.72rem; color: var(--amber-soft); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
-              Danh sách món cần thanh toán (${order.items.length} món):
+          <!-- MỤC TÍCH CHỌN NHỮNG MÓN THANH TOÁN (CÓ Ô CHECKBOX CHỌN MÓN ĐỂ THANH TOÁN) -->
+          ${items.length > 0 ? `
+          <div class="vqr-checklist-box" style="margin-top: 10px; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--gold-primary); font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
+                <input type="checkbox" id="vqr-toggle-all" checked style="accent-color: var(--gold-primary); width: 16px; height: 16px; cursor: pointer;">
+                <span>Tích chọn món thanh toán (<span id="vqr-sel-count">${items.length}</span>/${items.length})</span>
+              </label>
+              <span class="text-xs text-muted" style="font-size: 0.72rem;">Bỏ tích món chưa muốn trả</span>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              ${order.items.map((it) => `
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; gap: 8px;">
-                  <span style="color: var(--cream); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    ${escapeHtml(it.name)} <strong style="color: var(--amber-soft);">x${it.qty}</strong>
-                  </span>
-                  <span style="color: var(--muted); font-size: 0.78rem; white-space: nowrap;">${formatMoney((it.price || 0) * (it.qty || 1))}</span>
-                </div>
+
+            <div class="vqr-items-scroll-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; padding-right: 4px;">
+              ${items.map((it, idx) => `
+                <label class="vqr-item-row" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 6px; cursor: pointer; transition: background 0.15s;">
+                  <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                    <input type="checkbox" class="vqr-item-cb" data-index="${idx}" ${it.checked ? "checked" : ""} style="accent-color: var(--gold-primary); width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;">
+                    <div style="min-width: 0; flex: 1;">
+                      <div style="font-size: 0.82rem; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(it.name)}">
+                        ${escapeHtml(it.name)} <strong style="color: var(--amber-soft);">x${it.qty || 1}</strong>
+                      </div>
+                      <div style="font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-top: 1px;">
+                        <span class="badge ${it.isUnpaid ? "badge-danger" : "badge-warning"}" style="font-size: 0.62rem; padding: 1px 5px;">
+                          ${escapeHtml(it.sourceTag)}
+                        </span>
+                        <span>${formatMoney(it.finalPrice / (it.qty || 1))}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; white-space: nowrap;">
+                    <strong class="text-amber" style="font-size: 0.84rem;">${formatMoney(it.finalPrice)}</strong>
+                  </div>
+                </label>
               `).join("")}
             </div>
           </div>` : ""}
@@ -159,7 +209,7 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
           ${onConfirm ? `
           <div class="vietqr-footer-actions">
             <button type="button" class="btn btn-primary btn-block btn-lg" id="vqr-confirm-btn">
-              <span>${escapeHtml(confirmLabel)}</span>
+              <span>${escapeHtml(confirmLabel)} (${formatMoney(currentTotal)})</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
           </div>` : ""}
@@ -173,16 +223,74 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
     if (e.target === host) close();
   });
 
-  host.querySelector("#vqr-copy-amount").addEventListener("click", () => copyToClipboard(String(order.total), "số tiền"));
+  const checkboxes = host.querySelectorAll(".vqr-item-cb");
+  const toggleAll = host.querySelector("#vqr-toggle-all");
+  const amountVal = host.querySelector("#vqr-amount-val");
+  const selCount = host.querySelector("#vqr-sel-count");
+  const confirmBtn = host.querySelector("#vqr-confirm-btn");
+  const copyAmountBtn = host.querySelector("#vqr-copy-amount");
+
+  const syncCheckState = () => {
+    let sum = 0;
+    let count = 0;
+    checkboxes.forEach((cb, idx) => {
+      items[idx].checked = cb.checked;
+      if (cb.checked) {
+        count++;
+        sum += items[idx].finalPrice;
+      }
+    });
+
+    currentTotal = sum;
+    if (amountVal) amountVal.textContent = formatMoney(sum);
+    if (selCount) selCount.textContent = count;
+    if (toggleAll) toggleAll.checked = count === items.length && items.length > 0;
+
+    if (confirmBtn) {
+      if (sum <= 0) {
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = "0.5";
+        confirmBtn.querySelector("span").textContent = "Vui lòng tích chọn món cần thanh toán";
+      } else {
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = "1";
+        confirmBtn.querySelector("span").textContent = `${escapeHtml(confirmLabel)} (${formatMoney(sum)})`;
+      }
+    }
+  };
+
+  checkboxes.forEach((cb) => cb.addEventListener("change", syncCheckState));
+  if (toggleAll) {
+    toggleAll.addEventListener("change", () => {
+      checkboxes.forEach((cb) => { cb.checked = toggleAll.checked; });
+      syncCheckState();
+    });
+  }
+
+  if (copyAmountBtn) {
+    copyAmountBtn.addEventListener("click", () => copyToClipboard(String(currentTotal), "số tiền"));
+  }
   host.querySelector("#vqr-copy-acc").addEventListener("click", () => copyToClipboard(bank.accountNumber, "số tài khoản"));
   host.querySelector("#vqr-copy-memo").addEventListener("click", () => copyToClipboard(transferContent, "nội dung chuyển khoản"));
 
-  const confirmBtn = host.querySelector("#vqr-confirm-btn");
   if (confirmBtn) {
     confirmBtn.addEventListener("click", async () => {
+      const selectedItems = items.filter((it) => it.checked);
+      if (items.length > 0 && selectedItems.length === 0) {
+        toast("Vui lòng tích chọn ít nhất 1 món để thanh toán.", "warning");
+        return;
+      }
       confirmBtn.disabled = true;
       try {
-        await onConfirm(order);
+        if (onConfirm) {
+          await onConfirm({
+            order,
+            selectedItems,
+            totalPaid: currentTotal,
+            hasUnpaidSelected: selectedItems.some((it) => it.isUnpaid),
+            hasCartSelected: selectedItems.some((it) => !it.isUnpaid),
+          });
+        }
         close();
       } catch (err) {
         toast(err.message, "error");
