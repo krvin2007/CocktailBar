@@ -94,19 +94,18 @@ const LATEST_ORDER_KEY = "quanbar_latest_order";
 
 async function checkAndRenderUnpaidOrderBanner() {
   if (!unpaidBannerWrap) return;
-  try {
-    const customer = getCurrentCustomer();
-    const storedRef = getItem(LATEST_ORDER_KEY, null);
-    const all = await getAllOrders();
+  const customer = getCurrentCustomer();
+  // Nếu chưa đăng nhập tài khoản: KHÔNG bao giờ hiển thị đơn hàng
+  if (!customer) {
+    unpaidBannerWrap.innerHTML = "";
+    unpaidBannerWrap.hidden = true;
+    return;
+  }
 
-    // Tìm đơn mới nhất của khách hàng mà chưa thanh toán và chưa huỷ
-    let unpaidOrder = null;
-    if (customer) {
-      unpaidOrder = all.find((o) => (o.customerId === customer.id || o.phone === customer.phone) && o.status !== "cancelled" && o.paymentStatus === "unpaid" && o.total > 0);
-    }
-    if (!unpaidOrder && storedRef) {
-      unpaidOrder = all.find((o) => o.id === storedRef.id && o.status !== "cancelled" && o.paymentStatus === "unpaid" && o.total > 0);
-    }
+  try {
+    const all = await getAllOrders();
+    // Chỉ tìm đơn của CHÍNH tài khoản đang đăng nhập
+    const unpaidOrder = all.find((o) => (o.customerId === customer.id || o.phone === customer.phone) && o.status !== "cancelled" && o.paymentStatus === "unpaid" && o.total > 0);
 
     if (!unpaidOrder) {
       unpaidBannerWrap.innerHTML = "";
@@ -845,8 +844,16 @@ fillCustomerInfo();
 
 window.addEventListener("customer-auth-change", () => {
   fillCustomerInfo();
-  if (!getCurrentCustomer()) promo.points = 0; // đăng xuất thì bỏ điểm đang định dùng
+  if (!getCurrentCustomer()) {
+    promo.points = 0; // đăng xuất thì bỏ điểm đang định dùng
+    removeItem(LATEST_ORDER_KEY);
+    if (unpaidBannerWrap) {
+      unpaidBannerWrap.innerHTML = "";
+      unpaidBannerWrap.hidden = true;
+    }
+  }
   refreshPricing();
+  checkAndRenderUnpaidOrderBanner();
 });
 
 // Đổi VI/EN: chữ tĩnh trong HTML do applyI18n() lo; phần do JS vẽ thì vẽ lại ở đây

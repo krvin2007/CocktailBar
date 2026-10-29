@@ -435,6 +435,8 @@ export function isCustomerLoggedIn() {
 /** Đăng xuất khách hàng */
 export function customerLogout() {
   removeItem(SESSION_KEY);
+  removeItem("quanbar_latest_order");
+  removeItem("applied_voucher");
   dispatchAuthChange(null);
 }
 
