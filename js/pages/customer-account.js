@@ -11,11 +11,14 @@ import "../modules/navbar.js";
 import { api } from "../modules/api.js";
 import { getCurrentCustomer, MEMBER_RANKS, rankProgress, lifetimeOf, POINT_VALUE_VND } from "../modules/customerAuth.js";
 import { POINT_REDEEM_VND, MIN_POINT_REDEEM, MAX_POINT_REDEEM_SHARE } from "../modules/promotions.js";
-import { loadingHtml, errorHtml } from "../modules/ui.js";
+import { loadingHtml, errorHtml, toast } from "../modules/ui.js";
 import { escapeHtml, formatMoney, formatDateTime } from "../modules/utils.js";
 import { t } from "../modules/i18n.js";
+import { openVietQRPaymentModal } from "../modules/vietqrService.js";
+import { reportTransferSent } from "../modules/ordersService.js";
 
 const bodyEl = document.getElementById("account-body");
+let currentCustomerOrders = [];
 
 /** Tên hạng theo ngôn ngữ đang chọn (khoá dịch rank_<key>) */
 const rankName = (rank) => t(`rank_${rank.key}`, rank.label);
@@ -50,7 +53,51 @@ function historyRowHtml(entry) {
     </tr>`;
 }
 
-function render(customer) {
+function orderRowHtml(o) {
+  const code = escapeHtml(o.code || "");
+  const total = formatMoney(o.total || 0);
+  const itemsText = Array.isArray(o.items) && o.items.length
+    ? o.items.map((i) => `${escapeHtml(i.name)} (x${i.qty})`).join(", ")
+    : "Đặt bàn";
+
+  const statusBadges = {
+    pending: `<span class="badge badge-warning">Chờ xử lý</span>`,
+    preparing: `<span class="badge badge-warning" style="background: rgba(197,152,67,0.15); color: var(--amber-soft);">Đang pha chế</span>`,
+    completed: `<span class="badge badge-success">Hoàn tất</span>`,
+    cancelled: `<span class="badge badge-muted">Đã huỷ</span>`,
+  };
+  const statusHtml = statusBadges[o.status] || `<span class="badge badge-muted">${escapeHtml(o.status || "")}</span>`;
+
+  let paymentBadgeHtml;
+  let payBtnHtml = "";
+  if (o.paymentStatus === "paid") {
+    paymentBadgeHtml = `<span class="badge badge-success">Đã thanh toán</span>`;
+  } else if (o.paymentStatus === "awaiting") {
+    paymentBadgeHtml = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">Chờ xác nhận CK</span>`;
+  } else {
+    paymentBadgeHtml = `<span class="badge badge-danger" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">Chưa thanh toán</span>`;
+    if (o.status !== "cancelled" && Number(o.total) > 0) {
+      payBtnHtml = `
+        <button type="button" class="btn btn-primary btn-sm btn-pay-account-order" data-id="${escapeHtml(o.id)}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">
+          Thanh toán VietQR
+        </button>`;
+    }
+  }
+
+  return `
+    <tr>
+      <td class="text-sm font-mono"><strong class="text-amber">${code}</strong></td>
+      <td class="text-sm">${o.createdAt ? formatDateTime(o.createdAt) : "—"}</td>
+      <td class="text-sm" style="max-width: 220px;" title="${escapeHtml(itemsText)}">${escapeHtml(itemsText)}</td>
+      <td class="text-sm font-bold text-amber">${total}</td>
+      <td>${statusHtml}</td>
+      <td>${paymentBadgeHtml}</td>
+      <td style="text-align: right; white-space: nowrap;">${payBtnHtml || "—"}</td>
+    </tr>`;
+}
+
+function render(customer, myOrders = []) {
+  currentCustomerOrders = myOrders;
   const points = Number(customer.points) || 0;       // số dư dùng được
   const lifetime = lifetimeOf(customer);              // tích luỹ trọn đời - dùng để xét hạng (không giảm khi dùng điểm)
   const { current, next, toNext, percent } = rankProgress(lifetime);
@@ -88,6 +135,29 @@ function render(customer) {
       <p class="rank-progress-text">${progressText}</p>
     </div>
 
+    <!-- KHỐI ĐƠN HÀNG CỦA KHÁCH: LƯU RÕ TRẠNG THÁI CHƯA THANH TOÁN -->
+    <h4 class="account-subtitle" style="display: flex; align-items: center; justify-content: space-between;">
+      <span>${t("acc_my_orders", "Đơn hàng của tôi")}</span>
+      <span class="text-xs text-muted" style="font-weight: normal;">${myOrders.length} đơn</span>
+    </h4>
+    ${myOrders.length ? `
+    <div class="table-wrap account-orders" style="margin-bottom: 28px;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mã đơn</th>
+            <th>Thời gian</th>
+            <th>Món đã gọi</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái đơn</th>
+            <th>Thanh toán</th>
+            <th style="text-align: right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>${myOrders.map(orderRowHtml).join("")}</tbody>
+      </table>
+    </div>` : `<p class="text-muted" style="margin-bottom: 28px;">Bạn chưa có đơn đặt hàng nào.</p>`}
+
     <h4 class="account-subtitle">${t("acc_ladder", "Các hạng thành viên")}</h4>
     <ol class="rank-ladder">${ladder}</ol>
     <p class="text-xs text-muted account-rule">${t("acc_rule", "Quy đổi: mỗi {vnd} của đơn hoàn tất = 1 điểm. Điểm chỉ được cộng khi quán xác nhận đơn Hoàn tất; đơn bị huỷ không được tính.").replace("{vnd}", formatMoney(POINT_VALUE_VND))}</p>
@@ -116,14 +186,37 @@ async function init() {
 
   bodyEl.innerHTML = loadingHtml(t("acc_loading", "Đang tải thông tin thành viên..."));
   try {
-    const customer = await api.get(`/customers/${encodeURIComponent(session.id)}`);
-    render(customer);
+    const [customer, rawOrders] = await Promise.all([
+      api.get(`/customers/${encodeURIComponent(session.id)}`),
+      api.get("/orders").catch(() => []),
+    ]);
+    const orders = (Array.isArray(rawOrders) ? rawOrders : [])
+      .filter((o) => (o.customerId && String(o.customerId) === String(customer.id)) || (o.phone && o.phone === customer.phone))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    render(customer, orders);
   } catch (err) {
     bodyEl.innerHTML = err.status === 404
       ? errorHtml(t("acc_not_found", "Không tìm thấy hồ sơ thành viên. Vui lòng đăng nhập lại."))
       : errorHtml(err.message);
   }
 }
+
+bodyEl.addEventListener("click", (e) => {
+  const btn = e.target.closest(".btn-pay-account-order");
+  if (!btn) return;
+  const orderId = btn.dataset.id;
+  const order = currentCustomerOrders.find((o) => o.id === orderId);
+  if (!order) return;
+
+  openVietQRPaymentModal(order, {
+    confirmLabel: "Tôi Đã Chuyển Khoản Xong",
+    onConfirm: async () => {
+      await reportTransferSent(order.id);
+      toast(`Đã gửi báo cáo chuyển khoản cho đơn ${order.code}. Quán sẽ kiểm tra và xác nhận sớm!`, "success");
+      init();
+    },
+  });
+});
 
 init();
 window.addEventListener("languagechange", init);
