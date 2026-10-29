@@ -637,7 +637,8 @@ export async function createOrder(customerInfo) {
   if (ageError) throw new Error(ageError);
 
   const isBooking = customerInfo.serviceType === "booking";
-  const hadItems = getCart().length > 0;
+  const itemsProvided = Array.isArray(customerInfo.items) && customerInfo.items.length > 0 ? customerInfo.items : null;
+  const hadItems = (itemsProvided || getCart()).length > 0;
 
   // Giờ đặt bàn lưu dạng ISO (UTC): chuỗi "YYYY-MM-DDTHH:mm" của ô chọn giờ không có
   // múi giờ nên sẽ bị hiểu lệch khi máy khách và máy quán khác múi giờ.
@@ -648,7 +649,9 @@ export async function createOrder(customerInfo) {
     bookingTime = parsed.toISOString();
   }
 
-  const { cart, changes } = await syncCartWithCatalog();
+  const { cart, changes } = itemsProvided
+    ? { cart: itemsProvided, changes: [] }
+    : await syncCartWithCatalog();
   if (cart.length === 0 && (!isBooking || hadItems)) return { success: false, changes };
 
   const orders = await getAllOrders();
@@ -700,7 +703,11 @@ export async function createOrder(customerInfo) {
   }
 
   // Chỉ xoá giỏ hàng SAU KHI máy chủ đã lưu đơn thành công
-  clearCart();
+  if (itemsProvided) {
+    itemsProvided.forEach((item) => removeFromCart(item.drinkId));
+  } else {
+    clearCart();
+  }
 
   if (pricing.voucherId) {
     try {

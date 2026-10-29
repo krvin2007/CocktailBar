@@ -97,7 +97,9 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
   };
 
   let currentTotal = calcTotal();
-  const transferContent = `BAR ${order?.code || "ORDER"}`.toUpperCase();
+  const unpaidCodes = [...new Set(items.filter((it) => it.isUnpaid && it.orderCode).map((it) => it.orderCode))];
+  const memoCode = unpaidCodes.length > 0 ? unpaidCodes.join(" ") : (order?.code || "ORDER");
+  const transferContent = `BAR ${memoCode}`.toUpperCase();
   const qrUrl = generateVietQRUrl(bank, { amount: currentTotal, memo: transferContent });
 
   const host = document.createElement("div");
@@ -266,6 +268,7 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
       syncCheckState();
     });
   }
+  syncCheckState();
 
   if (copyAmountBtn) {
     copyAmountBtn.addEventListener("click", () => copyToClipboard(String(currentTotal), "số tiền"));

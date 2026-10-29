@@ -367,3 +367,4 @@ export function openCinemaTicketModal(order, { toEmail = "" } = {}) {
     if (e.target === modal) close();
   });
 }
+

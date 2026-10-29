@@ -1025,6 +1025,44 @@ check("sendOrderConfirmationEmail lưu mã đơn chính xác", sentMail.orderCod
 const retrievedMails = await emailService.getEmailsByRecipient("long.nguyen@gmail.com");
 check("getEmailsByRecipient lấy đúng email đã gửi", retrievedMails.length >= 1, true);
 
+/* ---------------- [44] Thanh toán kết hợp đơn cũ và món mới (Combined Checkout) ---------------- */
+section("[44] Thanh toán kết hợp đơn cũ và món mới (Combined Checkout)");
+// 1. Tạo đơn cũ chưa thanh toán
+fakeDb.orders.push({
+  id: "order_unpaid_test",
+  code: "DH0888",
+  name: "Khách Thanh Toán Gộp",
+  phone: "0909123456",
+  email: "long.nguyen@gmail.com",
+  serviceType: "dine-in",
+  items: [{ drinkId: "d1", name: "Negroni Classico", price: 125000, qty: 1 }],
+  total: 125000,
+  subtotal: 125000,
+  status: "pending",
+  paymentStatus: "unpaid",
+  createdAt: new Date().toISOString(),
+});
+
+// 2. Báo chuyển khoản cho đơn cũ
+const reported = await orders.reportTransferSent("order_unpaid_test");
+check("reportTransferSent chuyển trạng thái thành awaiting", reported.paymentStatus, "awaiting");
+
+// 3. Tạo đơn mới cho món được chọn riêng lẻ thông qua items truyền vào
+const customOrderRes = await orders.createOrder({
+  name: "Khách Thanh Toán Gộp",
+  phone: "0909123456",
+  email: "long.nguyen@gmail.com",
+  birthDate: "1992-05-14",
+  serviceType: "dine-in",
+  paymentStatus: "awaiting",
+  items: [{ drinkId: "d2", name: "Smoked Old Fashioned", price: 135000, qty: 1 }],
+  note: "Thanh toán chung đợt với đơn DH0888",
+});
+check("createOrder hỗ trợ truyền items tùy chọn", customOrderRes.success, true);
+check("Đơn mới tạo có đúng 1 món Smoked Old Fashioned", customOrderRes.order.items[0].drinkId, "d2");
+check("Đơn mới tạo lưu trạng thái awaiting thanh toán MBBank", customOrderRes.order.paymentStatus, "awaiting");
+check("Đơn mới ghi nhận ghi chú thanh toán gộp", customOrderRes.order.note.includes("DH0888"), true);
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0
