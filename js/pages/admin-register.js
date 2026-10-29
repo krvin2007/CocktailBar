@@ -152,7 +152,6 @@ formEl.addEventListener("submit", async (e) => {
     phone: data.phone,
     email: data.email,
     role: data.role,
-    shift: data.shift,
     startDate: data.startDate,
     // Không gửi status: registerStaff() luôn đặt "pending" (chờ quản lý duyệt)
   };
