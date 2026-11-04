@@ -1,3 +1,4 @@
+import { api } from "../modules/api.js";
 /* =========================================================
    ORDER.JS - Trang giỏ hàng + đặt bàn/đặt món + tra cứu đơn
    - Giỏ hàng: đọc/ghi localStorage (thao tác tức thì).
@@ -188,6 +189,8 @@ function openCustomerPayment(order, afterReport, allItems = null) {
       const selectedItems = payload?.selectedItems || itemsToPass.filter((i) => i.checked);
       const hasUnpaid = selectedItems.some((it) => it.isUnpaid);
       const hasCart = selectedItems.some((it) => !it.isUnpaid);
+      const customer = getCurrentCustomer();
+      let confirmedOrderForTicket = null;
 
       // 1. Cập nhật trạng thái chuyển khoản cho các đơn cũ nếu có tích chọn
       if (hasUnpaid) {
@@ -195,6 +198,13 @@ function openCustomerPayment(order, afterReport, allItems = null) {
         for (const oId of unpaidOrderIds) {
           try {
             await reportTransferSent(oId);
+            const freshOrder = await api.get(`/orders/${encodeURIComponent(oId)}`).catch(() => null);
+            const orderToEmail = freshOrder || targetOrder || currentUnpaidOrder;
+            if (orderToEmail) {
+              const updatedStatusOrder = { ...orderToEmail, paymentStatus: "awaiting" };
+              await sendOrderConfirmationEmail(updatedStatusOrder, customer);
+              if (!confirmedOrderForTicket) confirmedOrderForTicket = updatedStatusOrder;
+            }
           } catch (err) {
             console.warn("Không thể cập nhật báo chuyển khoản cho đơn cũ:", err);
           }
@@ -205,7 +215,6 @@ function openCustomerPayment(order, afterReport, allItems = null) {
       if (hasCart) {
         const cartItems = selectedItems.filter((it) => !it.isUnpaid);
         if (cartItems.length > 0) {
-          const customer = getCurrentCustomer();
           const targetEmail = customer?.email || formEl.elements.email?.value || "";
           const birthDate = customer?.birthDate || formEl.elements.birthDate?.value || "2000-01-01";
           try {
@@ -224,6 +233,7 @@ function openCustomerPayment(order, afterReport, allItems = null) {
             });
             if (newOrderRes?.order) {
               await sendOrderConfirmationEmail(newOrderRes.order, customer);
+              if (!confirmedOrderForTicket) confirmedOrderForTicket = newOrderRes.order;
             }
           } catch (err) {
             console.warn("Không thể lưu đơn gộp cho giỏ hàng:", err);
@@ -233,7 +243,27 @@ function openCustomerPayment(order, afterReport, allItems = null) {
         }
       }
 
-      toast(`Đã ghi nhận thanh toán MBBank cho các món đã chọn! Quán sẽ kiểm tra và phục vụ quý khách.`, "success");
+      // 3. Nếu thanh toán đơn đơn lẻ trực tiếp
+      if (!hasUnpaid && !hasCart && targetOrder) {
+        try {
+          await reportTransferSent(targetOrder.id);
+          const freshOrder = await api.get(`/orders/${encodeURIComponent(targetOrder.id)}`).catch(() => targetOrder);
+          const updatedStatusOrder = { ...(freshOrder || targetOrder), paymentStatus: "awaiting" };
+          await sendOrderConfirmationEmail(updatedStatusOrder, customer);
+          confirmedOrderForTicket = updatedStatusOrder;
+        } catch (err) {
+          console.warn("Không thể cập nhật báo chuyển khoản:", err);
+        }
+      }
+
+      const finalOrder = confirmedOrderForTicket || targetOrder || currentUnpaidOrder;
+      const targetEmail = finalOrder?.email || customer?.email || "";
+      toast(`Đã ghi nhận thanh toán MBBank và gửi Vé Điện Tử đến email: ${targetEmail || "hòm thư tài khoản"}!`, "success");
+      
+      if (finalOrder) {
+        openCinemaTicketModal(finalOrder, { toEmail: targetEmail });
+      }
+
       await checkAndRenderUnpaidOrderBanner();
       renderCart();
       if (afterReport) afterReport(targetOrder);

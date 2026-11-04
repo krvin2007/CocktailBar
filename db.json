@@ -1360,6 +1360,38 @@
       "total": 128250,
       "createdAt": "2026-11-04T01:42:53.006Z",
       "tableNumber": ""
+    },
+    {
+      "id": "order_mw1ghw87thoamn",
+      "code": "DH0015",
+      "name": "Lê Thành Tài",
+      "phone": "0397062429",
+      "email": "krvin2007@gmail.com",
+      "serviceType": "dine-in",
+      "customerId": "cust-id_mw1ggplfxj5t9e",
+      "birthDate": "2007-09-04",
+      "items": [
+        {
+          "drinkId": "d19",
+          "name": "Green Park Basil Velvet",
+          "price": 135000,
+          "image": "img/drinks/green-park.jpg",
+          "qty": 1
+        }
+      ],
+      "note": "thích",
+      "status": "pending",
+      "paymentStatus": "awaiting",
+      "subtotal": 135000,
+      "discounts": [],
+      "voucherCode": "",
+      "pointsUsed": 0,
+      "doorVerification": "pending",
+      "verifiedBy": "",
+      "verificationNote": "",
+      "total": 135000,
+      "createdAt": "2026-11-04T01:46:59.815Z",
+      "tableNumber": "quầy bar"
     }
   ],
   "staff": [
@@ -1458,6 +1490,28 @@
       "points": 80,
       "lifetimePoints": 80,
       "createdAt": "2026-03-20T20:15:00.000Z"
+    },
+    {
+      "id": "cust-id_mw1ggplfxj5t9e",
+      "name": "Lê Thành Tài",
+      "phone": "0397062429",
+      "email": "krvin2007@gmail.com",
+      "birthDate": "2007-09-04",
+      "password": "sha256$5946c84ac04d3482e620227b125a4828$e07741bd2a686b665367b9b593e5da63b7ea405641ba6ce0530aced76143f208",
+      "status": "active",
+      "legalAgreed": true,
+      "idVerified": false,
+      "points": 20,
+      "lifetimePoints": 20,
+      "tier": "Thành viên Thân thiết",
+      "pointHistory": [
+        {
+          "type": "welcome",
+          "points": 20,
+          "at": "2026-11-04T01:46:04.588Z"
+        }
+      ],
+      "createdAt": "2026-11-04T01:46:04.588Z"
     }
   ],
   "vouchers": [
@@ -2576,6 +2630,28 @@
       "author": "Đỗ Kim Ngân",
       "comment": "Green Park Basil có bọt nhung mịn màng, hương húng tây tươi mát rất dễ chịu cho phái nữ.",
       "createdAt": "2026-10-28T21:05:00.000Z"
+    }
+  ],
+  "emails": [
+    {
+      "id": "mail_dh0015_init",
+      "to": "krvin2007@gmail.com",
+      "orderId": "order_mw1ghw87thoamn",
+      "orderCode": "DH0015",
+      "subject": "🎟️ [Quán Bar Đêm] Vé Điện Tử & Xác Nhận Đơn Hàng #DH0015",
+      "type": "order_ticket",
+      "sentAt": "2026-11-04T01:46:59.815Z",
+      "orderSummary": {
+        "code": "DH0015",
+        "name": "Lê Thành Tài",
+        "phone": "0397062429",
+        "total": 135000,
+        "status": "pending",
+        "paymentStatus": "awaiting",
+        "serviceType": "dine-in",
+        "bookingTime": "",
+        "itemsCount": 1
+      }
     }
   ]
 }
