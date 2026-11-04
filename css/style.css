@@ -5439,3 +5439,48 @@ body.age-gate-locked {
 }
 
 
+
+
+/* Khung chọn Ngày & Khung giờ đến cho Đặt bàn trước */
+.booking-time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 540px) {
+  .booking-time-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.quick-time-slots {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.btn-time-slot {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: var(--amber-soft, #e8c682);
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.btn-time-slot:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--amber, #c59843);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.btn-time-slot.active {
+  background: var(--amber, #c59843);
+  border-color: var(--amber, #c59843);
+  color: #0b0907;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(197, 152, 67, 0.4);
+}
