@@ -123,6 +123,97 @@
   </div>
 </div>
 
+<!-- ---------- Modal Đặt lại mật khẩu khách hàng (Admin) ---------- -->
+<div class="modal-overlay" id="admin-reset-pass-modal" hidden>
+  <div class="modal-box" style="max-width: 480px;">
+    <div class="modal-head">
+      <div>
+        <h3 id="admin-reset-modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+          🔑 Đặt Lại Mật Khẩu Khách Hàng
+        </h3>
+        <p class="text-xs text-muted" id="admin-reset-modal-subtitle" style="margin: 4px 0 0 0;"></p>
+      </div>
+      <button type="button" class="modal-close-x" id="admin-reset-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <form id="admin-reset-form" novalidate style="padding-top: 14px;">
+      <input type="hidden" id="admin-reset-cust-id">
+
+      <div class="form-group mb-3">
+        <label style="display: block; font-size: 0.84rem; font-weight: 600; color: var(--cream); margin-bottom: 6px;">
+          Mật khẩu mới cấp cho khách <span class="req">*</span>
+        </label>
+        <div class="pw-input-wrap" style="position: relative;">
+          <input type="password" id="admin-reset-pass-input" value="Khach@123" placeholder="Tối thiểu 8 ký tự, có chữ hoa, số & ký tự đặc biệt" required style="width: 100%; padding: 10px 36px 10px 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.95rem;">
+          <button type="button" class="pw-toggle-btn" data-target="admin-reset-pass-input" aria-label="Ẩn/hiện mật khẩu" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+          <small class="text-xs text-muted">Mặc định: <code>Khach@123</code></small>
+          <button type="button" id="admin-reset-btn-random" class="btn btn-link text-xs text-amber" style="padding: 0; background: none; border: none; text-decoration: underline; cursor: pointer;">
+            Tạo MK ngẫu nhiên
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group mb-3" style="background: rgba(212,175,55,0.08); border-left: 3px solid var(--gold-primary); padding: 10px 12px; border-radius: 4px; font-size: 0.8rem; color: rgba(255,255,255,0.85); line-height: 1.45;">
+        ℹ️ <strong>Lưu ý:</strong> Mật khẩu mới sẽ được băm SHA-256 an toàn và cập nhật trực tiếp. Quản lý có thể gửi thông tin mật khẩu mới cho khách qua SMS / Zalo hoặc khi khách đến quán.
+      </div>
+
+      <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
+        <button type="button" class="btn btn-ghost" id="admin-reset-modal-cancel">Huỷ bỏ</button>
+        <button type="submit" class="btn btn-primary" id="admin-reset-form-submit">
+          Xác nhận đặt lại MK
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ---------- Modal Quản lý ảnh đại diện khách hàng (Admin) ---------- -->
+<div class="modal-overlay" id="admin-avatar-modal" hidden>
+  <div class="modal-box" style="max-width: 440px;">
+    <div class="modal-head">
+      <div>
+        <h3 id="admin-avatar-modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+          📷 Quản Lý Ảnh Đại Diện
+        </h3>
+        <p class="text-xs text-muted" id="admin-avatar-modal-subtitle" style="margin: 4px 0 0 0;"></p>
+      </div>
+      <button type="button" class="modal-close-x" id="admin-avatar-modal-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <div style="padding-top: 16px; text-align: center;">
+      <input type="hidden" id="admin-avatar-cust-id">
+      
+      <div id="admin-avatar-preview-box" style="width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 16px; border: 3px solid var(--amber-soft); box-shadow: 0 0 20px rgba(197,152,67,0.3); overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4);">
+        <img id="admin-avatar-preview-img" src="" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+        <span id="admin-avatar-preview-fallback" style="font-size: 2.5rem; font-weight: 700; color: var(--gold-light);"></span>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+        <label for="admin-avatar-file-input" class="btn btn-primary btn-sm" style="cursor: pointer;">
+          📁 Chọn ảnh tải lên
+        </label>
+        <input type="file" id="admin-avatar-file-input" accept="image/png, image/jpeg, image/webp, image/gif" style="display: none;">
+        
+        <button type="button" class="btn btn-ghost btn-sm text-danger" id="admin-avatar-btn-remove" style="border-color: rgba(239,68,68,0.4);">
+          🗑️ Gỡ ảnh hiện tại
+        </button>
+      </div>
+
+      <p class="text-xs text-muted" style="margin-bottom: 16px; line-height: 1.4;">
+        Hỗ trợ định dạng JPG, PNG, WebP (tối đa 2MB). Quản lý có thể cập nhật ảnh đại diện hỗ trợ khách hoặc gỡ bỏ nếu ảnh không phù hợp.
+      </p>
+
+      <div style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">
+        <button type="button" class="btn btn-ghost btn-sm" id="admin-avatar-modal-cancel">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
 <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
 <script type="module" src="js/pages/admin-customers.js"></script>

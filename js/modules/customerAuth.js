@@ -235,13 +235,14 @@ export async function syncCustomerSession() {
   const fresh = {
     ...session,
     name: record.name,
+    avatar: record.avatar || "",
     tier: record.tier || session.tier,
     points: record.points || 0,
     lifetimePoints: lifetimeOf(record),
     customDiscount: Number(record.customDiscount) || 0,
     discountNote: record.discountNote || "",
   };
-  const changed = fresh.name !== session.name || fresh.tier !== session.tier || fresh.points !== session.points
+  const changed = fresh.name !== session.name || fresh.avatar !== session.avatar || fresh.tier !== session.tier || fresh.points !== session.points
     || fresh.lifetimePoints !== session.lifetimePoints || fresh.customDiscount !== session.customDiscount
     || fresh.discountNote !== session.discountNote;
   if (changed) {
@@ -305,6 +306,7 @@ export async function customerLogin(identifier, password) {
     const sessionData = {
       id: customer.id,
       name: customer.name,
+      avatar: customer.avatar || "",
       phone: customer.phone,
       email: customer.email || "",
       birthDate: customer.birthDate || "",
@@ -404,6 +406,7 @@ export async function customerRegister({ name, phone, email, password, birthDate
     const sessionData = {
       id: saved.id,
       name: saved.name,
+      avatar: saved.avatar || "",
       phone: saved.phone,
       email: saved.email,
       birthDate: saved.birthDate || cleanBirth,
@@ -464,6 +467,164 @@ export async function updateCustomerDiscount(customerId, customDiscount, discoun
   return await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, {
     customDiscount: discount,
     discountNote: String(discountNote || "").trim(),
+  });
+}
+
+/**
+ * Cập nhật ảnh đại diện của khách hàng
+ * @param {string} customerId
+ * @param {string} avatarDataUrl Chuỗi Data URL (Base64) hoặc link ảnh
+ */
+export async function updateCustomerAvatar(customerId, avatarDataUrl) {
+  if (!customerId) throw new Error("Không tìm thấy mã khách hàng.");
+  const avatar = String(avatarDataUrl || "").trim();
+  const saved = await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, {
+    avatar,
+    avatarUpdatedAt: new Date().toISOString(),
+  });
+
+  const session = getCurrentCustomer();
+  if (session && session.id === customerId) {
+    const updatedSession = { ...session, avatar };
+    setItem(SESSION_KEY, updatedSession);
+    dispatchAuthChange(updatedSession);
+  }
+  return saved;
+}
+
+/**
+ * Đổi mật khẩu cho khách hàng đang đăng nhập
+ * @param {string} customerId
+ * @param {string} oldPassword
+ * @param {string} newPassword
+ */
+export async function changeCustomerPassword(customerId, oldPassword, newPassword) {
+  if (!customerId) return { success: false, message: "Không tìm thấy thông tin khách hàng." };
+  const oldPass = String(oldPassword || "");
+  const newPass = String(newPassword || "");
+
+  if (!oldPass) return { success: false, message: "Vui lòng nhập mật khẩu hiện tại." };
+  if (!newPass) return { success: false, message: "Vui lòng nhập mật khẩu mới." };
+
+  const prob = passwordProblem(newPass);
+  if (prob) return { success: false, message: prob };
+
+  const customer = await fetchCustomerRecord(customerId);
+  if (!customer) return { success: false, message: "Không tìm thấy tài khoản khách hàng trên hệ thống." };
+
+  const checkOld = verifyPassword(oldPass, customer.password);
+  if (!checkOld.ok) return { success: false, message: "Mật khẩu hiện tại không chính xác." };
+
+  if (oldPass === newPass) {
+    return { success: false, message: "Mật khẩu mới không được trùng với mật khẩu hiện tại." };
+  }
+
+  const newHash = hashPassword(newPass);
+  await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, {
+    password: newHash,
+    passwordUpdatedAt: new Date().toISOString(),
+  });
+
+  return { success: true, message: "Đổi mật khẩu thành công! Quý khách vui lòng ghi nhớ mật khẩu mới." };
+}
+
+// Bộ lưu trữ OTP tạm thời cho yêu cầu quên mật khẩu
+const resetOtpStore = new Map();
+
+/**
+ * Yêu cầu gửi mã OTP để đặt lại mật khẩu khi quên
+ * @param {string} identifier SĐT hoặc Email
+ */
+export async function requestPasswordResetOtp(identifier) {
+  const ident = String(identifier || "").trim().toLowerCase();
+  const cleanPhone = normalizePhone(ident);
+  if (!ident) return { success: false, message: "Vui lòng nhập Số điện thoại hoặc Email đã đăng ký." };
+
+  const list = await getAllCustomers();
+  const customer = list.find((c) => {
+    const matchPhone = c.phone && normalizePhone(c.phone) === cleanPhone;
+    const matchEmail = c.email && c.email.toLowerCase() === ident;
+    return matchPhone || matchEmail;
+  });
+
+  if (!customer) {
+    return { success: false, message: "Không tìm thấy tài khoản tương ứng với số điện thoại hoặc email này." };
+  }
+
+  if (customer.status === "inactive" || customer.status === "banned") {
+    return { success: false, message: "Tài khoản này hiện đang bị khóa. Vui lòng liên hệ quản lý quầy bar để được hỗ trợ." };
+  }
+
+  // Tạo mã OTP 6 chữ số ngẫu nhiên
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 5 * 60 * 1000; // Có hiệu lực trong 5 phút
+
+  resetOtpStore.set(customer.id, { otp, customerId: customer.id, expiresAt });
+
+  const maskTarget = customer.phone
+    ? `${customer.phone.slice(0, 3)}****${customer.phone.slice(-3)}`
+    : customer.email;
+
+  return {
+    success: true,
+    customerId: customer.id,
+    customerName: customer.name,
+    target: maskTarget,
+    otp, // Hiển thị mã demo trong thông báo để người dùng dễ kiểm thử
+    message: `Mã OTP xác thực đã được gửi tới ${maskTarget}: ${otp}`,
+  };
+}
+
+/**
+ * Đặt lại mật khẩu mới sau khi xác thực OTP
+ * @param {Object} param0 { customerId, newPassword, otp }
+ */
+export async function resetCustomerPassword({ customerId, newPassword, otp }) {
+  if (!customerId) return { success: false, message: "Thiếu thông tin tài khoản cần đặt lại mật khẩu." };
+  const newPass = String(newPassword || "");
+
+  const prob = passwordProblem(newPass);
+  if (prob) return { success: false, message: prob };
+
+  // Kiểm tra OTP
+  const record = resetOtpStore.get(customerId);
+  if (record) {
+    if (Date.now() > record.expiresAt) {
+      resetOtpStore.delete(customerId);
+      return { success: false, message: "Mã OTP đã hết hạn hiệu lực (5 phút). Vui lòng yêu cầu mã mới." };
+    }
+    if (String(otp || "").trim() !== String(record.otp).trim()) {
+      return { success: false, message: "Mã OTP xác thực không chính xác." };
+    }
+  }
+
+  const customer = await fetchCustomerRecord(customerId);
+  if (!customer) return { success: false, message: "Không tìm thấy tài khoản khách hàng." };
+
+  const newHash = hashPassword(newPass);
+  await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, {
+    password: newHash,
+    passwordUpdatedAt: new Date().toISOString(),
+  });
+
+  resetOtpStore.delete(customerId);
+  return { success: true, message: "Đặt lại mật khẩu thành công! Quý khách có thể đăng nhập bằng mật khẩu mới." };
+}
+
+/**
+ * Đặt lại mật khẩu khách hàng từ phía Quản lý / Admin
+ * @param {string} customerId
+ * @param {string} [newPassword] Mặc định là 'Khach@123'
+ */
+export async function adminResetCustomerPassword(customerId, newPassword = "Khach@123") {
+  if (!customerId) throw new Error("Thiếu mã khách hàng.");
+  const prob = passwordProblem(newPassword);
+  if (prob) throw new Error(prob);
+
+  const newHash = hashPassword(newPassword);
+  return await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, {
+    password: newHash,
+    passwordUpdatedAt: new Date().toISOString(),
   });
 }
 

@@ -1063,6 +1063,62 @@ check("Đơn mới tạo có đúng 1 món Smoked Old Fashioned", customOrderRes
 check("Đơn mới tạo lưu trạng thái awaiting thanh toán MBBank", customOrderRes.order.paymentStatus, "awaiting");
 check("Đơn mới ghi nhận ghi chú thanh toán gộp", customOrderRes.order.note.includes("DH0888"), true);
 
+/* ----------------------------------------------------------------
+   [45] Quản lý tài khoản: Upload avatar, Đổi mật khẩu, Quên mật khẩu OTP, Admin Reset MK
+   ---------------------------------------------------------------- */
+console.log("\n[45] Quản lý tài khoản: Upload avatar, Đổi mật khẩu, Quên mật khẩu OTP, Admin Reset MK");
+resetDb();
+
+// 1. Đăng ký & đăng nhập một khách hàng thử nghiệm
+const regRes = await customerAuth.customerRegister({
+  name: "Đỗ Thành Long",
+  phone: "0912345678",
+  email: "long.do@gmail.com",
+  birthDate: "1994-08-20",
+  password: "Password@123",
+});
+check("Đăng ký tài khoản thành công", regRes.success, true);
+const testCustId = regRes.customer.id;
+
+// 2. Upload avatar
+const dummyAvatar = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+const updatedWithAvatar = await customerAuth.updateCustomerAvatar(testCustId, dummyAvatar);
+check("updateCustomerAvatar lưu thành công avatar", updatedWithAvatar.avatar, dummyAvatar);
+const currentSessionAfterAvatar = customerAuth.getCurrentCustomer();
+check("Session khách đồng bộ avatar mới", currentSessionAfterAvatar.avatar, dummyAvatar);
+
+// 3. Đổi mật khẩu
+const changeWrongOld = await customerAuth.changeCustomerPassword(testCustId, "WrongPass@123", "NewPass@456");
+check("Đổi mật khẩu thất bại khi sai mật khẩu cũ", changeWrongOld.success, false);
+
+const changeWeakNew = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "weak");
+check("Đổi mật khẩu thất bại khi mật khẩu mới không đạt chuẩn", changeWeakNew.success, false);
+
+const changeSuccess = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456");
+check("Đổi mật khẩu thành công với mật khẩu hợp lệ", changeSuccess.success, true);
+
+// 4. Đăng nhập lại với mật khẩu mới
+const loginWithNewPass = await customerAuth.customerLogin("0912345678", "NewPass@456");
+check("Đăng nhập thành công với mật khẩu mới sau khi đổi", loginWithNewPass.success, true);
+
+// 5. Quên mật khẩu & cấp OTP
+const otpReq = await customerAuth.requestPasswordResetOtp("0912345678");
+check("Yêu cầu OTP quên mật khẩu thành công", otpReq.success, true);
+check("OTP có 6 chữ số", typeof otpReq.otp === "string" && otpReq.otp.length === 6, true);
+
+// 6. Đặt lại mật khẩu với OTP
+const resetWrongOtp = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: "000000" });
+check("Đặt lại MK thất bại khi sai OTP", resetWrongOtp.success, false);
+
+const resetSuccess = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: otpReq.otp });
+check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true);
+
+// 7. Admin Reset MK
+const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
+check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);
+const loginAfterAdminReset = await customerAuth.customerLogin("0912345678", "Khach@999");
+check("Khách đăng nhập thành công với mật khẩu do Admin cấp", loginAfterAdminReset.success, true);
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0
