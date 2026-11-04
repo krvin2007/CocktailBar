@@ -83,7 +83,9 @@ export function renderHeader() {
       <div class="header-mobile-tools">
         <!-- Nút tài khoản trên mobile -->
         <button type="button" class="btn btn-ghost btn-sm mobile-auth-btn" id="mobile-auth-btn" aria-label="Tài khoản" title="${account ? `Tài khoản: ${escapeHtml(account.name)}` : "Đăng nhập / Đăng ký"}">
-          ${ICONS.user(18)}
+          ${account && account.avatar
+            ? `<img src="${escapeHtml(account.avatar)}" alt="${escapeHtml(account.name)}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--gold-primary); flex-shrink: 0;">`
+            : ICONS.user(18)}
           ${account ? `<span class="user-active-dot"></span>` : ""}
         </button>
 
@@ -202,11 +204,10 @@ export function renderHeader() {
   const mobileAuthBtn = document.getElementById("mobile-auth-btn");
   if (mobileAuthBtn) {
     mobileAuthBtn.addEventListener("click", () => {
-      if (account) {
-        // Toggle dropdown hoặc mở order
-        const dropdown = document.getElementById("customer-dropdown-menu");
-        if (dropdown) dropdown.hidden = !dropdown.hidden;
-        else openCustomerAuthModal("login");
+      if (staff) {
+        window.location.href = homePageFor(staff);
+      } else if (customer) {
+        window.location.href = "customer-account.html";
       } else {
         openCustomerAuthModal("login");
       }

@@ -489,3 +489,323 @@
     text-align: center;
   }
 }
+
+/* =========================================================
+   TỐI ƯU GIAO DIỆN TỰ ĐỘNG THÍCH ỨNG TRÊN THIẾT BỊ DI ĐỘNG (MOBILE & TABLET)
+   Bảo đảm trải nghiệm mượt mà trên iPhone SE, iPhone 12/13/14/15/16,
+   Samsung Galaxy, iPad, máy tính bảng và màn hình xoay ngang.
+   ========================================================= */
+
+/* --- 1. POPUP & MODAL DI ĐỘNG (Hộp thoại đăng nhập, đổi MK, quên MK, VietQR, vé xem phim) --- */
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 20px) !important;
+    padding: 20px 16px !important;
+    margin: auto !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .modal-box.modal-wide {
+    max-width: 100% !important;
+  }
+
+  .modal-head {
+    margin-bottom: 14px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .modal-close-x {
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.4rem !important;
+  }
+
+  /* VietQR Payment Modal trên di động */
+  .modal-vietqr {
+    padding: 18px 14px !important;
+  }
+
+  .vietqr-body-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .vietqr-img-frame {
+    max-width: 220px !important;
+    margin: 0 auto !important;
+  }
+
+  .vietqr-amount-banner {
+    padding: 12px 14px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .vqr-amount-value {
+    font-size: 1.3rem !important;
+  }
+}
+
+/* --- 2. BANNER ĐƠN HÀNG CHỜ THANH TOÁN TRÊN DI ĐỘNG (order.html) --- */
+@media (max-width: 640px) {
+  .active-unpaid-order-banner {
+    padding: 14px 12px !important;
+  }
+
+  .active-unpaid-order-banner > div:first-child {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .active-unpaid-order-banner > div:first-child > div:first-child {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .active-unpaid-order-banner > div:first-child > div:last-child {
+    width: 100% !important;
+    margin-left: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: stretch !important;
+  }
+
+  .active-unpaid-order-banner #banner-pay-btn {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px 12px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .active-unpaid-order-banner #banner-cancel-btn {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+  }
+
+  .active-unpaid-order-banner #banner-dismiss-btn {
+    padding: 4px 10px !important;
+  }
+}
+
+/* --- 3. TRANG TÀI KHOẢN KHÁCH HÀNG (customer-account.html) --- */
+@media (max-width: 640px) {
+  .account-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .account-profile-card {
+    padding: 18px 14px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 14px !important;
+  }
+
+  .account-profile-main {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .account-profile-chips {
+    justify-content: center !important;
+  }
+
+  .account-profile-name {
+    font-size: 1.4rem !important;
+    text-align: center !important;
+  }
+
+  .account-profile-meta {
+    justify-content: center !important;
+    gap: 6px 12px !important;
+    font-size: 0.78rem !important;
+  }
+
+  .account-profile-actions {
+    width: 100% !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-top: 12px !important;
+  }
+
+  .rank-card {
+    padding: 18px 14px !important;
+  }
+
+  .rank-card-top {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .rank-card-name {
+    font-size: 1.6rem !important;
+  }
+
+  .rank-card-points {
+    text-align: left !important;
+  }
+
+  .rank-card-points strong {
+    font-size: 2.3rem !important;
+  }
+
+  .rank-ladder {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .rank-ladder {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* --- 4. BẢNG DỮ LIỆU CUỘN NGANG MƯỢT MÀ TRÊN DI ĐỘNG (customer & admin) --- */
+.table-wrap,
+.account-orders,
+.account-history {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.4) transparent;
+}
+
+.table-wrap::-webkit-scrollbar,
+.account-orders::-webkit-scrollbar,
+.account-history::-webkit-scrollbar {
+  height: 5px;
+}
+
+.table-wrap::-webkit-scrollbar-thumb,
+.account-orders::-webkit-scrollbar-thumb,
+.account-history::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 999px;
+}
+
+/* --- 5. GIAO DIỆN KHU VỰC QUẢN TRỊ TRÊN DI ĐỘNG (admin-*.html) --- */
+@media (max-width: 860px) {
+  /* Nút mở sidebar quản trị luôn nổi bật ở góc trên */
+  .admin-sidebar-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 210;
+    width: 40px;
+    height: 40px;
+    background: rgba(30, 24, 18, 0.95);
+    border: 1px solid var(--amber-soft);
+    border-radius: 8px;
+    color: var(--gold-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Lớp phủ mờ backdrop khi sidebar quản trị mở ra */
+  #admin-sidebar.open::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 270px;
+    right: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: -1;
+    pointer-events: auto;
+  }
+
+  .admin-main {
+    padding: 64px 14px 60px !important;
+  }
+
+  .admin-topbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 14px 12px !important;
+  }
+
+  .admin-topbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .admin-user-pill {
+    padding: 4px 10px !important;
+    font-size: 0.78rem !important;
+  }
+
+  .admin-page-title {
+    font-size: 1.3rem !important;
+  }
+
+  .table-toolbar {
+    padding: 12px !important;
+  }
+
+  .table-toolbar .filters {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .table-toolbar .filters > * {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* --- 6. CỬA SỔ CHATBOT BARTENDER ẢO TRÊN DI ĐỘNG --- */
+@media (max-width: 600px) {
+  .bar-chatbot-window {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 74px !important;
+    width: auto !important;
+    max-width: none !important;
+    height: calc(100dvh - 90px) !important;
+    max-height: 560px !important;
+    border-radius: 12px !important;
+  }
+
+  .chatbot-quick-chips {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 6px !important;
+  }
+
+  .quick-chip-btn {
+    flex-shrink: 0 !important;
+  }
+}
