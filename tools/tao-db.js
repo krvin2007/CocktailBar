@@ -50,6 +50,7 @@ const db = {
   staff: withHashedPassword(plain(SEED_STAFF)),
   customers: withHashedPassword(plain(SEED_CUSTOMERS)), // thiếu bảng này thì đăng ký/đăng nhập khách và tích điểm đều hỏng
   vouchers: plain(SEED_VOUCHERS),
+  reviews: plain(SEED_REVIEWS),
   messages: [],
   emails: [],
   spirits: plain(SPIRITS_COLLECTION),
