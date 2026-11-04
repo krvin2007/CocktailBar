@@ -355,3 +355,4 @@ export function printOrderInvoice(order) {
   `);
   printWindow.document.close();
 }
+

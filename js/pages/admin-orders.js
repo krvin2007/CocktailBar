@@ -21,6 +21,7 @@ import { toast, confirmDialog, openModal, closeModal, setButtonLoading } from ".
 import { ICONS } from "../modules/icons.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
 import { exportOrdersToExcel, printOrderInvoice } from "../modules/exportService.js";
+import { sendOrderConfirmationEmail } from "../modules/emailService.js";
 
 const bodyEl = document.getElementById("orders-body");
 const paginationEl = document.getElementById("pagination");
@@ -303,7 +304,12 @@ async function handleConfirmPayment(order = activeOrder, ask = true) {
 
   try {
     await confirmPayment(order.id);
-    toast(`Đơn ${order.code}: đã thanh toán.`, "success");
+    try {
+      await sendOrderConfirmationEmail({ ...order, paymentStatus: "paid" });
+    } catch (mErr) {
+      console.warn("Lỗi gửi email xác nhận:", mErr);
+    }
+    toast(`Đơn ${order.code}: đã thanh toán & gửi email xác nhận tới khách hàng.`, "success");
     closeModal("order-modal");
     await reloadTable();
   } catch (err) {

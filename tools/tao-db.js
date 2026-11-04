@@ -32,6 +32,7 @@ const { SEED_ORDERS } = await import(modulePath("ordersService.js"));
 const { SEED_STAFF } = await import(modulePath("staffService.js"));
 const { SEED_CUSTOMERS } = await import(modulePath("customerAuth.js"));
 const { SEED_VOUCHERS } = await import(modulePath("vouchersService.js"));
+const { SEED_REVIEWS } = await import(modulePath("reviewsService.js"));
 const { hashPassword } = await import(modulePath("passwords.js"));
 const { DEFAULT_SETTINGS } = await import(modulePath("settingsService.js"));
 const { SPIRITS_COLLECTION } = await import(modulePath("spiritsData.js"));
