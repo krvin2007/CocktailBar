@@ -173,3 +173,4 @@ export function openChangePasswordModal(customer, onSuccess = null) {
   document.body.appendChild(host);
   oldPassInput.focus();
 }
+

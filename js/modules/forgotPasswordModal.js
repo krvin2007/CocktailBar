@@ -235,3 +235,4 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
   document.body.appendChild(host);
   setTimeout(() => identInput.focus(), 100);
 }
+

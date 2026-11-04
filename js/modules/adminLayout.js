@@ -167,7 +167,16 @@ export function initAdminLayout(pageTitle = "") {
 
   const mobileToggle = document.getElementById("admin-sidebar-toggle");
   if (mobileToggle && sidebar) {
-    mobileToggle.addEventListener("click", () => sidebar.classList.toggle("open"));
+    mobileToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (sidebar.classList.contains("open") && !sidebar.contains(e.target) && !e.target.closest("#admin-sidebar-toggle")) {
+        sidebar.classList.remove("open");
+      }
+    });
   }
 
   refreshUnreadBadge();
