@@ -44,6 +44,8 @@ const loginHintEl = document.getElementById("promo-login-hint");
 const formEl = document.getElementById("order-form");
 const submitBtn = document.getElementById("submit-order-btn");
 const bookingTimeInput = document.getElementById("booking-time-input");
+const bookingDatePicker = document.getElementById("booking-date-picker");
+const bookingTimePicker = document.getElementById("booking-time-picker");
 const guestCountInput = formEl.elements.guestCount;
 const capacityHint = document.getElementById("capacity-hint");
 const ageCheckbox = document.getElementById("age-confirm");
@@ -848,10 +850,56 @@ function toLocalDatetimeValue(date) {
  * Bộ chọn ngày giờ của trình duyệt chỉ cho chọn trong khoảng hợp lệ:
  * sớm nhất = bây giờ + minLeadMinutes, xa nhất = bây giờ + maxDaysAhead ngày.
  */
+function syncBookingTime() {
+  if (!bookingDatePicker || !bookingTimePicker || !bookingTimeInput) return;
+  const dateVal = bookingDatePicker.value;
+  const timeVal = bookingTimePicker.value;
+
+  if (dateVal && timeVal) {
+    bookingTimeInput.value = `${dateVal}T${timeVal}`;
+  } else {
+    bookingTimeInput.value = "";
+  }
+
+  // Cập nhật trạng thái active cho các nút chọn nhanh
+  document.querySelectorAll(".btn-time-slot").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.time === timeVal);
+  });
+}
+
 function setBookingTimeRange() {
-  if (!bookingTimeInput) return;
-  bookingTimeInput.min = toLocalDatetimeValue(new Date(Date.now() + BOOKING_RULES.minLeadMinutes * MINUTE));
-  bookingTimeInput.max = toLocalDatetimeValue(new Date(Date.now() + BOOKING_RULES.maxDaysAhead * 24 * 60 * MINUTE));
+  const minDate = new Date(Date.now() + BOOKING_RULES.minLeadMinutes * MINUTE);
+  const maxDate = new Date(Date.now() + BOOKING_RULES.maxDaysAhead * 24 * 60 * MINUTE);
+
+  const minDayStr = toLocalDatetimeValue(minDate).slice(0, 10);
+  const maxDayStr = toLocalDatetimeValue(maxDate).slice(0, 10);
+
+  if (bookingDatePicker) {
+    bookingDatePicker.min = minDayStr;
+    bookingDatePicker.max = maxDayStr;
+    if (!bookingDatePicker.value) {
+      bookingDatePicker.value = minDayStr;
+    }
+  }
+
+  if (bookingTimePicker && !bookingTimePicker.value) {
+    // Khung giờ gợi ý ban đầu
+    const curHour = new Date().getHours();
+    if (curHour >= 21) {
+      bookingTimePicker.value = "22:00";
+    } else if (curHour >= 18) {
+      bookingTimePicker.value = "20:00";
+    } else {
+      bookingTimePicker.value = "19:00";
+    }
+  }
+
+  if (bookingTimeInput) {
+    bookingTimeInput.min = toLocalDatetimeValue(minDate);
+    bookingTimeInput.max = toLocalDatetimeValue(maxDate);
+  }
+
+  syncBookingTime();
 }
 
 /** Hiện/ẩn các ô theo hình thức phục vụ, và chỉ bắt buộc nhập những ô đang hiện */
@@ -884,18 +932,29 @@ formEl.elements.serviceType.forEach((radio) => {
  * - nằm trong giờ mở cửa OPENING_HOURS
  */
 function validateBookingTime() {
-  if (!isBooking() || !bookingTimeInput.value) return true;
+  if (!isBooking()) return true;
+
+  syncBookingTime();
+
+  if (!bookingTimeInput.value) {
+    setFieldError(bookingTimePicker || bookingTimeInput, t("order_err_time_required", "Vui lòng chọn ngày và giờ đến."));
+    return false;
+  }
 
   const chosen = new Date(bookingTimeInput.value).getTime();
   const earliest = Date.now() + BOOKING_RULES.minLeadMinutes * MINUTE;
   const latest = Date.now() + BOOKING_RULES.maxDaysAhead * 24 * 60 * MINUTE;
 
   let message = "";
-  if (chosen < earliest) message = fmt(t("order_err_lead", "Vui lòng đặt bàn trước tối thiểu {lead} phút."), { lead: BOOKING_RULES.minLeadMinutes });
-  else if (chosen > latest) message = fmt(t("order_err_ahead", "Quán nhận đặt bàn trước tối đa {days} ngày."), { days: BOOKING_RULES.maxDaysAhead });
-  else if (!isWithinOpeningHours(new Date(chosen))) message = fmt(t("order_err_hours", "Giờ mở cửa {hours}. Vui lòng chọn giờ trong khung này."), { hours: openingHoursText(getCurrentLang()) });
+  if (chosen < earliest) {
+    message = fmt(t("order_err_lead", "Vui lòng đặt bàn trước tối thiểu {lead} phút."), { lead: BOOKING_RULES.minLeadMinutes });
+  } else if (chosen > latest) {
+    message = fmt(t("order_err_ahead", "Quán nhận đặt bàn trước tối đa {days} ngày."), { days: BOOKING_RULES.maxDaysAhead });
+  } else if (!isWithinOpeningHours(new Date(chosen))) {
+    message = fmt(t("order_err_hours", "Giờ mở cửa {hours}. Vui lòng chọn giờ trong khung này."), { hours: openingHoursText(getCurrentLang()) });
+  }
 
-  setFieldError(bookingTimeInput, message);
+  setFieldError(bookingTimePicker || bookingTimeInput, message);
   return !message;
 }
 
@@ -935,6 +994,33 @@ async function updateCapacityHint() {
 const debouncedCapacityHint = debounce(updateCapacityHint, 300);
 
 if (bookingTimeInput) bookingTimeInput.addEventListener("change", updateCapacityHint);
+
+if (bookingDatePicker) {
+  bookingDatePicker.addEventListener("change", () => {
+    syncBookingTime();
+    validateBookingTime();
+    updateCapacityHint();
+  });
+}
+
+if (bookingTimePicker) {
+  bookingTimePicker.addEventListener("change", () => {
+    syncBookingTime();
+    validateBookingTime();
+    updateCapacityHint();
+  });
+}
+
+document.querySelectorAll(".btn-time-slot").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (bookingTimePicker) {
+      bookingTimePicker.value = btn.dataset.time;
+      syncBookingTime();
+      validateBookingTime();
+      updateCapacityHint();
+    }
+  });
+});
 guestCountInput.addEventListener("input", debouncedCapacityHint);
 
 /* ---------------- Xác nhận đủ 18 tuổi ---------------- */

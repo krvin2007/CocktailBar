@@ -142,11 +142,60 @@
                   hoặc chọn sẵn món từ thực đơn để quầy bar chuẩn bị trước.
                 </p>
               </div>
-              <div class="form-group conditional-fields" data-for="booking">
-                <label><span data-i18n="order_label_time">Thời gian đến</span> <span class="req">*</span></label>
-                <input type="datetime-local" name="bookingTime" data-rule="" id="booking-time-input">
-                <!-- Nội dung do order.js điền từ giờ mở cửa trong venue.js -->
-                <span class="hint-text" id="booking-hours-hint"></span>
+              <div class="form-group full conditional-fields" data-for="booking">
+                <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
+                  <span><span data-i18n="order_label_time">Thời gian nhận bàn</span> <span class="req">*</span></span>
+                  <span class="text-xs text-muted" id="booking-hours-hint"></span>
+                </label>
+
+                <!-- Lưới tự chọn Ngày và Giờ riêng biệt trực quan, dễ dùng -->
+                <div class="booking-time-grid">
+                  <div>
+                    <label class="text-xs text-muted" style="margin-bottom: 4px; display: block;" data-i18n="order_label_date">📅 Chọn ngày đến:</label>
+                    <input type="date" id="booking-date-picker" class="form-input">
+                  </div>
+                  <div>
+                    <label class="text-xs text-muted" style="margin-bottom: 4px; display: block;" data-i18n="order_label_time_slot">⏰ Tự chọn khung giờ:</label>
+                    <select id="booking-time-picker" class="form-select">
+                      <option value="" data-i18n="order_ph_select_time">-- Chọn giờ đến --</option>
+                      <option value="18:00">18:00 (Mở cửa đón khách)</option>
+                      <option value="18:30">18:30</option>
+                      <option value="19:00">19:00</option>
+                      <option value="19:30">19:30</option>
+                      <option value="20:00">20:00 (Giờ vàng Speakeasy)</option>
+                      <option value="20:30">20:30</option>
+                      <option value="21:00">21:00 (Live DJ &amp; Âm nhạc)</option>
+                      <option value="21:30">21:30</option>
+                      <option value="22:00">22:00</option>
+                      <option value="22:30">22:30</option>
+                      <option value="23:00">23:00 (Đêm muộn)</option>
+                      <option value="23:30">23:30</option>
+                      <option value="00:00">00:00 (Nửa đêm)</option>
+                      <option value="00:30">00:30</option>
+                      <option value="01:00">01:00</option>
+                      <option value="01:30">01:30 (Suất nhận bàn cuối)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Các nút bấm nhanh khung giờ phổ biến -->
+                <div style="margin-top: 10px;">
+                  <span class="text-xs text-muted" data-i18n="order_quick_slots">Khung giờ phổ biến:</span>
+                  <div class="quick-time-slots">
+                    <button type="button" class="btn-time-slot" data-time="18:30">18:30</button>
+                    <button type="button" class="btn-time-slot" data-time="19:00">19:00</button>
+                    <button type="button" class="btn-time-slot" data-time="19:30">19:30</button>
+                    <button type="button" class="btn-time-slot" data-time="20:00">20:00</button>
+                    <button type="button" class="btn-time-slot" data-time="20:30">20:30</button>
+                    <button type="button" class="btn-time-slot" data-time="21:00">21:00</button>
+                    <button type="button" class="btn-time-slot" data-time="21:30">21:30</button>
+                    <button type="button" class="btn-time-slot" data-time="22:00">22:00</button>
+                    <button type="button" class="btn-time-slot" data-time="23:00">23:00</button>
+                  </div>
+                </div>
+
+                <!-- Input lưu trữ giá trị YYYY-MM-DDTHH:mm đồng bộ cho form -->
+                <input type="hidden" name="bookingTime" id="booking-time-input">
               </div>
               <div class="form-group conditional-fields" data-for="booking">
                 <label><span data-i18n="order_label_guests">Số lượng khách</span> <span class="req">*</span></label>
