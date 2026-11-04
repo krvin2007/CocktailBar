@@ -171,7 +171,8 @@ function ensureApiBanner() {
 }
 
 // api.js phát sự kiện "api-status" mỗi khi trạng thái kết nối thay đổi
-window.addEventListener("api-status", (e) => {
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("api-status", (e) => {
   const { online } = e.detail;
   if (online) {
     const banner = document.getElementById("api-offline-banner");
@@ -179,7 +180,8 @@ window.addEventListener("api-status", (e) => {
   } else {
     ensureApiBanner();
   }
-});
+  });
+}
 
 /* =========================================================
    MODAL THƯỜNG (form thêm/sửa, chi tiết đơn...)
@@ -210,8 +212,10 @@ export function closeModal(id) {
 }
 
 // Phím Esc đóng modal đang mở trên cùng (bàn phím - yêu cầu "keyboard event" của đề)
-document.addEventListener("keydown", (e) => {
+if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+  document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   const opened = [...document.querySelectorAll(".modal-overlay.show")].pop();
   if (opened && opened.id && opened.id !== "confirm-modal") closeModal(opened.id);
-});
+  });
+}

@@ -102,7 +102,7 @@ try {
 check("db.json đọc và parse JSON chuẩn xác", Boolean(dbParsed), true);
 const requiredTables = [
   "drinks", "orders", "staff", "customers", "vouchers",
-  "messages", "spirits", "bartenders", "collectors", "settings"
+  "messages", "spirits", "bartenders", "collectors", "settings", "reviews"
 ];
 requiredTables.forEach((t) => {
   check(`Bảng dữ liệu '${t}' tồn tại và hợp lệ`, t in dbParsed, true);
@@ -178,6 +178,32 @@ check("changePasswordModal có hàm openChangePasswordModal", typeof changePassM
 
 const forgotPassMod = await import("../js/modules/forgotPasswordModal.js");
 check("forgotPasswordModal có hàm openForgotPasswordModal", typeof forgotPassMod.openForgotPasswordModal, "function");
+
+const favMod = await import("../js/modules/favoritesService.js");
+check("favoritesService có hàm getFavoriteIds", typeof favMod.getFavoriteIds, "function");
+check("favoritesService có hàm isFavorite", typeof favMod.isFavorite, "function");
+check("favoritesService có hàm toggleFavorite", typeof favMod.toggleFavorite, "function");
+check("favoritesService có hàm getFavoriteDrinks", typeof favMod.getFavoriteDrinks, "function");
+
+const revMod = await import("../js/modules/reviewsService.js");
+check("reviewsService có hàm getAllReviews", typeof revMod.getAllReviews, "function");
+check("reviewsService có hàm getDrinkReviews", typeof revMod.getDrinkReviews, "function");
+check("reviewsService có hàm addDrinkReview", typeof revMod.addDrinkReview, "function");
+check("reviewsService có hàm deleteReview", typeof revMod.deleteReview, "function");
+
+const expMod = await import("../js/modules/exportService.js");
+check("exportService có hàm exportToCsv", typeof expMod.exportToCsv, "function");
+check("exportService có hàm exportOrdersToExcel", typeof expMod.exportOrdersToExcel, "function");
+check("exportService có hàm exportDrinksToExcel", typeof expMod.exportDrinksToExcel, "function");
+check("exportService có hàm exportCustomersToExcel", typeof expMod.exportCustomersToExcel, "function");
+check("exportService có hàm parseCsv", typeof expMod.parseCsv, "function");
+check("exportService có hàm parseDrinksFromCsvRows", typeof expMod.parseDrinksFromCsvRows, "function");
+check("exportService có hàm printOrderInvoice", typeof expMod.printOrderInvoice, "function");
+
+const notifMod = await import("../js/modules/notificationService.js");
+check("notificationService có hàm playNotificationSound", typeof notifMod.playNotificationSound, "function");
+check("notificationService có hàm checkOrderUpdates", typeof notifMod.checkOrderUpdates, "function");
+check("notificationService có hàm startOrderNotificationWatcher", typeof notifMod.startOrderNotificationWatcher, "function");
 
 console.log("\n==============================================================");
 if (failCount === 0) {

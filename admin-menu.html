@@ -43,10 +43,20 @@
             <option value="out">Đã hết hàng</option>
           </select>
         </div>
-        <button type="button" class="btn btn-primary" id="add-drink-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Thêm đồ uống mới</span>
-        </button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline" id="btn-export-drinks-excel" title="Xuất toàn bộ thực đơn ra file Excel">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            <span>Xuất Excel</span>
+          </button>
+          <button type="button" class="btn btn-outline" id="btn-open-import-csv" title="Nhập hàng loạt món từ file Excel / CSV">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12"/></svg>
+            <span>Nhập Excel / CSV</span>
+          </button>
+          <button type="button" class="btn btn-primary" id="add-drink-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Thêm đồ uống mới</span>
+          </button>
+        </div>
       </div>
 
       <table class="data-table">
@@ -199,5 +209,68 @@
 <!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
 <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
 <script type="module" src="js/pages/admin-menu.js"></script>
+
+<!-- Modal Nhập Excel / CSV -->
+<div class="modal-overlay" id="import-drinks-modal" aria-hidden="true">
+  <div class="modal-box modal-wide" style="max-width: 800px;">
+    <div class="modal-head">
+      <div class="modal-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12"/></svg>
+        <span>Nhập Thực Đơn Hàng Loạt từ Excel / CSV</span>
+      </div>
+      <button type="button" class="modal-close-x" id="import-drinks-close" aria-label="Đóng">&times;</button>
+    </div>
+
+    <div class="p-3" style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <strong style="color: var(--accent-gold, #d4af37);">Chưa có mẫu file Excel?</strong>
+          <div style="font-size: 0.85rem; color: var(--text-muted, #a0a0a0); margin-top: 2px;">Tải file mẫu chuẩn UTF-8 chứa sẵn các cột và dữ liệu mẫu để điền nhanh.</div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" id="btn-download-import-template">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          <span>Tải file mẫu (.csv)</span>
+        </button>
+      </div>
+
+      <div class="form-group full">
+        <label>Chọn file CSV / Excel (.csv) từ máy tính của bạn:</label>
+        <input type="file" id="import-drinks-file-input" accept=".csv,text/csv" style="padding: 10px; background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.2); border-radius: 6px; width: 100%;">
+      </div>
+
+      <div id="import-preview-wrap" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h4 style="margin: 0; font-size: 0.95rem; color: var(--accent-gold, #d4af37);">
+            Xem trước danh sách món phân tích được (<span id="import-preview-count">0</span> món):
+          </h4>
+        </div>
+        <div style="max-height: 240px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;">
+          <table class="data-table" style="margin: 0; font-size: 0.85rem;">
+            <thead>
+              <tr>
+                <th>Tên món</th>
+                <th>Danh mục</th>
+                <th>Giá</th>
+                <th>ABV</th>
+                <th>Ly phục vụ</th>
+                <th>Hương vị</th>
+              </tr>
+            </thead>
+            <tbody id="import-preview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-actions mt-2" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-ghost" id="import-drinks-btn-cancel">Huỷ bỏ</button>
+        <button type="button" class="btn btn-primary" id="import-drinks-btn-confirm" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>Xác nhận nhập vào thực đơn</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

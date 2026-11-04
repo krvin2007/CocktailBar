@@ -11,6 +11,7 @@ import { countUnreadMessages } from "./messagesService.js";
 import { ICONS } from "./icons.js";
 import { escapeHtml } from "./utils.js";
 import { getCurrentLang, setLanguage, toggleLanguage, t, applyI18n } from "./i18n.js";
+import { startOrderNotificationWatcher } from "./notificationService.js";
 
 function getAdminMenu() {
   return [
@@ -182,5 +183,6 @@ export function initAdminLayout(pageTitle = "") {
   refreshUnreadBadge();
   revalidateSessionOnce(admin);
   applyI18n();
+  startOrderNotificationWatcher();
   return true;
 }

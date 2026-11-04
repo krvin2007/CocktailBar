@@ -12,6 +12,7 @@ import {
   stockLevel, stockPatch, tracksStock, LOW_STOCK_THRESHOLD,
 } from "../modules/drinksService.js";
 import { formatMoney, debounce, paginate, renderPagination, escapeHtml } from "../modules/utils.js";
+import { exportDrinksToExcel, parseCsv, parseDrinksFromCsvRows, downloadDrinkTemplateCsv } from "../modules/exportService.js";
 import { validateForm, clearFormErrors, setFieldError } from "../modules/validation.js";
 import { toast, confirmDialog, openModal, closeModal, setButtonLoading } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
@@ -39,7 +40,7 @@ const fileInput = document.getElementById("drink-file-input");
 const imageHiddenInput = document.getElementById("drink-form-image");
 const dropzone = document.getElementById("drink-upload-dropzone");
 const uploadPrompt = document.getElementById("drink-upload-prompt");
-const previewWrap = document.getElementById("drink-preview-wrap");
+const drinkPreviewWrap = document.getElementById("drink-preview-wrap");
 const previewImg = document.getElementById("drink-image-preview");
 const reselectBtn = document.getElementById("btn-reselect-image");
 const toggleUrlBtn = document.getElementById("btn-toggle-url");
@@ -172,14 +173,14 @@ function setImagePreview(src, label = "Đã chọn ảnh") {
     if (imageHiddenInput) imageHiddenInput.value = src;
     if (manualUrlInput) manualUrlInput.value = src.startsWith("data:") ? "" : src;
     if (previewImg) previewImg.src = src;
-    if (previewWrap) previewWrap.style.display = "flex";
+    if (drinkPreviewWrap) drinkPreviewWrap.style.display = "flex";
     if (uploadPrompt) uploadPrompt.style.display = "none";
     if (imageStatus) imageStatus.textContent = label;
   } else {
     if (imageHiddenInput) imageHiddenInput.value = "";
     if (manualUrlInput) manualUrlInput.value = "";
     if (previewImg) previewImg.src = "";
-    if (previewWrap) previewWrap.style.display = "none";
+    if (drinkPreviewWrap) drinkPreviewWrap.style.display = "none";
     if (uploadPrompt) uploadPrompt.style.display = "flex";
     if (imageStatus) imageStatus.textContent = "Chưa có ảnh nào được chọn";
   }
@@ -405,6 +406,110 @@ function bindEvents() {
 }
 
 // Chưa đăng nhập -> initAdminLayout chuyển hướng và trả false: dừng, không gọi API
+
+  // Xuất Excel thực đơn
+  document.getElementById("btn-export-drinks-excel")?.addEventListener("click", () => {
+    if (!allDrinks.length) {
+      toast("Không có dữ liệu thực đơn để xuất.", "warning");
+      return;
+    }
+    exportDrinksToExcel(allDrinks);
+  });
+
+  // Modal Nhập CSV / Excel thực đơn
+  const openImportBtn = document.getElementById("btn-open-import-csv");
+  const closeImportBtn = document.getElementById("import-drinks-close");
+  const cancelImportBtn = document.getElementById("import-drinks-btn-cancel");
+  const downloadTplBtn = document.getElementById("btn-download-import-template");
+  const importFileInput = document.getElementById("import-drinks-file-input");
+  const importPreviewWrap = document.getElementById("import-preview-wrap");
+  const importPreviewTbody = document.getElementById("import-preview-tbody");
+  const importPreviewCount = document.getElementById("import-preview-count");
+  const confirmImportBtn = document.getElementById("import-drinks-btn-confirm");
+
+  let parsedDrinksToImport = [];
+
+  openImportBtn?.addEventListener("click", () => {
+    parsedDrinksToImport = [];
+    if (importFileInput) importFileInput.value = "";
+    if (importPreviewWrap) importPreviewWrap.style.display = "none";
+    if (importPreviewTbody) importPreviewTbody.innerHTML = "";
+    if (confirmImportBtn) confirmImportBtn.disabled = true;
+    openModal("import-drinks-modal");
+  });
+
+  closeImportBtn?.addEventListener("click", () => closeModal("import-drinks-modal"));
+  cancelImportBtn?.addEventListener("click", () => closeModal("import-drinks-modal"));
+
+  downloadTplBtn?.addEventListener("click", () => {
+    downloadDrinkTemplateCsv();
+  });
+
+  importFileInput?.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const text = evt.target.result;
+        const rows = parseCsv(text);
+        parsedDrinksToImport = parseDrinksFromCsvRows(rows);
+
+        if (!parsedDrinksToImport.length) {
+          toast("Không tìm thấy món hợp lệ nào trong file CSV.", "warning");
+          if (importPreviewWrap) importPreviewWrap.style.display = "none";
+          if (confirmImportBtn) confirmImportBtn.disabled = true;
+          return;
+        }
+
+        if (importPreviewCount) importPreviewCount.textContent = parsedDrinksToImport.length;
+        if (importPreviewTbody) {
+          importPreviewTbody.innerHTML = parsedDrinksToImport.map((d) => `
+            <tr>
+              <td><strong>${escapeHtml(d.name)}</strong></td>
+              <td>${escapeHtml(d.category)}</td>
+              <td>${formatMoney(d.price)}</td>
+              <td>${d.abv}%</td>
+              <td>${escapeHtml(d.glassType)}</td>
+              <td>${escapeHtml(d.tasteNotes.join(", "))}</td>
+            </tr>
+          `).join("");
+        }
+        if (importPreviewWrap) importPreviewWrap.style.display = "block";
+        if (confirmImportBtn) confirmImportBtn.disabled = false;
+        toast(`Đã phân tích thành công ${parsedDrinksToImport.length} món từ file!`, "success");
+      } catch (err) {
+        toast("Lỗi đọc file: " + err.message, "error");
+        if (importPreviewWrap) importPreviewWrap.style.display = "none";
+        if (confirmImportBtn) confirmImportBtn.disabled = true;
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  });
+
+  confirmImportBtn?.addEventListener("click", async () => {
+    if (!parsedDrinksToImport.length) return;
+    confirmImportBtn.disabled = true;
+    confirmImportBtn.innerHTML = '<span>Đang nhập...</span>';
+    let successCount = 0;
+
+    for (const d of parsedDrinksToImport) {
+      try {
+        await addDrink(d);
+        successCount++;
+      } catch (err) {
+        console.error("Lỗi khi thêm món:", d.name, err);
+      }
+    }
+
+    toast(`Đã thêm thành công ${successCount}/${parsedDrinksToImport.length} món vào thực đơn!`, "success");
+    closeModal("import-drinks-modal");
+    confirmImportBtn.disabled = false;
+    confirmImportBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><span>Xác nhận nhập vào thực đơn</span>`;
+    await reloadTable();
+  });
+
 if (initAdminLayout("Quản Lý Thực Đơn")) {
   fillCategorySelects();
   bindEvents();

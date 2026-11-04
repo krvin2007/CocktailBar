@@ -22,6 +22,7 @@ import { renderChatbotWidget } from "./chatbot.js";
 import { initAgeGate } from "./ageGate.js";
 import { init3DMotion } from "./motion3d.js";
 import { openForgotPasswordModal } from "./forgotPasswordModal.js";
+import { startOrderNotificationWatcher } from "./notificationService.js";
 
 function getNavLinks() {
   return [
@@ -734,6 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyI18n();
   // Điểm thưởng / hạng đổi sau mỗi đơn hoàn tất: đối chiếu lại với máy chủ (đổi thì tự vẽ lại menu)
   syncCustomerSession();
+  startOrderNotificationWatcher();
 });
 
 if (document.readyState !== "loading") {
@@ -745,4 +747,5 @@ if (document.readyState !== "loading") {
   init3DMotion();
   applyI18n();
   syncCustomerSession();
+  startOrderNotificationWatcher();
 }
