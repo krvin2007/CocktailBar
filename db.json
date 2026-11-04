@@ -2535,5 +2535,47 @@
     "bankName": "MBBank — Ngân hàng Quân Đội",
     "accountNumber": "09042007101207",
     "accountName": "LE THANH TAI"
-  }
+  },
+  "reviews": [
+    {
+      "id": "rev-1",
+      "drinkId": "d1",
+      "rating": 5,
+      "author": "Lê Thành Long",
+      "comment": "Negroni ở đây pha rất chuẩn vị Speakeasy, hậu vị đắng thảo mộc ngọt thanh rất lôi cuốn.",
+      "createdAt": "2026-10-15T21:30:00.000Z"
+    },
+    {
+      "id": "rev-2",
+      "drinkId": "d1",
+      "rating": 4,
+      "author": "Hoàng Minh",
+      "comment": "Đá điêu khắc tròn tan chậm, hương cam nướng thơm nồng. Rất hài lòng!",
+      "createdAt": "2026-10-20T22:15:00.000Z"
+    },
+    {
+      "id": "rev-3",
+      "drinkId": "d2",
+      "rating": 5,
+      "author": "Trần Anh Khoa",
+      "comment": "Khói gỗ sồi hun tại bàn cực kỳ ấn tượng, vị Bourbon đầm sâu tuyệt hảo.",
+      "createdAt": "2026-10-18T20:45:00.000Z"
+    },
+    {
+      "id": "rev-4",
+      "drinkId": "d3",
+      "rating": 5,
+      "author": "Nguyễn Hải Yến",
+      "comment": "Manhattan mượt mà, cherry maraschino ngâm thảo mộc chuẩn phong cách New York cổ điển.",
+      "createdAt": "2026-10-25T19:20:00.000Z"
+    },
+    {
+      "id": "rev-5",
+      "drinkId": "d4",
+      "rating": 5,
+      "author": "Đỗ Kim Ngân",
+      "comment": "Green Park Basil có bọt nhung mịn màng, hương húng tây tươi mát rất dễ chịu cho phái nữ.",
+      "createdAt": "2026-10-28T21:05:00.000Z"
+    }
+  ]
 }
