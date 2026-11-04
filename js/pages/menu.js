@@ -13,6 +13,7 @@ import { drinkCardHtml } from "../modules/drinkCard.js";
 import { ICONS } from "../modules/icons.js";
 import { loadingHtml, errorHtml } from "../modules/ui.js";
 import { initMenuBook } from "../modules/menuBook.js";
+import { isFavorite } from "../modules/favoritesService.js";
 
 const gridEl = qs("#drink-grid");
 const countEl = qs("#result-count");
@@ -23,6 +24,7 @@ const filters = {
   min: qs("#f-min"),
   max: qs("#f-max"),
   available: qs("#f-available"),
+  favorites: qs("#f-favorites"),
   sort: qs("#f-sort"),
 };
 
@@ -64,6 +66,7 @@ function readFilters() {
     minPrice: filters.min?.value && min >= 0 ? min : 0,
     maxPrice: filters.max?.value && max > 0 ? max : Infinity,
     onlyAvailable: filters.available ? filters.available.checked : false,
+    onlyFavorites: filters.favorites ? filters.favorites.checked : false,
     sortBy: filters.sort ? filters.sort.value : "default",
   };
 }
@@ -82,7 +85,10 @@ function render() {
     return;
   }
 
-  const list = filterDrinks(allDrinks, opts);
+  let list = filterDrinks(allDrinks, opts);
+  if (opts.onlyFavorites) {
+    list = list.filter((d) => isFavorite(d.id));
+  }
 
   if (countEl) countEl.textContent = `${list.length} món thức uống`;
 
@@ -90,8 +96,8 @@ function render() {
     ? list.map(drinkCardHtml).join("")
     : `<div class="empty-state">
          <div class="empty-icon">${ICONS.search(36)}</div>
-         <h4>Không tìm thấy đồ uống phù hợp</h4>
-         <p class="text-muted">Vui lòng điều chỉnh lại từ khóa hoặc giảm tiêu chí trong bộ lọc giá.</p>
+         <h4>${opts.onlyFavorites ? "Chưa có món yêu thích nào" : "Không tìm thấy đồ uống phù hợp"}</h4>
+         <p class="text-muted">${opts.onlyFavorites ? "Hãy nhấn vào biểu tượng trái tim ❤️ ở bất kỳ ly cocktail nào để lưu vào đây!" : "Vui lòng điều chỉnh lại từ khóa hoặc giảm tiêu chí trong bộ lọc giá."}</p>
        </div>`;
 }
 
@@ -99,9 +105,13 @@ const debouncedRender = debounce(render, 250);
 
 function bindFilterEvents() {
   if (filters.keyword) filters.keyword.addEventListener("input", debouncedRender);
-  [filters.category, filters.min, filters.max, filters.available, filters.sort]
+  [filters.category, filters.min, filters.max, filters.available, filters.favorites, filters.sort]
     .filter(Boolean)
     .forEach((el) => el.addEventListener("change", render));
+
+  window.addEventListener("favorites-change", () => {
+    if (filters.favorites?.checked) render();
+  });
 
   const resetBtn = qs("#f-reset");
   if (resetBtn) {

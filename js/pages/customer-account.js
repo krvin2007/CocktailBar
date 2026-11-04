@@ -21,6 +21,8 @@ import { reportTransferSent } from "../modules/ordersService.js";
 import { openCinemaTicketModal } from "../modules/emailService.js";
 import { openChangePasswordModal } from "../modules/changePasswordModal.js";
 import { openForgotPasswordModal } from "../modules/forgotPasswordModal.js";
+import { printOrderInvoice } from "../modules/exportService.js";
+import { getFavoriteDrinks, toggleFavorite } from "../modules/favoritesService.js";
 
 const bodyEl = document.getElementById("account-body");
 let currentCustomerOrders = [];
@@ -90,6 +92,11 @@ function orderRowHtml(o) {
     }
   }
 
+  const printInvoiceBtnHtml = `
+    <button type="button" class="btn btn-ghost btn-sm btn-print-account-order" data-id="${escapeHtml(o.id)}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap; color: var(--cream); margin-right: 4px; border: 1px solid rgba(255,255,255,0.15);" title="In hoá đơn thanh toán (PDF)">
+      🧾 Hóa đơn
+    </button>`;
+
   const ticketBtnHtml = `
     <button type="button" class="btn btn-ghost btn-sm btn-view-account-ticket" data-id="${escapeHtml(o.id)}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap; color: var(--amber-soft); margin-right: 4px;" title="Xem vé điện tử giống vé xem phim">
       🎟️ Vé điện tử
@@ -103,7 +110,7 @@ function orderRowHtml(o) {
       <td class="text-sm font-bold text-amber">${total}</td>
       <td>${statusHtml}</td>
       <td>${paymentBadgeHtml}</td>
-      <td style="text-align: right; white-space: nowrap;">${ticketBtnHtml}${payBtnHtml}</td>
+      <td style="text-align: right; white-space: nowrap;">${printInvoiceBtnHtml}${ticketBtnHtml}${payBtnHtml}</td>
     </tr>`;
 }
 
@@ -139,7 +146,7 @@ function messageCardHtml(m) {
     </div>`;
 }
 
-function render(customer, myOrders = [], myMessages = []) {
+function render(customer, myOrders = [], myMessages = [], myFavDrinks = []) {
   activeCustomer = customer;
   currentCustomerOrders = myOrders;
   const points = Number(customer.points) || 0;       // số dư dùng được
@@ -245,6 +252,35 @@ function render(customer, myOrders = [], myMessages = []) {
       </table>
     </div>` : `<p class="text-muted" style="margin-bottom: 28px;">Bạn chưa có đơn đặt hàng nào.</p>`}
 
+    
+    <!-- KHỐI MÓN UỐNG YÊU THÍCH (WISHLIST) -->
+    <h4 class="account-subtitle" style="display: flex; align-items: center; justify-content: space-between;">
+      <span>❤️ Món Uống Yêu Thích Của Tôi</span>
+      <span class="text-xs text-muted" style="font-weight: normal;">${myFavDrinks.length} món</span>
+    </h4>
+    ${myFavDrinks.length ? `
+    <div class="favorite-drinks-grid account-favorites-wrap" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 28px;">
+      ${myFavDrinks.map((d) => `
+        <div style="display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+          <img src="${escapeHtml(d.image || 'img/cocktails/placeholder.jpg')}" alt="${escapeHtml(d.name)}" style="width: 58px; height: 58px; border-radius: 6px; object-fit: cover;">
+          <div style="flex: 1; min-width: 0;">
+            <h5 style="margin: 0 0 3px 0; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              <a href="detail.html?id=${escapeHtml(d.id)}" style="color: var(--cream); text-decoration: none;">${escapeHtml(d.name)}</a>
+            </h5>
+            <div style="font-size: 0.8rem; color: var(--amber-soft); font-weight: 600; margin-bottom: 2px;">${formatMoney(d.price)}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(d.category || '')} · ${d.abv || 0}% ABV</div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm btn-remove-account-fav" data-id="${escapeHtml(d.id)}" title="Bỏ yêu thích" style="color: #ef4444; font-size: 1.1rem; padding: 4px 6px;">
+            ❤️
+          </button>
+        </div>
+      `).join("")}
+    </div>` : `
+    <div style="margin-bottom: 28px; padding: 14px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1);">
+      <p class="text-muted text-sm" style="margin-bottom: 6px;">Bạn chưa lưu món cocktail nào vào danh sách yêu thích.</p>
+      <a href="menu.html" style="color: var(--amber); font-size: 0.85rem; text-decoration: underline;">Khám phá Thực Đơn &amp; thả tim món bạn thích</a>
+    </div>`}
+  
     <!-- KHỐI TIN NHẮN & PHẢN HỒI TỪ QUÁN -->
     <h4 class="account-subtitle" style="display: flex; align-items: center; justify-content: space-between;">
       <span>Ý kiến &amp; Phản hồi từ Quán Bar</span>
@@ -290,10 +326,11 @@ async function init() {
 
   bodyEl.innerHTML = loadingHtml(t("acc_loading", "Đang tải thông tin thành viên..."));
   try {
-    const [customer, rawOrders, rawMessages] = await Promise.all([
+    const [customer, rawOrders, rawMessages, rawDrinks] = await Promise.all([
       api.get(`/customers/${encodeURIComponent(session.id)}`),
       api.get("/orders").catch(() => []),
       api.get("/messages").catch(() => []),
+      api.get("/drinks").catch(() => []),
     ]);
     const orders = (Array.isArray(rawOrders) ? rawOrders : [])
       .filter((o) => (o.customerId && String(o.customerId) === String(customer.id)) || (o.phone && o.phone === customer.phone))
@@ -307,7 +344,8 @@ async function init() {
       })
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    render(customer, orders, messages);
+    const favDrinks = getFavoriteDrinks(Array.isArray(rawDrinks) ? rawDrinks : []);
+    render(customer, orders, messages, favDrinks);
   } catch (err) {
     bodyEl.innerHTML = err.status === 404
       ? errorHtml(t("acc_not_found", "Không tìm thấy hồ sơ thành viên. Vui lòng đăng nhập lại."))
@@ -346,6 +384,29 @@ bodyEl.addEventListener("change", (e) => {
 });
 
 bodyEl.addEventListener("click", async (e) => {
+  // In hoá đơn PDF
+  const printBtn = e.target.closest(".btn-print-account-order");
+  if (printBtn) {
+    const orderId = printBtn.dataset.id;
+    const order = currentCustomerOrders.find((o) => String(o.id) === String(orderId));
+    if (order) {
+      printOrderInvoice(order);
+    } else {
+      toast("Không tìm thấy thông tin đơn hàng để in.", "error");
+    }
+    return;
+  }
+
+  // Xoá món khỏi danh sách yêu thích
+  const removeFavBtn = e.target.closest(".btn-remove-account-fav");
+  if (removeFavBtn) {
+    const drinkId = removeFavBtn.dataset.id;
+    toggleFavorite(drinkId);
+    toast("Đã bỏ món khỏi danh sách yêu thích.", "info");
+    init();
+    return;
+  }
+
   // Đổi mật khẩu
   const changePassBtn = e.target.closest("#btn-open-change-pass");
   if (changePassBtn) {

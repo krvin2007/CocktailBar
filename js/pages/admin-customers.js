@@ -10,6 +10,7 @@ import { getAllOrders } from "../modules/ordersService.js";
 import { normalizePhone, formatMoney, formatDate, formatDateTime, debounce, paginate, renderPagination, escapeHtml } from "../modules/utils.js";
 import { openModal, closeModal, toast, confirmDialog } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
+import { exportCustomersToExcel } from "../modules/exportService.js";
 
 const bodyEl = document.getElementById("customers-body");
 const paginationEl = document.getElementById("pagination");
@@ -395,6 +396,15 @@ if (initAdminLayout("Khách Hàng Thành Viên")) {
       toast(err.message, "error");
     }
   });
+    document.getElementById("btn-export-customers-excel")?.addEventListener("click", () => {
+    if (!rows.length) {
+      toast("Không có dữ liệu khách hàng để xuất.", "warning");
+      return;
+    }
+    const currentList = filtered().map(r => r.customer);
+    exportCustomersToExcel(currentList.length ? currentList : rows.map(r => r.customer));
+  });
+
   bodyEl.innerHTML = `<tr><td colspan="7" class="table-empty py-4 text-center text-muted">Đang tải danh sách khách hàng...</td></tr>`;
   reload();
 }

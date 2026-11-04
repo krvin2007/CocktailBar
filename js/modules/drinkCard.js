@@ -10,6 +10,26 @@ import { ICONS } from "./icons.js";
 import { t } from "./i18n.js";
 import { isSoldOut } from "./drinksService.js";
 import { getCurrentCustomer, getCustomerDiscountPercent } from "./customerAuth.js";
+import { isFavorite, toggleFavorite } from "./favoritesService.js";
+
+// Gắn sự kiện toggle tim yêu thích toàn cục
+if (typeof document !== "undefined") {
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-drink-favorite");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const id = btn.dataset.id;
+    const isNowFav = toggleFavorite(id);
+    btn.classList.toggle("is-favorite", isNowFav);
+    btn.setAttribute("title", isNowFav ? "Bỏ yêu thích" : "Thêm vào yêu thích");
+    const svg = btn.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("fill", isNowFav ? "#ef4444" : "none");
+      svg.setAttribute("stroke", isNowFav ? "#ef4444" : "currentColor");
+    }
+  });
+}
 
 export function drinkCardHtml(drink) {
   const soldout = isSoldOut(drink);
@@ -17,6 +37,12 @@ export function drinkCardHtml(drink) {
   const discountPercent = getCustomerDiscountPercent(customer);
   const hasDiscount = discountPercent > 0;
   const discountedPrice = hasDiscount ? Math.floor((drink.price * (100 - discountPercent)) / 100) : drink.price;
+  const fav = isFavorite(drink.id);
+
+  const favBtnHtml = `
+    <button type="button" class="btn-drink-favorite ${fav ? "is-favorite" : ""}" data-id="${drink.id}" aria-label="Yêu thích món này" title="${fav ? "Bỏ yêu thích" : "Thêm vào yêu thích"}">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="${fav ? "#ef4444" : "none"}" stroke="${fav ? "#ef4444" : "currentColor"}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    </button>`;
 
   const isImagePath = typeof drink.image === "string" && (drink.image.includes("/") || drink.image.startsWith("http"));
   const imageHtml = isImagePath
@@ -25,7 +51,7 @@ export function drinkCardHtml(drink) {
 
   const tasteTags = Array.isArray(drink.tasteNotes) && drink.tasteNotes.length > 0
     ? `<div class="drink-card-tastes">
-        ${drink.tasteNotes.slice(0, 3).map((t) => `<span class="taste-pill">${escapeHtml(t)}</span>`).join("")}
+        ${drink.tasteNotes.slice(0, 3).map((tag) => `<span class="taste-pill">${escapeHtml(tag)}</span>`).join("")}
        </div>`
     : "";
 
@@ -41,6 +67,7 @@ export function drinkCardHtml(drink) {
   return `
     <a class="drink-card" href="detail.html?id=${drink.id}">
       <div class="drink-card-image-wrap">
+        ${favBtnHtml}
         ${soldout ? `<span class="drink-badge badge-soldout">${t("badge_soldout", "Tạm hết món")}</span>` : ""}
         ${drink.featured ? `<span class="drink-badge badge-featured">${ICONS.sparkle(12)} Signature</span>` : ""}
         ${imageHtml}

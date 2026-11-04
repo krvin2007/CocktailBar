@@ -20,6 +20,7 @@ import { validateForm, clearFormErrors } from "../modules/validation.js";
 import { toast, confirmDialog, openModal, closeModal, setButtonLoading } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
+import { exportOrdersToExcel, printOrderInvoice } from "../modules/exportService.js";
 
 const bodyEl = document.getElementById("orders-body");
 const paginationEl = document.getElementById("pagination");
@@ -371,6 +372,14 @@ function bindEvents() {
   const debouncedRender = debounce(() => { currentPage = 1; renderTable(); }, 250);
   keywordInput.addEventListener("input", debouncedRender);
   [statusSelect, paymentSelect, sortSelect].forEach((el) => el.addEventListener("change", () => { currentPage = 1; renderTable(); }));
+
+  document.getElementById("btn-export-orders-excel")?.addEventListener("click", () => {
+    exportOrdersToExcel(allOrders);
+  });
+
+  document.getElementById("btn-print-order-receipt")?.addEventListener("click", () => {
+    if (activeOrder) printOrderInvoice(activeOrder);
+  });
 
   document.getElementById("order-modal-close").addEventListener("click", () => closeModal("order-modal"));
   // Nhân viên đưa mã QR cho khách quét tại quầy; thu ngân xác nhận ngay trong hộp QR khi tiền về

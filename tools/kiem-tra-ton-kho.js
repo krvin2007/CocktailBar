@@ -87,6 +87,10 @@ const customerAuth = await import(mod("customerAuth.js"));
 const vouchers = await import(mod("vouchersService.js"));
 const promotions = await import(mod("promotions.js"));
 const utils = await import(mod("utils.js"));
+const favoritesService = await import(mod("favoritesService.js"));
+const reviewsService = await import(mod("reviewsService.js"));
+const exportService = await import(mod("exportService.js"));
+const notificationService = await import(mod("notificationService.js"));
 
 function resetDb() {
   fakeDb.drinks = structuredClone(JSON.parse(JSON.stringify(drinks.SEED_DRINKS)));
@@ -95,6 +99,7 @@ function resetDb() {
   fakeDb.messages = [];
   fakeDb.customers = structuredClone(customerAuth.SEED_CUSTOMERS);
   fakeDb.vouchers = structuredClone(vouchers.SEED_VOUCHERS);
+  fakeDb.reviews = structuredClone(reviewsService.SEED_REVIEWS || []);
   fakeDb.settings = { bankId: "MB", bankName: "MBBank", accountNumber: "09042007101207", accountName: "LE THANH TAI" };
   orders.clearCart();
   localStorage.clear();
@@ -1118,6 +1123,72 @@ const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Kh
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);
 const loginAfterAdminReset = await customerAuth.customerLogin("0912345678", "Khach@999");
 check("Khách đăng nhập thành công với mật khẩu do Admin cấp", loginAfterAdminReset.success, true);
+
+/* ----------------------------------------------------------------
+   [46] Tính năng nâng cao: Yêu thích (Favorites), Đánh giá & Bình luận (Reviews), Xuất/Nhập Excel & Thông báo
+   ---------------------------------------------------------------- */
+console.log("\n[46] Tính năng nâng cao: Yêu thích, Đánh giá/Bình luận, Xuất/Nhập CSV & Thông báo");
+resetDb();
+
+// 1. Kiểm tra Favorites Service (Thả tim & lọc món)
+check("Danh sách yêu thích ban đầu rỗng", favoritesService.getFavoriteCount(), 0);
+check("Món d1 chưa nằm trong yêu thích", favoritesService.isFavorite("d1"), false);
+
+const favAddRes = favoritesService.toggleFavorite("d1");
+check("Toggle yêu thích lần đầu trả về true (đã thêm)", favAddRes, true);
+check("Món d1 hiện đã nằm trong danh sách yêu thích", favoritesService.isFavorite("d1"), true);
+check("Tổng số món yêu thích bằng 1", favoritesService.getFavoriteCount(), 1);
+
+const mockDrinks = [
+  { id: "d1", name: "Classic Negroni" },
+  { id: "d2", name: "Smoked Old Fashioned" },
+];
+const favDrinks = favoritesService.getFavoriteDrinks(mockDrinks);
+check("getFavoriteDrinks lọc chính xác món d1", favDrinks.length === 1 && favDrinks[0].id === "d1", true);
+
+const favRemoveRes = favoritesService.toggleFavorite("d1");
+check("Toggle yêu thích lần 2 trả về false (đã gỡ)", favRemoveRes, false);
+check("Món d1 không còn trong yêu thích", favoritesService.isFavorite("d1"), false);
+check("Tổng số món yêu thích trở về 0", favoritesService.getFavoriteCount(), 0);
+
+// 2. Kiểm tra Reviews Service (Đánh giá & Bình luận)
+const initialReviews = await reviewsService.getAllReviews();
+check("Dữ liệu reviews ban đầu đọc thành công từ server", Array.isArray(initialReviews), true);
+const d1ReviewsCount = (await reviewsService.getDrinkReviews("d1")).length;
+
+const newReview = await reviewsService.addDrinkReview({
+  drinkId: "d1",
+  rating: 5,
+  author: "Võ Minh Khang",
+  comment: "Ly Negroni hoàn hảo, vị đắng thảo mộc thanh thoát khó quên!",
+});
+check("Thêm đánh giá mới thành công có id", Boolean(newReview && newReview.id), true);
+check("Đánh giá mới lưu đúng số sao 5", newReview.rating, 5);
+
+const d1ReviewsAfter = await reviewsService.getDrinkReviews("d1");
+check("Số lượng review của món d1 tăng đúng 1", d1ReviewsAfter.length, d1ReviewsCount + 1);
+
+const deleteRes = await reviewsService.deleteReview(newReview.id);
+check("Xoá review vừa tạo thành công", deleteRes, true);
+
+// 3. Kiểm tra Export / Import Service (CSV Parser & Drink Rows)
+const sampleCsv = 'Tên món,Danh mục,Giá bán,ABV,Ly phục vụ,Mô tả,Hương vị\n"Ruby Velvet Highball",signature,135000,18,Collins Glass,"Cocktail quả mọng thanh lịch","Quả mọng, Thảo mộc"';
+const parsedRows = exportService.parseCsv(sampleCsv);
+check("parseCsv phân tích đúng số dòng (header + data)", parsedRows.length, 2);
+check("parseCsv đọc đúng cột tên", parsedRows[1][0], "Ruby Velvet Highball");
+
+const importedDrinks = exportService.parseDrinksFromCsvRows(parsedRows);
+check("parseDrinksFromCsvRows chuyển đổi đúng 1 món", importedDrinks.length, 1);
+check("Món import có tên chính xác", importedDrinks[0].name, "Ruby Velvet Highball");
+check("Món import có giá số chính xác", importedDrinks[0].price, 135000);
+check("Món import có ABV chính xác", importedDrinks[0].abv, 18);
+check("Món import có ghi chú hương vị mảng", importedDrinks[0].tasteNotes.includes("Quả mọng"), true);
+
+// 4. Kiểm tra Notification Service
+check("playNotificationSound chạy không ném ngoại lệ", typeof notificationService.playNotificationSound, "function");
+notificationService.playNotificationSound();
+await notificationService.checkOrderUpdates();
+check("checkOrderUpdates chạy kiểm tra định kỳ an toàn", true, true);
 
 /* ================================================================ */
 console.log("\n==============================================================");
