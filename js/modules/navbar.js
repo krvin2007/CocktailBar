@@ -21,6 +21,7 @@ import { signIn, currentAdmin, logout as staffLogout, homePageFor } from "./auth
 import { renderChatbotWidget } from "./chatbot.js";
 import { initAgeGate } from "./ageGate.js";
 import { init3DMotion } from "./motion3d.js";
+import { openForgotPasswordModal } from "./forgotPasswordModal.js";
 
 function getNavLinks() {
   return [
@@ -143,15 +144,22 @@ export function renderHeader() {
           ` : customer ? `
             <div class="customer-nav-dropdown" id="customer-nav-dropdown">
               <button type="button" class="btn btn-customer-account" id="btn-customer-menu-toggle" aria-expanded="false" title="Khách hàng: ${escapeHtml(customer.name)}">
-                ${ICONS.user(15)}
+                ${customer.avatar
+                  ? `<img src="${escapeHtml(customer.avatar)}" alt="${escapeHtml(customer.name)}" class="nav-avatar-img" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--gold-primary); flex-shrink: 0;">`
+                  : ICONS.user(15)}
                 <span class="customer-nav-name">${escapeHtml(customer.name.split(" ").slice(-2).join(" "))}</span>
                 <svg class="dropdown-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="customer-dropdown-menu" id="customer-dropdown-menu" hidden>
-                <div class="customer-dropdown-header">
-                  <div class="customer-dropdown-name">${escapeHtml(customer.name)}</div>
-                  <div class="customer-dropdown-tier">${escapeHtml(t("rank_" + rankForPoints(lifetimeOf(customer)).key, customer.tier))} · ${customer.points || 0} ${t("acc_pts", "điểm")}</div>
-                  ${customer.phone ? `<div class="customer-dropdown-phone text-xs text-muted">${escapeHtml(customer.phone)}</div>` : ""}
+                <div class="customer-dropdown-header" style="display: flex; align-items: center; gap: 12px;">
+                  ${customer.avatar
+                    ? `<img src="${escapeHtml(customer.avatar)}" alt="${escapeHtml(customer.name)}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold-primary); flex-shrink: 0;">`
+                    : `<div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, rgba(212,175,55,0.3), rgba(0,0,0,0.5)); border: 1.5px solid var(--gold-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--gold-light); font-size: 1.1rem; flex-shrink: 0;">${escapeHtml(customer.name.charAt(0).toUpperCase())}</div>`}
+                  <div style="min-width: 0; flex: 1;">
+                    <div class="customer-dropdown-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(customer.name)}</div>
+                    <div class="customer-dropdown-tier">${escapeHtml(t("rank_" + rankForPoints(lifetimeOf(customer)).key, customer.tier))} · ${customer.points || 0} ${t("acc_pts", "điểm")}</div>
+                    ${customer.phone ? `<div class="customer-dropdown-phone text-xs text-muted">${escapeHtml(customer.phone)}</div>` : ""}
+                  </div>
                 </div>
                 <div class="customer-dropdown-divider"></div>
                 <a href="customer-account.html" class="customer-dropdown-item">
@@ -312,6 +320,11 @@ export function ensureCustomerAuthModal() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
+              <div style="display: flex; justify-content: flex-end; margin-top: 5px;">
+                <button type="button" class="btn btn-link text-xs text-amber" id="btn-modal-forgot-pass" style="padding: 0; background: none; border: none; cursor: pointer; text-decoration: underline;">
+                  Quên mật khẩu?
+                </button>
+              </div>
             </div>
             <button type="submit" class="btn btn-primary btn-block btn-lg mt-2" id="btn-submit-cust-login">
               <span data-i18n="auth_btn_login">Đăng nhập</span>
@@ -408,6 +421,15 @@ export function ensureCustomerAuthModal() {
       }
     });
   });
+
+  // Sự kiện Quên mật khẩu
+  const modalForgotBtn = modal.querySelector("#btn-modal-forgot-pass");
+  if (modalForgotBtn) {
+    modalForgotBtn.addEventListener("click", () => {
+      closeModal("customer-auth-modal");
+      openForgotPasswordModal();
+    });
+  }
 
   // Xử lý submit Login
   const loginForm = modal.querySelector("#cust-form-login");

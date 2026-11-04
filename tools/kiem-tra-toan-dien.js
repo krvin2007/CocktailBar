@@ -166,6 +166,19 @@ check("emailService có hàm generateBarcodeSvg", typeof emailMod.generateBarcod
 check("emailService có hàm buildCinemaTicketHtml", typeof emailMod.buildCinemaTicketHtml, "function");
 check("emailService có hàm sendOrderConfirmationEmail", typeof emailMod.sendOrderConfirmationEmail, "function");
 
+const custAuthMod = await import("../js/modules/customerAuth.js");
+check("customerAuth có hàm updateCustomerAvatar", typeof custAuthMod.updateCustomerAvatar, "function");
+check("customerAuth có hàm changeCustomerPassword", typeof custAuthMod.changeCustomerPassword, "function");
+check("customerAuth có hàm requestPasswordResetOtp", typeof custAuthMod.requestPasswordResetOtp, "function");
+check("customerAuth có hàm resetCustomerPassword", typeof custAuthMod.resetCustomerPassword, "function");
+check("customerAuth có hàm adminResetCustomerPassword", typeof custAuthMod.adminResetCustomerPassword, "function");
+
+const changePassMod = await import("../js/modules/changePasswordModal.js");
+check("changePasswordModal có hàm openChangePasswordModal", typeof changePassMod.openChangePasswordModal, "function");
+
+const forgotPassMod = await import("../js/modules/forgotPasswordModal.js");
+check("forgotPasswordModal có hàm openForgotPasswordModal", typeof forgotPassMod.openForgotPasswordModal, "function");
+
 console.log("\n==============================================================");
 if (failCount === 0) {
   console.log(`HOÀN TẤT: ĐẠT ${passCount}/${passCount} KIỂM TRA - HỆ THỐNG HOÀN TOÀN KHÔNG CÒN LỖI!`);

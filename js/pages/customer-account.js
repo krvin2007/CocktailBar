@@ -11,17 +11,20 @@
 
 import "../modules/navbar.js";
 import { api } from "../modules/api.js";
-import { getCurrentCustomer, MEMBER_RANKS, rankProgress, lifetimeOf, POINT_VALUE_VND } from "../modules/customerAuth.js";
+import { getCurrentCustomer, MEMBER_RANKS, rankProgress, lifetimeOf, POINT_VALUE_VND, updateCustomerAvatar } from "../modules/customerAuth.js";
 import { POINT_REDEEM_VND, MIN_POINT_REDEEM, MAX_POINT_REDEEM_SHARE } from "../modules/promotions.js";
-import { loadingHtml, errorHtml, toast } from "../modules/ui.js";
-import { escapeHtml, formatMoney, formatDateTime } from "../modules/utils.js";
+import { loadingHtml, errorHtml, toast, confirmDialog } from "../modules/ui.js";
+import { escapeHtml, formatMoney, formatDate, formatDateTime } from "../modules/utils.js";
 import { t } from "../modules/i18n.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
 import { reportTransferSent } from "../modules/ordersService.js";
 import { openCinemaTicketModal } from "../modules/emailService.js";
+import { openChangePasswordModal } from "../modules/changePasswordModal.js";
+import { openForgotPasswordModal } from "../modules/forgotPasswordModal.js";
 
 const bodyEl = document.getElementById("account-body");
 let currentCustomerOrders = [];
+let activeCustomer = null;
 
 /** Tên hạng theo ngôn ngữ đang chọn (khoá dịch rank_<key>) */
 const rankName = (rank) => t(`rank_${rank.key}`, rank.label);
@@ -137,6 +140,7 @@ function messageCardHtml(m) {
 }
 
 function render(customer, myOrders = [], myMessages = []) {
+  activeCustomer = customer;
   currentCustomerOrders = myOrders;
   const points = Number(customer.points) || 0;       // số dư dùng được
   const lifetime = lifetimeOf(customer);              // tích luỹ trọn đời - dùng để xét hạng (không giảm khi dùng điểm)
@@ -156,6 +160,49 @@ function render(customer, myOrders = [], myMessages = []) {
     </li>`).join("");
 
   bodyEl.innerHTML = `
+    <!-- KHỐI HỒ SƠ TÀI KHOẢN VÀ ẢNH ĐẠI DIỆN -->
+    <div class="account-profile-card">
+      <div class="account-profile-main">
+        <div class="account-avatar-wrapper">
+          <div class="account-avatar-frame">
+            ${customer.avatar
+              ? `<img src="${escapeHtml(customer.avatar)}" alt="${escapeHtml(customer.name)}" class="account-avatar-img">`
+              : `<div class="account-avatar-initial">${escapeHtml((customer.name || "K").charAt(0).toUpperCase())}</div>`}
+          </div>
+          <div class="account-avatar-actions">
+            <label for="input-account-avatar" class="account-avatar-btn-upload" title="Tải ảnh từ máy tính">
+              📷 <span>Đổi ảnh</span>
+            </label>
+            <input type="file" id="input-account-avatar" accept="image/png, image/jpeg, image/webp, image/gif" style="display: none;">
+            ${customer.avatar ? `
+              <button type="button" class="account-avatar-btn-remove" id="btn-account-avatar-remove" title="Xoá ảnh đại diện">Xoá ảnh</button>
+            ` : ""}
+          </div>
+        </div>
+
+        <div class="account-profile-details">
+          <div class="account-profile-chips">
+            <h2 class="account-profile-name">${escapeHtml(customer.name)}</h2>
+            <span class="account-chip-verified">✓ Đủ 18+</span>
+          </div>
+          <div class="account-profile-meta">
+            <span><strong>SĐT:</strong> ${escapeHtml(customer.phone || "—")}</span>
+            <span><strong>Email:</strong> ${escapeHtml(customer.email || "Chưa cập nhật")}</span>
+            <span><strong>Ngày sinh:</strong> ${customer.birthDate ? formatDate(customer.birthDate) : "—"}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="account-profile-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-open-change-pass" style="border: 1px solid rgba(212,175,55,0.4); color: var(--gold-light); display: inline-flex; align-items: center; gap: 6px;">
+          🔑 <span>Đổi mật khẩu</span>
+        </button>
+        <button type="button" class="btn btn-link text-xs" id="btn-open-forgot-pass" style="text-decoration: underline; background: none; border: none; cursor: pointer; padding: 2px 4px; color: var(--amber-soft);">
+          Quên mật khẩu?
+        </button>
+      </div>
+    </div>
+
     <div class="rank-card" style="--rank-color: ${current.color}">
       <div class="rank-card-top">
         <div>
@@ -268,7 +315,73 @@ async function init() {
   }
 }
 
-bodyEl.addEventListener("click", (e) => {
+bodyEl.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "input-account-avatar") {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast("Vui lòng chọn file hình ảnh (PNG, JPG, WebP, GIF).", "warning");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast("Dung lượng ảnh tối đa là 2MB. Vui lòng chọn ảnh nhỏ hơn.", "warning");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target.result;
+      try {
+        await updateCustomerAvatar(activeCustomer.id, dataUrl);
+        toast("Cập nhật ảnh đại diện thành công!", "success");
+        init();
+      } catch (err) {
+        toast(err.message || "Không thể lưu ảnh đại diện.", "danger");
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+bodyEl.addEventListener("click", async (e) => {
+  // Đổi mật khẩu
+  const changePassBtn = e.target.closest("#btn-open-change-pass");
+  if (changePassBtn) {
+    openChangePasswordModal(activeCustomer, () => {
+      init();
+    });
+    return;
+  }
+
+  // Quên mật khẩu
+  const forgotPassBtn = e.target.closest("#btn-open-forgot-pass");
+  if (forgotPassBtn) {
+    openForgotPasswordModal(activeCustomer?.phone || activeCustomer?.email || "", () => {
+      init();
+    });
+    return;
+  }
+
+  // Xoá ảnh đại diện
+  const removeAvatarBtn = e.target.closest("#btn-account-avatar-remove");
+  if (removeAvatarBtn) {
+    const ok = await confirmDialog("Bạn có chắc chắn muốn gỡ bỏ ảnh đại diện hiện tại?", {
+      title: "Gỡ ảnh đại diện",
+      okText: "Gỡ ảnh",
+    });
+    if (!ok) return;
+    try {
+      await updateCustomerAvatar(activeCustomer.id, "");
+      toast("Đã gỡ bỏ ảnh đại diện.", "info");
+      init();
+    } catch (err) {
+      toast(err.message || "Lỗi khi gỡ ảnh đại diện.", "danger");
+    }
+    return;
+  }
+
   const ticketBtn = e.target.closest(".btn-view-account-ticket");
   if (ticketBtn) {
     const orderId = ticketBtn.dataset.id;

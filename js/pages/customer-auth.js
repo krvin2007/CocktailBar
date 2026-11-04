@@ -11,6 +11,7 @@ import { toast, setButtonLoading } from "../modules/ui.js";
 import { applyI18n } from "../modules/i18n.js";
 import { passwordProblem, PASSWORD_RULE_TEXT } from "../modules/passwords.js";
 import { ageProblem } from "../modules/age.js";
+import { openForgotPasswordModal } from "../modules/forgotPasswordModal.js";
 
 applyI18n(); // trang đăng nhập không có thanh menu: tự áp ngôn ngữ đã chọn ở các trang khác
 
@@ -75,6 +76,21 @@ document.querySelectorAll(".pw-toggle-btn").forEach((btn) => {
     }
   });
 });
+
+// Quên mật khẩu
+const forgotPassBtn = document.getElementById("page-btn-forgot-pass");
+if (forgotPassBtn) {
+  forgotPassBtn.addEventListener("click", () => {
+    const ident = document.getElementById("page-login-ident")?.value?.trim() || "";
+    openForgotPasswordModal(ident, (filledIdent, newPass) => {
+      const identInput = document.getElementById("page-login-ident");
+      const passInput = document.getElementById("page-login-pass");
+      if (identInput) identInput.value = filledIdent;
+      if (passInput) passInput.value = newPass;
+      toast("Đã cập nhật mật khẩu mới vào ô đăng nhập. Quý khách có thể bấm 'Đăng nhập' ngay!", "info");
+    });
+  });
+}
 
 // Xử lý submit Login
 const loginForm = document.getElementById("page-form-login");

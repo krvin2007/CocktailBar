@@ -5,7 +5,7 @@
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
-import { getAllCustomers, MEMBER_RANKS, rankForPoints, lifetimeOf, updateCustomerStatus, updateCustomerDiscount } from "../modules/customerAuth.js";
+import { getAllCustomers, MEMBER_RANKS, rankForPoints, lifetimeOf, updateCustomerStatus, updateCustomerDiscount, adminResetCustomerPassword, updateCustomerAvatar } from "../modules/customerAuth.js";
 import { getAllOrders } from "../modules/ordersService.js";
 import { normalizePhone, formatMoney, formatDate, formatDateTime, debounce, paginate, renderPagination, escapeHtml } from "../modules/utils.js";
 import { openModal, closeModal, toast, confirmDialog } from "../modules/ui.js";
@@ -65,11 +65,20 @@ function rowHtml({ customer, rank, orderCount, spent }) {
     ? `<div style="margin-top: 4px;"><span class="badge badge-warning" title="${escapeHtml(customer.discountNote || "Admin giảm giá riêng")}">${ICONS.sparkle(12)} Admin -${customDiscount}%</span></div>`
     : "";
 
+  const avatarHtml = customer.avatar
+    ? `<img src="${escapeHtml(customer.avatar)}" alt="${escapeHtml(customer.name)}" class="admin-cust-avatar" data-action="avatar" title="Bấm để quản lý ảnh đại diện">`
+    : `<div class="admin-cust-avatar-fallback" data-action="avatar" title="Bấm để tải ảnh đại diện lên">${escapeHtml((customer.name || "K").charAt(0).toUpperCase())}</div>`;
+
   return `
     <tr data-id="${escapeHtml(customer.id)}">
       <td>
-        <strong>${escapeHtml(customer.name)}</strong>
-        <div class="text-xs text-muted">${customer.createdAt ? `Tham gia ${formatDate(customer.createdAt)}` : ""}</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          ${avatarHtml}
+          <div>
+            <strong>${escapeHtml(customer.name)}</strong>
+            <div class="text-xs text-muted">${customer.createdAt ? `Tham gia ${formatDate(customer.createdAt)}` : ""}</div>
+          </div>
+        </div>
       </td>
       <td class="text-sm">${escapeHtml(customer.phone || "")}${customer.email ? `<div class="text-xs text-muted">${escapeHtml(customer.email)}</div>` : ""}</td>
       <td>
@@ -80,7 +89,9 @@ function rowHtml({ customer, rank, orderCount, spent }) {
       <td>${orderCount}</td>
       <td><strong>${formatMoney(spent)}</strong></td>
       <td>${statusBadge}</td>
-      <td class="cell-actions" style="text-align: right; display: flex; gap: 6px; justify-content: flex-end; align-items: center; flex-wrap: nowrap;">
+      <td class="cell-actions" style="text-align: right; display: flex; gap: 5px; justify-content: flex-end; align-items: center; flex-wrap: nowrap;">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="reset-pass" title="Đặt lại mật khẩu cho khách hàng này">🔑 Đặt lại MK</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="avatar" title="Cập nhật hoặc gỡ ảnh đại diện">📷 Ảnh</button>
         <button type="button" class="btn btn-ghost btn-sm" data-action="discount" title="Cấp chiết khấu ưu đãi riêng cho khách này">${ICONS.sparkle(14)} Giảm giá</button>
         ${isBanned
           ? `<button type="button" class="btn btn-ghost btn-sm text-success" data-action="unlock">Mở khóa</button>`
@@ -148,7 +159,58 @@ function openDiscountModal(customer) {
   openModal("discount-modal");
 }
 
+function openAdminResetPassModal(customer) {
+  document.getElementById("admin-reset-cust-id").value = customer.id;
+  document.getElementById("admin-reset-pass-input").value = "Khach@123";
+  document.getElementById("admin-reset-pass-input").type = "password";
+  document.getElementById("admin-reset-modal-title").innerHTML = `🔑 Đặt Lại Mật Khẩu: ${escapeHtml(customer.name)}`;
+  document.getElementById("admin-reset-modal-subtitle").textContent = `SĐT: ${customer.phone || "—"} · Email: ${customer.email || "—"}`;
+  openModal("admin-reset-pass-modal");
+}
+
+let activeAvatarCustomer = null;
+
+function openAdminAvatarModal(customer) {
+  activeAvatarCustomer = customer;
+  document.getElementById("admin-avatar-cust-id").value = customer.id;
+  document.getElementById("admin-avatar-modal-title").innerHTML = `📷 Quản Lý Ảnh: ${escapeHtml(customer.name)}`;
+  document.getElementById("admin-avatar-modal-subtitle").textContent = `SĐT: ${customer.phone || "—"}`;
+
+  const imgEl = document.getElementById("admin-avatar-preview-img");
+  const fallbackEl = document.getElementById("admin-avatar-preview-fallback");
+  const removeBtn = document.getElementById("admin-avatar-btn-remove");
+
+  if (customer.avatar) {
+    imgEl.src = customer.avatar;
+    imgEl.style.display = "block";
+    fallbackEl.style.display = "none";
+    if (removeBtn) removeBtn.style.display = "inline-flex";
+  } else {
+    imgEl.src = "";
+    imgEl.style.display = "none";
+    fallbackEl.textContent = (customer.name || "K").charAt(0).toUpperCase();
+    fallbackEl.style.display = "block";
+    if (removeBtn) removeBtn.style.display = "none";
+  }
+
+  openModal("admin-avatar-modal");
+}
+
 bodyEl.addEventListener("click", async (e) => {
+  const resetPassBtn = e.target.closest('button[data-action="reset-pass"]');
+  if (resetPassBtn) {
+    const row = rows.find((r) => r.customer.id === resetPassBtn.closest("tr").dataset.id);
+    if (row) openAdminResetPassModal(row.customer);
+    return;
+  }
+
+  const avatarTarget = e.target.closest('[data-action="avatar"]');
+  if (avatarTarget) {
+    const row = rows.find((r) => r.customer.id === avatarTarget.closest("tr").dataset.id);
+    if (row) openAdminAvatarModal(row.customer);
+    return;
+  }
+
   const discountBtn = e.target.closest('button[data-action="discount"]');
   if (discountBtn) {
     const row = rows.find((r) => r.customer.id === discountBtn.closest("tr").dataset.id);
@@ -209,6 +271,101 @@ if (initAdminLayout("Khách Hàng Thành Viên")) {
   document.getElementById("customer-modal-close").addEventListener("click", () => closeModal("customer-modal"));
   document.getElementById("discount-modal-close")?.addEventListener("click", () => closeModal("discount-modal"));
   document.getElementById("discount-modal-cancel")?.addEventListener("click", () => closeModal("discount-modal"));
+
+  // Đóng modal Reset Pass và Avatar
+  document.getElementById("admin-reset-modal-close")?.addEventListener("click", () => closeModal("admin-reset-pass-modal"));
+  document.getElementById("admin-reset-modal-cancel")?.addEventListener("click", () => closeModal("admin-reset-pass-modal"));
+  document.getElementById("admin-avatar-modal-close")?.addEventListener("click", () => closeModal("admin-avatar-modal"));
+  document.getElementById("admin-avatar-modal-cancel")?.addEventListener("click", () => closeModal("admin-avatar-modal"));
+
+  // Nút tạo mật khẩu ngẫu nhiên cho admin
+  document.getElementById("admin-reset-btn-random")?.addEventListener("click", () => {
+    const randomPass = `Khach@${Math.floor(1000 + Math.random() * 9000)}`;
+    const passInput = document.getElementById("admin-reset-pass-input");
+    passInput.value = randomPass;
+    passInput.type = "text";
+  });
+
+  // Toggle ẩn/hiện mật khẩu
+  document.querySelectorAll(".pw-toggle-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.dataset.target;
+      const input = document.getElementById(targetId);
+      if (input) {
+        input.type = input.type === "password" ? "text" : "password";
+      }
+    });
+  });
+
+  // Submit đặt lại mật khẩu cho khách
+  const adminResetForm = document.getElementById("admin-reset-form");
+  adminResetForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const customerId = document.getElementById("admin-reset-cust-id").value;
+    const newPass = document.getElementById("admin-reset-pass-input").value;
+
+    try {
+      await adminResetCustomerPassword(customerId, newPass);
+      const row = rows.find((r) => r.customer.id === customerId);
+      const custName = row?.customer?.name || "khách hàng";
+      toast(`Đã đặt lại mật khẩu cho ${custName} thành công: "${newPass}"`, "success");
+      closeModal("admin-reset-pass-modal");
+      await reload();
+    } catch (err) {
+      toast(err.message, "error");
+    }
+  });
+
+  // Upload avatar khách từ admin
+  const avatarFileInput = document.getElementById("admin-avatar-file-input");
+  avatarFileInput?.addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file || !activeAvatarCustomer) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast("Vui lòng chọn file hình ảnh (PNG, JPG, WebP, GIF).", "warning");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast("Dung lượng ảnh tối đa là 2MB. Vui lòng chọn ảnh nhỏ hơn.", "warning");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target.result;
+      try {
+        await updateCustomerAvatar(activeAvatarCustomer.id, dataUrl);
+        toast(`Đã cập nhật ảnh đại diện cho ${activeAvatarCustomer.name}!`, "success");
+        activeAvatarCustomer.avatar = dataUrl;
+        openAdminAvatarModal(activeAvatarCustomer);
+        await reload();
+      } catch (err) {
+        toast(err.message || "Không thể cập nhật ảnh đại diện.", "error");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Gỡ avatar khách từ admin
+  document.getElementById("admin-avatar-btn-remove")?.addEventListener("click", async () => {
+    if (!activeAvatarCustomer) return;
+    const ok = await confirmDialog(`Bạn có chắc muốn gỡ ảnh đại diện của ${activeAvatarCustomer.name}?`, {
+      title: "Gỡ ảnh đại diện",
+      okText: "Gỡ ảnh",
+    });
+    if (!ok) return;
+
+    try {
+      await updateCustomerAvatar(activeAvatarCustomer.id, "");
+      toast(`Đã gỡ ảnh đại diện của ${activeAvatarCustomer.name}.`, "info");
+      activeAvatarCustomer.avatar = "";
+      openAdminAvatarModal(activeAvatarCustomer);
+      await reload();
+    } catch (err) {
+      toast(err.message || "Không thể gỡ ảnh đại diện.", "error");
+    }
+  });
 
   const discountForm = document.getElementById("discount-form");
   discountForm?.addEventListener("submit", async (e) => {
