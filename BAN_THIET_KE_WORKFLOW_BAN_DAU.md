@@ -26,9 +26,10 @@ flowchart TD
     subgraph "THẾ GIỚI 1: KHÁCH HÀNG (BÊN NGOÀI QUÁN)"
         Khach["Khách hàng mở điện thoại / laptop"]
         Khach --> XemMenu["1. Xem Menu Cocktail & Hương vị"]
-        XemMenu --> DatBan["2. Đặt bàn giữ chỗ theo khung giờ"]
-        DatBan --> QuetQR["3. Quét mã VietQR chuyển khoản"]
-        QuetQR --> NhanVe["4. Nhận vé điện tử Bar Cinema Ticket"]
+        XemMenu --> ChonMon["2. Chọn món & Thêm vào giỏ hàng"]
+        ChonMon --> DatBan["3. Đặt bàn giữ chỗ theo khung giờ"]
+        DatBan --> QuetQR["4. Quét mã VietQR chuyển khoản"]
+        QuetQR --> NhanVe["5. Nhận vé điện tử"]
     end
 
     subgraph "ĐIỂM GIAO THOA (CƠ SỞ DỮ LIỆU ĐƠN HÀNG)"
@@ -36,11 +37,11 @@ flowchart TD
     end
 
     subgraph "THẾ GIỚI 2: VẬN HÀNH QUÁN BAR (BÊN TRONG QUÁN)"
-        ChuongBao["5. Chuông reo báo đơn mới"]
-        ThuNgan["6. Thu ngân duyệt đơn & In bill"]
-        PhaChe["7. Bartender nhận ly & Pha chế"]
-        PhucVu["8. Phục vụ mang cocktail ra bàn"]
-        QuanLy["9. Quản lý kiểm soát kho & Doanh thu"]
+        ChuongBao["6. Chuông reo báo đơn mới"]
+        ThuNgan["7. Thu ngân duyệt đơn & In bill"]
+        PhaChe["8. Bartender nhận ly & Pha chế"]
+        PhucVu["9. Phục vụ mang cocktail ra bàn"]
+        QuanLy["10. Quản lý kiểm soát kho & Doanh thu"]
     end
 
     QuetQR --> DonHang
@@ -76,8 +77,8 @@ sequenceDiagram
     Web->>Bank: 8. Sinh mã QR động MBBank khớp đúng số tiền & mã đơn
     Bank-->>Khach: 9. Khách quét mã trên App ngân hàng ➔ Chuyển khoản xong
     Khach->>Web: 10. Bấm nút "Tôi đã chuyển khoản"
-    Web->>Mail: 11. Tự sinh vé Bar Cinema Ticket (Barcode SVG) gửi vào hòm thư
-    Web-->>Khach: 12. Hiển thị cuống vé sang trọng ➔ Khách yên tâm đến quán tối nay
+    Web->>Mail: 11. Tự sinh vé điện tử (Barcode SVG) gửi vào hòm thư
+    Web-->>Khach: 12. Hiển thị vé điện tử ➔ Khách yên tâm đến quán tối nay
 ```
 
 ---
@@ -166,7 +167,7 @@ Sau khi vẽ xong 4 sơ đồ Workflow trên, ta lập tức có câu trả lờ
 - Trừ kho, hoàn kho ➔ Viết trong `ordersService.js`.
 - Sinh mã QR MBBank ➔ Viết trong `vietqrService.js`.
 - Phát chuông khi có đơn mới ➔ Viết trong `notificationService.js` (Web Audio API).
-- Vẽ vé rách Cinema có mã vạch ➔ Viết trong `emailService.js`.
+- Sinh vé điện tử có mã vạch ➔ Viết trong `emailService.js`.
 - In hoá đơn 80mm PDF & Xuất Excel ➔ Viết trong `exportService.js`.
 
 ---

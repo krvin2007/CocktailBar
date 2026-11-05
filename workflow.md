@@ -17,7 +17,7 @@
 6. [Workflow F05: Trợ lý Bartender ảo AI phục vụ tại quầy](#6-workflow-f05-trợ-lý-bartender-ảo-ai)
 7. [Workflow F06: Đặt bàn & Chọn khung giờ đón khách](#7-workflow-f06-đặt-bàn--chọn-khung-giờ-đón-khách)
 8. [Workflow F07: Thanh toán chuyển khoản tự động VietQR MBBank](#8-workflow-f07-thanh-toán-chuyển-khoản-vietqr-mbbank)
-9. [Workflow F08: Cấp phát vé điện tử Bar Cinema Ticket (Barcode SVG)](#9-workflow-f08-cấp-phát-vé-điện-tử-bar-cinema-ticket)
+9. [Workflow F08: Cấp phát vé điện tử (Barcode SVG)](#9-workflow-f08-cấp-phát-vé-điện-tử)
 10. [Workflow F09: Đăng nhập một cửa & Tích điểm thành viên](#10-workflow-f09-đăng-nhập-một-cửa--tích-điểm-thành-viên)
 11. [Workflow F10: Phân quyền vai trò nhân sự (RBAC Flow)](#11-workflow-f10-phân-quyền-vai-trò-nhân-sự-rbac)
 12. [Workflow F11: Quản lý vòng đời đơn hàng & Máy trạng thái hoàn trừ kho](#12-workflow-f11-quản-lý-vòng-đời-đơn-hàng--hoàn-trừ-kho)
@@ -43,7 +43,7 @@ flowchart TD
     CartAdd --> OrderPage["Đặt bàn & Gọi món (order.html)"]
     
     OrderPage --> VietQRModal["Quét mã VietQR MBBank"]
-    VietQRModal --> OrderSuccess["Đơn thành công ➔ Sinh vé Bar Cinema Ticket"]
+    VietQRModal --> OrderSuccess["Đơn thành công ➔ Nhận vé điện tử"]
     OrderSuccess --> EmailBox["Lưu hòm vé (/emails)"]
 
     %% Kênh tương tác tức thì
@@ -184,7 +184,7 @@ sequenceDiagram
 
 ---
 
-## 9. WORKFLOW F08: CẤP PHÁT VÉ ĐIỆN TỬ BAR CINEMA TICKET
+## 9. WORKFLOW F08: CẤP PHÁT VÉ ĐIỆN TỬ
 
 ```mermaid
 flowchart TD
