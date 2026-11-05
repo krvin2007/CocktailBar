@@ -7,15 +7,18 @@
 
 ---
 
-## 📚 BỘ HỒ SƠ TÀI LIỆU KỸ THUẬT (BÀI TẬP BẮT BUỘC)
+## 📚 BỘ HỒ SƠ TÀI LIỆU KỸ THUẬT THEO 8 GIAI ĐOẠN PHÁT TRIỂN (SDLC)
 
-Hồ sơ kỹ thuật của đề tài được phân tách chi tiết thành 5 tài liệu chuẩn mực:
+Toàn bộ quá trình phát triển hệ thống được tài liệu hóa thành 8 báo cáo chuyên sâu:
 
-1. **[README.md](README.md):** Giới thiệu đề tài, mục tiêu, công nghệ và hướng dẫn cài đặt chạy dự án.
-2. **[workflow.md](workflow.md):** Thiết kế và vẽ sơ đồ Workflow chi tiết cho từng chức năng của hệ thống.
-3. **[database.md](database.md):** Thiết kế cơ sở dữ liệu chi tiết, từ điển dữ liệu (Data Dictionary) và sơ đồ ERD.
-4. **[API_Document.md](API_Document.md):** Tài liệu thiết kế RESTful API đầy đủ phương thức, tham số, request/response body và mã lỗi.
-5. **[software_architecture_design.md](software_architecture_design.md):** Thiết kế kiến trúc phần mềm, mô hình C4, phân tầng N-Tier và các mẫu thiết kế (Design Patterns).
+1. **[1_phan_tich_yeu_cau.md](1_phan_tich_yeu_cau.md):** Giai đoạn 1 — Phân tích yêu cầu nghiệp vụ, người dùng, phi chức năng và ma trận RTM.
+2. **[2_xac_dinh_chuc_nang.md](2_xac_dinh_chuc_nang.md):** Giai đoạn 2 — Xác định và phân rã 21 chức năng, mô hình Use Case, ma trận vai trò.
+3. **[workflow.md](workflow.md):** Giai đoạn 3 — Vẽ sơ đồ Workflow cho từng chức năng (Mermaid Flowchart, Sequence, State Machine).
+4. **[software_architecture_design.md](software_architecture_design.md):** Giai đoạn 4 — Thiết kế kiến trúc phần mềm (C4 Model, N-Tier, Design Patterns).
+5. **[database.md](database.md):** Giai đoạn 5 — Thiết kế cơ sở dữ liệu chi tiết, từ điển dữ liệu (Data Dictionary) và sơ đồ ERD.
+6. **[API_Document.md](API_Document.md):** Giai đoạn 6 — Đặc tả thiết kế RESTful API đầy đủ endpoints, request/response payload và mã lỗi.
+7. **[7_lap_trinh_frontend_backend.md](7_lap_trinh_frontend_backend.md):** Giai đoạn 7 — Đặc tả triển khai mã nguồn Frontend (HTML5/CSS3/OOP ES6) và Backend (json-server, VietQR, Web Audio).
+8. **[8_kiem_thu.md](8_kiem_thu.md):** Giai đoạn 8 — Kế hoạch kiểm thử & Báo cáo kết quả nghiệm thu (366 test kho, 36 test chatbot, 63 health check, 0 lỗi ESLint).
 
 ---
 
