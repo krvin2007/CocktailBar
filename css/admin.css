@@ -518,11 +518,12 @@
 }
 
 .data-table tbody tr {
-  transition: background 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .data-table tbody tr:hover {
-  background: rgba(197, 152, 67, 0.04);
+  background: rgba(197, 152, 67, 0.08);
+  box-shadow: inset 3px 0 0 var(--amber);
 }
 
 .data-table tbody tr:last-child td {

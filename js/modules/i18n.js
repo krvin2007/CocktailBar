@@ -335,6 +335,7 @@ export const TRANSLATIONS = {
 
     badge_soldout: "Tạm hết món",
     badge_featured: "Signature",
+    badge_bestseller: "Best-Seller",
     abv_tooltip: "Nồng độ cồn",
     rating_tooltip: "Đánh giá",
     empty_featured: "Danh sách món nổi bật đang được cập nhật.",
@@ -815,6 +816,7 @@ export const TRANSLATIONS = {
 
     badge_soldout: "Sold Out",
     badge_featured: "Signature",
+    badge_bestseller: "Best-Seller",
     abv_tooltip: "Alcohol by Volume",
     rating_tooltip: "Rating",
     empty_featured: "Featured cocktails list is currently being updated.",
