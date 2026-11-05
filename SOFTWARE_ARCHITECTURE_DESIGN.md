@@ -423,3 +423,4 @@ Bản thiết kế kiến trúc phần mềm này khẳng định:
 
 ---
 *Tài liệu thuộc hồ sơ kỹ thuật chính thức của đồ án Quán Bar Đêm.*
+
