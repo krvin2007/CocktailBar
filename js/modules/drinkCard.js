@@ -64,12 +64,22 @@ export function drinkCardHtml(drink) {
        </span>`
     : `<span class="drink-card-price">${formatMoney(drink.price)}${drink.servingMl ? ` <small class="price-serving">${servingLabel(drink)}</small>` : ""}</span>`;
 
+  const isBestSeller = (Number(drink.rating) >= 4.9 && drink.featured) || drink.id === "d1" || drink.id === "d2";
+  const isSignature = Boolean(drink.featured || drink.category === "signature");
+  let badgeHtml = "";
+  if (soldout) {
+    badgeHtml = `<span class="drink-badge badge-soldout">${t("badge_soldout", "Tạm hết món")}</span>`;
+  } else if (isBestSeller) {
+    badgeHtml = `<span class="drink-badge badge-bestseller"><span class="badge-fire-icon">🔥</span> ${t("badge_bestseller", "Best-Seller")}</span>`;
+  } else if (isSignature) {
+    badgeHtml = `<span class="drink-badge badge-signature">${ICONS.sparkle(12)} ${t("badge_featured", "Signature")}</span>`;
+  }
+
   return `
     <a class="drink-card" href="detail.html?id=${drink.id}">
       <div class="drink-card-image-wrap">
         ${favBtnHtml}
-        ${soldout ? `<span class="drink-badge badge-soldout">${t("badge_soldout", "Tạm hết món")}</span>` : ""}
-        ${drink.featured ? `<span class="drink-badge badge-featured">${ICONS.sparkle(12)} Signature</span>` : ""}
+        ${badgeHtml}
         ${imageHtml}
         <div class="drink-card-overlay"></div>
       </div>

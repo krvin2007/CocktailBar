@@ -7,6 +7,37 @@
 
 @import "chatbot.css";
 
+/* Custom Luxury Dark Scrollbar & Smooth Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0907;
+  border-left: 1px solid rgba(226, 186, 114, 0.08);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c59843 0%, #7d541c 100%);
+  border-radius: 999px;
+  border: 2px solid #0b0907;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e8c682 0%, #c59843 100%);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c59843 #0b0907;
+}
+
 /* =========================================================
    01. BỐ CỤC CHUNG & BASE STYLES
    ========================================================= */
@@ -165,14 +196,17 @@
 }
 
 .main-nav a:hover {
-  color: var(--cream);
-  background: rgba(197, 152, 67, 0.08);
+  color: var(--amber-soft);
+  background: rgba(197, 152, 67, 0.12);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.35);
 }
 
 .main-nav a.active {
   color: var(--amber-soft);
-  background: rgba(197, 152, 67, 0.14);
+  background: rgba(197, 152, 67, 0.16);
+  border: 1px solid rgba(212, 175, 55, 0.25);
   font-weight: 600;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
 }
 
 .nav-badge {
@@ -343,17 +377,24 @@
 }
 
 .btn-primary {
-  background: var(--amber);
-  color: #120e0a;
-  border-color: var(--amber);
-  box-shadow: 0 4px 14px rgba(197, 152, 67, 0.25);
+  background: linear-gradient(135deg, #d4af37 0%, #c59843 50%, #966c24 100%);
+  color: #0b0907;
+  border: 1px solid rgba(255, 230, 160, 0.4);
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(197, 152, 67, 0.32);
 }
 
 .btn-primary:hover {
-  background: var(--amber-soft);
-  border-color: var(--amber-soft);
-  box-shadow: 0 6px 20px rgba(197, 152, 67, 0.35);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #f7d774 0%, #d4af37 50%, #b8860b 100%);
+  border-color: rgba(255, 240, 180, 0.7);
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.52), 0 0 14px rgba(247, 215, 116, 0.35);
+  transform: translateY(-2px);
+  color: #0b0907;
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(197, 152, 67, 0.35);
 }
 
 .btn-ghost {
@@ -366,18 +407,21 @@
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--amber);
   color: var(--amber-soft);
+  box-shadow: 0 0 12px rgba(197, 152, 67, 0.2);
 }
 
 .btn-outline {
   background: transparent;
   color: var(--amber-soft);
-  border-color: var(--border-strong);
+  border: 1px solid rgba(212, 175, 55, 0.4);
 }
 
 .btn-outline:hover {
-  background: rgba(197, 152, 67, 0.1);
+  background: rgba(197, 152, 67, 0.12);
   border-color: var(--amber-soft);
-  color: var(--cream);
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.28);
+  transform: translateY(-1px);
 }
 
 .btn-danger {
@@ -548,11 +592,35 @@ textarea {
   letter-spacing: 0.2px;
 }
 
-.badge-success { background: var(--success-bg); color: var(--success); }
-.badge-danger  { background: var(--danger-bg); color: var(--danger); }
-.badge-warning { background: var(--warning-bg); color: var(--warning); }
-.badge-info    { background: var(--info-bg); color: var(--info); }
-.badge-muted   { background: rgba(255, 255, 255, 0.06); color: var(--text-dim); }
+.badge-success {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(76, 183, 121, 0.28);
+  box-shadow: 0 0 8px rgba(76, 183, 121, 0.16);
+}
+.badge-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(226, 92, 80, 0.28);
+  box-shadow: 0 0 8px rgba(226, 92, 80, 0.16);
+}
+.badge-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid rgba(229, 167, 62, 0.28);
+  box-shadow: 0 0 8px rgba(229, 167, 62, 0.16);
+}
+.badge-info {
+  background: var(--info-bg);
+  color: var(--info);
+  border: 1px solid rgba(90, 159, 227, 0.28);
+  box-shadow: 0 0 8px rgba(90, 159, 227, 0.16);
+}
+.badge-muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-dim);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
 /* =========================================================
    07. HERO SECTION CINEMATIC
@@ -624,7 +692,10 @@ textarea {
   line-height: 1.12;
   letter-spacing: -0.5px;
   margin-bottom: 20px;
-  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+  background: linear-gradient(135deg, #ffffff 0%, #fcf8f0 35%, #e8c682 70%, #c59843 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.85));
 }
 
 .hero-lead {
@@ -650,13 +721,21 @@ textarea {
   gap: 24px;
   margin-top: 56px;
   padding: 20px 32px;
-  background: rgba(19, 15, 12, 0.75);
-  border: 1px solid var(--border-soft);
+  background: rgba(19, 15, 12, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.28);
   border-radius: var(--radius-md);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
   max-width: fit-content;
   margin-left: auto;
   margin-right: auto;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.hero-stats:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 24px rgba(197, 152, 67, 0.2);
 }
 
 .hero-stat {
@@ -764,13 +843,13 @@ textarea {
   border-radius: var(--radius-md);
   overflow: hidden;
   text-decoration: none;
-  transition: all 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .drink-card:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lift);
+  border-color: rgba(212, 175, 55, 0.45);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.8), 0 0 24px rgba(197, 152, 67, 0.22);
 }
 
 .drink-card-image-wrap {
@@ -823,7 +902,7 @@ textarea {
 }
 
 .drink-card:hover .drink-card-img {
-  transform: scale(1.05);
+  transform: scale(1.07);
 }
 
 .drink-card-fallback {
@@ -848,29 +927,50 @@ textarea {
   top: 12px;
   left: 12px;
   z-index: 2;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   padding: 4px 10px;
-  border-radius: 4px;
-}
-
-.badge-featured {
-  background: rgba(197, 152, 67, 0.9);
-  color: #120e0a;
-  display: flex;
+  border-radius: 999px;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.badge-featured,
+.badge-signature {
+  background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
+  color: #0b0907;
+  border: 1px solid rgba(255, 235, 175, 0.65);
+  box-shadow: 0 2px 10px rgba(212, 175, 55, 0.45);
+}
+
+.badge-bestseller {
+  background: linear-gradient(135deg, #ff5e3a 0%, #ff2a00 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 200, 180, 0.55);
+  box-shadow: 0 2px 10px rgba(255, 94, 58, 0.45);
+}
+
+.badge-bestseller .badge-fire-icon {
+  font-size: 0.8rem;
+  line-height: 1;
 }
 
 .badge-soldout {
-  background: rgba(226, 92, 80, 0.9);
+  background: rgba(226, 92, 80, 0.92);
   color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(226, 92, 80, 0.35);
 }
 
 .badge-lowstock {
-  background: rgba(229, 167, 62, 0.9);
+  background: rgba(229, 167, 62, 0.92);
   color: #120e0a;
+  border: 1px solid rgba(255, 230, 160, 0.4);
 }
 
 .drink-card-body {
@@ -933,9 +1033,16 @@ textarea {
   font-weight: 500;
   padding: 3px 8px;
   background: rgba(197, 152, 67, 0.08);
-  border: 1px solid rgba(197, 152, 67, 0.16);
+  border: 1px solid rgba(197, 152, 67, 0.2);
   border-radius: 4px;
   color: var(--amber-soft);
+  transition: all 0.2s ease;
+}
+
+.taste-pill:hover {
+  background: rgba(197, 152, 67, 0.18);
+  border-color: rgba(212, 175, 55, 0.45);
+  color: var(--cream);
 }
 
 .drink-card-footer {
@@ -981,10 +1088,16 @@ textarea {
 .drink-card-rating {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--cream);
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffd166;
+}
+
+.drink-card-rating svg {
+  color: #ffb703;
+  fill: #ffb703;
+  filter: drop-shadow(0 0 5px rgba(255, 183, 3, 0.7));
 }
 
 /* =========================================================
@@ -1666,11 +1779,11 @@ textarea {
 .order-summary-box {
   position: sticky;
   top: 96px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, #1d1612 0%, #140f0c 100%);
+  border: 1px solid rgba(212, 175, 55, 0.35);
   border-radius: var(--radius-md);
   padding: 28px;
-  box-shadow: var(--shadow-lift);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(197, 152, 67, 0.15);
 }
 
 .bill-header {
@@ -1679,22 +1792,27 @@ textarea {
   justify-content: space-between;
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-soft);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.22);
 }
 
 .bill-title {
   font-family: var(--font-heading);
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--cream);
+  letter-spacing: 0.5px;
 }
 
 .bill-tag {
   font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--amber);
+  color: var(--amber-soft);
+  background: rgba(197, 152, 67, 0.14);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 3px 8px;
+  border-radius: 4px;
 }
 
 .summary-row {
@@ -1716,9 +1834,10 @@ textarea {
 
 .summary-row.total .font-serif {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   font-weight: 700;
   color: var(--amber-soft);
+  text-shadow: 0 0 14px rgba(232, 198, 130, 0.4);
 }
 
 /* ---------- Ưu đãi trong phiếu đặt chỗ: mã giảm giá + dùng điểm ---------- */
@@ -5460,27 +5579,28 @@ body.age-gate-locked {
 }
 .btn-time-slot {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  border: 1px solid rgba(212, 175, 55, 0.28);
   color: var(--amber-soft, #e8c682);
-  padding: 4px 11px;
+  padding: 5px 13px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-family: inherit;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
 }
 .btn-time-slot:hover {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(212, 175, 55, 0.16);
   border-color: var(--amber, #c59843);
   color: #fff;
   transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
 }
 .btn-time-slot.active {
-  background: var(--amber, #c59843);
-  border-color: var(--amber, #c59843);
+  background: linear-gradient(135deg, #d4af37 0%, #c59843 100%);
+  border-color: #ffd875;
   color: #0b0907;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(197, 152, 67, 0.4);
+  box-shadow: 0 2px 14px rgba(212, 175, 55, 0.55);
 }
