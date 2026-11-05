@@ -383,6 +383,17 @@ function bindEvents() {
     exportOrdersToExcel(allOrders);
   });
 
+  
+  document.getElementById("btn-resend-order-ticket")?.addEventListener("click", async () => {
+    if (!activeOrder) return;
+    try {
+      await sendOrderConfirmationEmail(activeOrder);
+      toast(`Đã gửi lại vé điện tử đến email ${activeOrder.email || "của khách hàng"} thành công!`, "success");
+    } catch (err) {
+      toast("Lỗi gửi email: " + err.message, "error");
+    }
+  });
+
   document.getElementById("btn-print-order-receipt")?.addEventListener("click", () => {
     if (activeOrder) printOrderInvoice(activeOrder);
   });
