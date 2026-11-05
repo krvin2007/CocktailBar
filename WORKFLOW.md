@@ -161,3 +161,4 @@ flowchart TD
 | **7. Báo đơn** | Hệ thống | Phát chuông âm thanh cảnh báo đơn mới | `notificationService.js` (Web Audio API) | Âm thanh `ding-dong` sang trọng phát ra |
 | **8. Quản trị** | Nhân viên | Tiếp nhận đơn, xác nhận, chuyển trạng thái pha chế | `admin-orders.html`, `ordersService.js` | `status = 'preparing' ➔ 'completed'` |
 | **9. In & Xuất** | Thu ngân | In hóa đơn thanh toán PDF & Xuất báo cáo Excel | `exportService.js` | File `.csv` UTF-8 BOM và cửa sổ in POS |
+
