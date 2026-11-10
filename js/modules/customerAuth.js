@@ -493,6 +493,30 @@ export async function updateCustomerAvatar(customerId, avatarDataUrl) {
 }
 
 /**
+ * Cập nhật thông tin hồ sơ của khách hàng (Họ tên, Email, Ngày sinh)
+ * @param {string} customerId
+ * @param {Object} profileData
+ */
+export async function updateCustomerProfile(customerId, { name, email, birthDate } = {}) {
+  if (!customerId) throw new Error("Không tìm thấy mã khách hàng.");
+  const payload = {};
+  if (name !== undefined) payload.name = String(name).trim();
+  if (email !== undefined) payload.email = String(email).trim().toLowerCase();
+  if (birthDate !== undefined) payload.birthDate = String(birthDate).trim();
+  payload.updatedAt = new Date().toISOString();
+
+  const saved = await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, payload);
+
+  const session = getCurrentCustomer();
+  if (session && session.id === customerId) {
+    const updatedSession = { ...session, ...payload };
+    setItem(SESSION_KEY, updatedSession);
+    dispatchAuthChange(updatedSession);
+  }
+  return saved;
+}
+
+/**
  * Đổi mật khẩu cho khách hàng đang đăng nhập
  * @param {string} customerId
  * @param {string} oldPassword

@@ -11,18 +11,19 @@
 
 import "../modules/navbar.js";
 import { api } from "../modules/api.js";
-import { getCurrentCustomer, MEMBER_RANKS, rankProgress, lifetimeOf, POINT_VALUE_VND, updateCustomerAvatar } from "../modules/customerAuth.js";
+import { getCurrentCustomer, MEMBER_RANKS, rankProgress, lifetimeOf, POINT_VALUE_VND, updateCustomerAvatar, updateCustomerProfile } from "../modules/customerAuth.js";
 import { POINT_REDEEM_VND, MIN_POINT_REDEEM, MAX_POINT_REDEEM_SHARE } from "../modules/promotions.js";
 import { loadingHtml, errorHtml, toast, confirmDialog } from "../modules/ui.js";
 import { escapeHtml, formatMoney, formatDate, formatDateTime } from "../modules/utils.js";
 import { t } from "../modules/i18n.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
-import { reportTransferSent } from "../modules/ordersService.js";
+import { reportTransferSent, cancelByCustomer } from "../modules/ordersService.js";
 import { openCinemaTicketModal, getEmailsByRecipient, sendOrderConfirmationEmail } from "../modules/emailService.js";
 import { openChangePasswordModal } from "../modules/changePasswordModal.js";
 import { openForgotPasswordModal } from "../modules/forgotPasswordModal.js";
 import { printOrderInvoice } from "../modules/exportService.js";
 import { getFavoriteDrinks, toggleFavorite } from "../modules/favoritesService.js";
+import { ageProblem } from "../modules/age.js";
 
 const bodyEl = document.getElementById("account-body");
 let currentCustomerOrders = [];
@@ -102,6 +103,11 @@ function orderRowHtml(o) {
       🎟️ Vé điện tử
     </button>`;
 
+  const cancelBtnHtml = o.status === "pending" ? `
+    <button type="button" class="btn btn-ghost btn-sm btn-cancel-account-order" data-id="${escapeHtml(o.id)}" data-code="${escapeHtml(o.code)}" data-phone="${escapeHtml(o.phone || '')}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap; color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); margin-right: 4px;" title="Huỷ đơn đặt này (hoàn lại kho)">
+      Huỷ đơn
+    </button>` : "";
+
   return `
     <tr>
       <td class="text-sm font-mono"><strong class="text-amber">${code}</strong></td>
@@ -110,7 +116,7 @@ function orderRowHtml(o) {
       <td class="text-sm font-bold text-amber">${total}</td>
       <td>${statusHtml}</td>
       <td>${paymentBadgeHtml}</td>
-      <td style="text-align: right; white-space: nowrap;">${printInvoiceBtnHtml}${ticketBtnHtml}${payBtnHtml}</td>
+      <td style="text-align: right; white-space: nowrap;">${printInvoiceBtnHtml}${ticketBtnHtml}${cancelBtnHtml}${payBtnHtml}</td>
     </tr>`;
 }
 
@@ -201,6 +207,9 @@ function render(customer, myOrders = [], myMessages = [], myFavDrinks = [], myEm
       </div>
 
       <div class="account-profile-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-open-edit-profile" style="border: 1px solid rgba(255,255,255,0.2); color: var(--cream); display: inline-flex; align-items: center; gap: 6px;">
+          ✏️ <span>Chỉnh sửa hồ sơ</span>
+        </button>
         <button type="button" class="btn btn-ghost btn-sm" id="btn-open-change-pass" style="border: 1px solid rgba(212,175,55,0.4); color: var(--gold-light); display: inline-flex; align-items: center; gap: 6px;">
           🔑 <span>Đổi mật khẩu</span>
         </button>
@@ -353,6 +362,86 @@ function render(customer, myOrders = [], myMessages = [], myFavDrinks = [], myEm
     </div>`;
 }
 
+function openEditProfileModal(customer, onSuccess) {
+  const existing = document.getElementById("modal-edit-profile");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "modal-edit-profile";
+  modal.className = "modal-overlay is-open";
+  modal.innerHTML = `
+    <div class="modal-dialog" style="max-width: 440px;">
+      <div class="modal-head" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <h3 class="modal-title" style="margin: 0; font-size: 1.1rem; color: var(--cream);">✏️ Chỉnh sửa thông tin cá nhân</h3>
+        <button type="button" class="modal-close" id="btn-close-edit-profile" aria-label="Đóng" style="background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">&times;</button>
+      </div>
+      <form id="form-edit-profile" style="padding: 16px 20px;">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Họ và tên *</label>
+          <input type="text" id="edit-profile-name" class="form-control" value="${escapeHtml(customer.name || '')}" required style="width: 100%;">
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Email nhận vé &amp; thông báo</label>
+          <input type="email" id="edit-profile-email" class="form-control" value="${escapeHtml(customer.email || '')}" style="width: 100%;">
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Ngày sinh (Yêu cầu đủ 18+)</label>
+          <input type="date" id="edit-profile-birth" class="form-control" value="${escapeHtml(customer.birthDate || '')}" style="width: 100%;">
+          <div id="edit-profile-age-error" class="text-xs" style="color: #f87171; margin-top: 4px; display: none;"></div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn btn-ghost" id="btn-cancel-edit-profile">Huỷ</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-edit-profile">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector("#btn-close-edit-profile").addEventListener("click", close);
+  modal.querySelector("#btn-cancel-edit-profile").addEventListener("click", close);
+
+  const form = modal.querySelector("#form-edit-profile");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = modal.querySelector("#edit-profile-name").value.trim();
+    const email = modal.querySelector("#edit-profile-email").value.trim();
+    const birthDate = modal.querySelector("#edit-profile-birth").value.trim();
+
+    if (!name) {
+      toast("Vui lòng nhập họ và tên.", "warning");
+      return;
+    }
+
+    if (birthDate) {
+      const problem = ageProblem(birthDate);
+      if (problem) {
+        const errEl = modal.querySelector("#edit-profile-age-error");
+        errEl.textContent = problem;
+        errEl.style.display = "block";
+        return;
+      }
+    }
+
+    const submitBtn = modal.querySelector("#btn-submit-edit-profile");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Đang lưu...";
+
+    try {
+      await updateCustomerProfile(customer.id, { name, email, birthDate });
+      toast("Cập nhật thông tin thành công!", "success");
+      close();
+      if (typeof onSuccess === "function") onSuccess();
+    } catch (err) {
+      toast(err.message || "Lỗi khi cập nhật thông tin.", "danger");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Lưu thay đổi";
+    }
+  });
+}
+
 async function init() {
   const session = getCurrentCustomer();
   if (!session) {
@@ -442,6 +531,36 @@ bodyEl.addEventListener("click", async (e) => {
     toggleFavorite(drinkId);
     toast("Đã bỏ món khỏi danh sách yêu thích.", "info");
     init();
+    return;
+  }
+
+  // Chỉnh sửa hồ sơ
+  const editProfileBtn = e.target.closest("#btn-open-edit-profile");
+  if (editProfileBtn) {
+    openEditProfileModal(activeCustomer, () => {
+      init();
+    });
+    return;
+  }
+
+  // Huỷ đơn đặt hàng
+  const cancelOrderBtn = e.target.closest(".btn-cancel-account-order");
+  if (cancelOrderBtn) {
+    const code = cancelOrderBtn.dataset.code;
+    const phone = cancelOrderBtn.dataset.phone || activeCustomer?.phone;
+    const ok = await confirmDialog(`Bạn có chắc chắn muốn huỷ đơn ${code}? Quán sẽ tự động hoàn lại tồn kho ly và cập nhật trạng thái đơn.`, {
+      title: "Xác nhận huỷ đơn",
+      okText: "Huỷ đơn",
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await cancelByCustomer(code, phone);
+      toast(`Đã huỷ đơn ${code} thành công và hoàn trả kho.`, "info");
+      init();
+    } catch (err) {
+      toast(err.message || "Không thể huỷ đơn lúc này.", "danger");
+    }
     return;
   }
 
