@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang Sản Phẩm & Đánh Giá Mẫu (Sample Product Review)</title>
+  <style>
+    :root {
+      --primary: #c59843;
+      --primary-light: #e8c682;
+      --bg: #0f0d0b;
+      --surface: #1a1512;
+      --text: #f5eedf;
+      --muted: #a39485;
+      --border: rgba(226, 186, 114, 0.2);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 30px 20px;
+    }
+    .container { max-width: 860px; margin: 0 auto; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .product-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 640px) {
+      .product-layout { grid-template-columns: 1fr; }
+    }
+    #product-image {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #241c16;
+    }
+    h1, h2, h3 { color: var(--primary-light); margin-bottom: 12px; }
+    .price { font-size: 1.4rem; font-weight: bold; color: var(--primary); margin: 8px 0; }
+    .rating-badge { color: #f59e0b; font-weight: 600; margin-bottom: 12px; display: inline-block; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: var(--muted); }
+    input[type="text"], input[type="email"], input[type="password"], textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #120e0a;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--primary); }
+    button {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    button:hover { background: var(--primary-light); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .star-rating { display: flex; gap: 12px; margin-bottom: 12px; }
+    .star-rating label { cursor: pointer; color: #f59e0b; font-size: 1.2rem; }
+    .review-item {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+    .review-item:last-child { border-bottom: none; }
+    .review-item-header { display: flex; justify-content: space-between; align-items: center; }
+    .review-author { font-weight: bold; color: var(--primary-light); }
+    .review-stars { color: #f59e0b; }
+    .review-date { font-size: 0.8rem; color: var(--muted); display: block; margin-top: 4px; }
+    .message { font-size: 0.9rem; margin-top: 8px; color: var(--primary-light); }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header style="margin-bottom: 24px; text-align: center;">
+      <h1>Sản Phẩm & Đánh Giá Mẫu (Sample Product Review)</h1>
+      <p class="muted">Minh hoạ luồng dữ liệu sản phẩm, đăng nhập và đánh giá sao (1-5 sao)</p>
+    </header>
+
+    <!-- Khối 1: Thông tin sản phẩm -->
+    <section class="card product-layout">
+      <img id="product-image" src="" alt="Ảnh sản phẩm">
+      <div>
+        <h2 id="product-name">Đang tải sản phẩm...</h2>
+        <div class="rating-badge" id="product-rating">★ 0.0</div>
+        <div class="price" id="product-price">0 đ</div>
+        <p id="product-description" style="color: var(--muted);"></p>
+      </div>
+    </section>
+
+    <!-- Khối 2: Đăng nhập thành viên -->
+    <section class="card">
+      <h2>Tài Khoản Thành Viên</h2>
+
+      <!-- Form khi chưa đăng nhập -->
+      <form id="login-form">
+        <p class="muted" style="margin-bottom: 12px;">Đăng nhập để gửi nhận xét của bạn:</p>
+        <div class="form-group">
+          <label for="login-email">Email:</label>
+          <input type="email" id="login-email" placeholder="VD: user@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Mật khẩu:</label>
+          <input type="password" id="login-password" placeholder="Nhập mật khẩu" required>
+        </div>
+        <button type="submit">Đăng nhập</button>
+      </form>
+
+      <!-- Khối khi đã đăng nhập -->
+      <div id="account-session" hidden>
+        <p id="welcome-message" style="font-weight: bold; color: var(--primary); margin-bottom: 10px;"></p>
+        <button type="button" id="logout-button" style="background: rgba(255,255,255,0.1); color: #fff;">Đăng xuất</button>
+      </div>
+      <p class="message" id="account-message"></p>
+    </section>
+
+    <!-- Khối 3: Gửi đánh giá mới -->
+    <section class="card">
+      <h2>Viết Đánh Giá Của Bạn</h2>
+      <p id="review-login-hint" class="muted">Vui lòng đăng nhập ở trên trước khi viết đánh giá.</p>
+
+      <form id="review-form" hidden>
+        <div class="form-group">
+          <label>Chấm điểm số sao:</label>
+          <div class="star-rating">
+            <label><input type="radio" name="rating" value="5" checked> ★★★★★ (5 sao)</label>
+            <label><input type="radio" name="rating" value="4"> ★★★★☆ (4 sao)</label>
+            <label><input type="radio" name="rating" value="3"> ★★★☆☆ (3 sao)</label>
+            <label><input type="radio" name="rating" value="2"> ★★☆☆☆ (2 sao)</label>
+            <label><input type="radio" name="rating" value="1"> ★☆☆☆☆ (1 sao)</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="review-comment">Nội dung bình luận:</label>
+          <textarea id="review-comment" rows="3" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..." required></textarea>
+        </div>
+        <button type="submit" id="review-submit">Gửi đánh giá</button>
+      </form>
+      <p class="message" id="review-message"></p>
+    </section>
+
+    <!-- Khối 4: Danh sách nhận xét -->
+    <section class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2>Nhận Xét Từ Khách Hàng</h2>
+        <span id="review-count" class="rating-badge">0 nhận xét</span>
+      </div>
+      <div id="reviews-list">
+        <p class="muted">Đang tải nhận xét...</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Nạp thư viện Axios và mã logic app.js -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
