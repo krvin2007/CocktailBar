@@ -1516,6 +1516,19 @@
   ],
   "vouchers": [
     {
+      "id": "v-welcome50",
+      "code": "WELCOME50",
+      "description": "Ưu đãi chào mừng thành viên mới: Giảm 50% tổng bill cho đơn đầu tiên",
+      "type": "percent",
+      "value": 50,
+      "maxDiscount": 0,
+      "minOrder": 0,
+      "expiresAt": "2030-12-31T23:59:59.000Z",
+      "usageLimit": 0,
+      "usedCount": 0,
+      "active": true
+    },
+    {
       "id": "v1",
       "code": "WELCOME10",
       "description": "Chào bạn mới: giảm 10% (tối đa 100.000đ) cho đơn từ 200.000đ",

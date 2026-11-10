@@ -614,10 +614,12 @@ function renderCart() {
 
 /* ---------------- Ưu đãi: giảm theo hạng, mã giảm giá, dùng điểm ---------------- */
 
-const savedVoucher = getItem(APPLIED_VOUCHER_KEY, "");
+const urlVoucher = new URLSearchParams(window.location.search).get("voucher");
+const savedVoucher = urlVoucher || getItem(APPLIED_VOUCHER_KEY, "");
 const promo = { voucher: savedVoucher || "", points: 0 }; // khách đang nhập gì (chưa chắc hợp lệ)
 if (voucherInput && savedVoucher) {
   voucherInput.value = savedVoucher;
+  if (urlVoucher) setItem(APPLIED_VOUCHER_KEY, urlVoucher);
 }
 let pricing = null;                       // kết quả tính giá mới nhất (promotions.resolvePricing)
 let pricingRequestId = 0;

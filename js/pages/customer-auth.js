@@ -173,10 +173,14 @@ if (regForm) {
     try {
       const res = await customerRegister({ name, phone, email, password: pass, birthDate });
       if (res.success) {
-        toast(`Đăng ký thành công! Chào mừng quý khách ${res.customer.name}.`, "success");
+        if (res.voucherCode) {
+          localStorage.setItem("applied_voucher", res.voucherCode);
+        }
+        toast(`🎉 Đăng ký thành công! Quán đã gửi mã giảm 50% (${res.voucherCode}) về email ${email} của bạn!`, "success", 4000);
         setTimeout(() => {
-          window.location.href = "order.html";
-        }, 700);
+          const redirectUrl = res.voucherCode ? `order.html?voucher=${encodeURIComponent(res.voucherCode)}` : "order.html";
+          window.location.href = redirectUrl;
+        }, 1500);
       } else {
         toast(res.message, "danger");
       }

@@ -12,6 +12,7 @@ import { getItem, setItem, removeItem } from "./storage.js";
 import { uid, normalizePhone } from "./utils.js";
 import { hashPassword, verifyPassword, passwordProblem } from "./passwords.js";
 import { ageProblem } from "./age.js";
+import { sendWelcomeVoucherEmail } from "./emailService.js";
 
 const CUSTOMER_COLLECTION = "customers";
 const SESSION_KEY = "customer_session";
@@ -419,7 +420,46 @@ export async function customerRegister({ name, phone, email, password, birthDate
     setItem(SESSION_KEY, sessionData);
     dispatchAuthChange(sessionData);
 
-    return { success: true, customer: sessionData };
+    // Tạo mã giảm giá 50% chào mừng thành viên mới và gửi thư xác nhận về Email
+    const personalVoucherCode = `WELCOME50-${cleanPhone.slice(-4)}`;
+    const welcomeVoucher = {
+      id: `v-welcome-${cleanPhone}`,
+      code: personalVoucherCode,
+      description: `Mã chào mừng thành viên mới (${cleanName}): Giảm 50% tổng bill cho đơn đầu tiên`,
+      type: "percent",
+      value: 50,
+      maxDiscount: 0,
+      minOrder: 0,
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      usageLimit: 1,
+      usedCount: 0,
+      active: true,
+      phone: cleanPhone,
+      email: cleanEmail,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      await api.post("/vouchers", welcomeVoucher);
+    } catch {
+      // Không chặn luồng nếu máy chủ vouchers offline
+    }
+
+    if (cleanEmail) {
+      try {
+        await sendWelcomeVoucherEmail({
+          name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          voucherCode: personalVoucherCode,
+          discountPercent: 50,
+        });
+      } catch (err) {
+        console.warn("Không thể gửi email chào mừng:", err);
+      }
+    }
+
+    return { success: true, customer: sessionData, voucherCode: personalVoucherCode };
   } catch (err) {
     return { success: false, message: err.message || "Lỗi tạo tài khoản khách hàng mới." };
   }

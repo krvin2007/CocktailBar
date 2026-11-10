@@ -18,7 +18,7 @@ import { escapeHtml, formatMoney, formatDate, formatDateTime } from "../modules/
 import { t } from "../modules/i18n.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
 import { reportTransferSent, cancelByCustomer } from "../modules/ordersService.js";
-import { openCinemaTicketModal, getEmailsByRecipient, sendOrderConfirmationEmail } from "../modules/emailService.js";
+import { openCinemaTicketModal, openWelcomeVoucherModal, getEmailsByRecipient, sendOrderConfirmationEmail } from "../modules/emailService.js";
 import { openChangePasswordModal } from "../modules/changePasswordModal.js";
 import { openForgotPasswordModal } from "../modules/forgotPasswordModal.js";
 import { printOrderInvoice } from "../modules/exportService.js";
@@ -155,6 +155,7 @@ function messageCardHtml(m) {
 function render(customer, myOrders = [], myMessages = [], myFavDrinks = [], myEmails = []) {
   activeCustomer = customer;
   currentCustomerOrders = myOrders;
+  window.__myEmails = myEmails;
   const points = Number(customer.points) || 0;       // số dư dùng được
   const lifetime = lifetimeOf(customer);              // tích luỹ trọn đời - dùng để xét hạng (không giảm khi dùng điểm)
   const { current, next, toNext, percent } = rankProgress(lifetime);
@@ -298,29 +299,38 @@ function render(customer, myOrders = [], myMessages = [], myFavDrinks = [], myEm
     </h4>
     ${myEmails.length ? `
     <div class="account-emails-wrap" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px;">
-      ${myEmails.map((m) => `
+      ${myEmails.map((m) => {
+        const isWelcome = m.type === "welcome_voucher";
+        const icon = isWelcome ? "🎁" : "🎟️";
+        const actionBtn = isWelcome ? `
+          <button type="button" class="btn btn-primary btn-sm btn-view-welcome-voucher" data-id="${escapeHtml(m.id)}" data-code="${escapeHtml(m.voucherCode || '')}" style="font-size: 0.8rem; padding: 4px 12px; background: linear-gradient(135deg, #d4af37, #b8860b); border: none; color: #000; font-weight: 600;">
+            🎁 Xem Mã Giảm 50%
+          </button>` : `
+          <button type="button" class="btn btn-primary btn-sm btn-view-mailbox-ticket" data-order-code="${escapeHtml(m.orderCode || '')}" data-order-id="${escapeHtml(m.orderId || '')}" style="font-size: 0.8rem; padding: 4px 12px;">
+            🎟️ Mở Vé Điện Tử
+          </button>`;
+
+        return `
         <div class="account-email-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(212,175,55,0.3); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div>
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <span style="font-size: 1.2rem;">🎟️</span>
-              <strong style="color: var(--cream); font-size: 0.95rem;">${escapeHtml(m.subject || "Vé Điện Tử Xác Nhận Đơn Hàng")}</strong>
+              <span style="font-size: 1.2rem;">${icon}</span>
+              <strong style="color: var(--cream); font-size: 0.95rem;">${escapeHtml(m.subject || "Thông báo từ Quán Bar Đêm")}</strong>
             </div>
             <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 14px; flex-wrap: wrap;">
               <span>Gửi lúc: <strong>${m.sentAt ? formatDateTime(m.sentAt) : "—"}</strong></span>
               <span>Đến: <strong style="color: #4ade80;">${escapeHtml(m.to || "")}</strong></span>
-              ${m.orderSummary ? `<span>Tổng tiền: <strong class="text-amber">${formatMoney(m.orderSummary.total || 0)}</strong></span>` : ""}
+              ${isWelcome ? `<span style="color: #facc15; font-weight: 600;">Mã ưu đãi: ${escapeHtml(m.voucherCode || 'WELCOME50')} (Giảm 50% tổng bill)</span>` : (m.orderSummary ? `<span>Tổng tiền: <strong class="text-amber">${formatMoney(m.orderSummary.total || 0)}</strong></span>` : "")}
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button type="button" class="btn btn-primary btn-sm btn-view-mailbox-ticket" data-order-code="${escapeHtml(m.orderCode || '')}" data-order-id="${escapeHtml(m.orderId || '')}" style="font-size: 0.8rem; padding: 4px 12px;">
-              🎟️ Mở Vé Điện Tử
-            </button>
+            ${actionBtn}
             <a href="mailto:${escapeHtml(m.to || '')}?subject=${encodeURIComponent(m.subject || '')}" class="btn btn-outline btn-sm" style="font-size: 0.8rem; padding: 4px 10px;">
               Hòm thư Gmail
             </a>
           </div>
-        </div>
-      `).join("")}
+        </div>`;
+      }).join("")}
     </div>` : `
     <div style="margin-bottom: 28px; padding: 14px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1);">
       <p class="text-muted text-sm" style="margin-bottom: 6px;">Chưa có thư vé điện tử nào. Khi bạn đặt bàn hoặc thanh toán chuyển khoản, vé điện tử và email xác nhận sẽ được tự động lưu tại đây.</p>
@@ -596,6 +606,33 @@ bodyEl.addEventListener("click", async (e) => {
       init();
     } catch (err) {
       toast(err.message || "Lỗi khi gỡ ảnh đại diện.", "danger");
+    }
+    return;
+  }
+
+  // Xem thư quà tặng chào mừng giảm 50%
+  const welcomeVoucherBtn = e.target.closest(".btn-view-welcome-voucher");
+  if (welcomeVoucherBtn) {
+    const emailId = welcomeVoucherBtn.dataset.id;
+    const emailRec = (window.__myEmails || []).find((em) => em.id === emailId) || {
+      to: activeCustomer?.email,
+      voucherCode: welcomeVoucherBtn.dataset.code || "WELCOME50",
+      discountPercent: 50,
+    };
+    openWelcomeVoucherModal(emailRec);
+    return;
+  }
+
+  // Mở vé điện tử từ hòm thư
+  const mailboxTicketBtn = e.target.closest(".btn-view-mailbox-ticket");
+  if (mailboxTicketBtn) {
+    const orderCode = mailboxTicketBtn.dataset.orderCode;
+    const orderId = mailboxTicketBtn.dataset.orderId;
+    const order = currentCustomerOrders.find((o) => o.code === orderCode || o.id === orderId);
+    if (order) {
+      openCinemaTicketModal(order, { toEmail: activeCustomer?.email || order.email });
+    } else {
+      toast("Không tìm thấy thông tin đơn vé này.", "warning");
     }
     return;
   }
