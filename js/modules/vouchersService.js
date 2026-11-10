@@ -28,6 +28,11 @@ function endOfDayIn(days) {
 /** Mã mẫu - nguồn sinh db.json và dự phòng khi máy chủ chưa chạy */
 export const SEED_VOUCHERS = [
   {
+    id: "v-welcome50", code: "WELCOME50", description: "Ưu đãi chào mừng thành viên mới: Giảm 50% tổng bill cho đơn đầu tiên",
+    type: "percent", value: 50, maxDiscount: 0, minOrder: 0,
+    expiresAt: endOfDayIn(180), usageLimit: 0, usedCount: 0, active: true,
+  },
+  {
     id: "v1", code: "WELCOME10", description: "Chào bạn mới: giảm 10% (tối đa 100.000đ) cho đơn từ 200.000đ",
     type: "percent", value: 10, maxDiscount: 100000, minOrder: 200000,
     expiresAt: endOfDayIn(90), usageLimit: 0, usedCount: 0, active: true,

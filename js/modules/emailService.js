@@ -368,3 +368,180 @@ export function openCinemaTicketModal(order, { toEmail = "" } = {}) {
   });
 }
 
+/**
+ * Xây dựng nội dung Email Chào Mừng Thành Viên Mới kèm mã giảm giá 50%
+ * @param {object} param0
+ * @returns {string} HTML email
+ */
+export function buildWelcomeVoucherHtml({ name, email, voucherCode, discountPercent = 50 }) {
+  const safeName = escapeHtml(name || "Quý khách");
+  const safeCode = escapeHtml(voucherCode || "WELCOME50");
+  const safeEmail = escapeHtml(email || "");
+
+  return `
+    <div class="welcome-voucher-email-box" style="background: linear-gradient(145deg, #181512, #0d0b09); border: 2px solid #d4af37; border-radius: 12px; padding: 24px; color: #f5f0eb; font-family: 'Plus Jakarta Sans', sans-serif; max-width: 580px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <div style="text-align: center; border-bottom: 1px dashed rgba(212,175,55,0.4); padding-bottom: 16px; margin-bottom: 20px;">
+        <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">🍸</span>
+        <h2 style="font-family: 'Cormorant Garamond', serif; color: #d4af37; font-size: 1.8rem; margin: 0; letter-spacing: 2px;">QUÁN BAR ĐÊM</h2>
+        <p style="font-size: 0.75rem; letter-spacing: 3px; color: #a89f91; margin: 4px 0 0; text-transform: uppercase;">Artisan Speakeasy Lounge</p>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h3 style="color: #ffffff; font-size: 1.2rem; margin-top: 0; margin-bottom: 10px;">Xin chào, ${safeName}! 👋</h3>
+        <p style="font-size: 0.92rem; line-height: 1.6; color: #d0c8be; margin: 0 0 12px;">
+          Chào mừng bạn đã gia nhập câu lạc bộ thành viên của <strong>Quán Bar Đêm</strong>. Để tri ân quý khách, chúng tôi hân hạnh gửi tặng bạn <strong>Mã Giảm Giá ${discountPercent}%</strong> cho <strong>tổng bill đơn hàng đầu tiên</strong> khi đặt bàn hoặc gọi món tại quán.
+        </p>
+      </div>
+
+      <!-- Khối Coupon Voucher Sang Trọng -->
+      <div style="background: rgba(212,175,55,0.08); border: 2px dashed #d4af37; border-radius: 10px; padding: 18px; text-align: center; margin-bottom: 22px;">
+        <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: #d4af37; font-weight: 600; margin-bottom: 6px;">
+          MÃ ƯU ĐÃI THÀNH VIÊN MỚI
+        </div>
+        <div style="font-family: monospace; font-size: 2rem; font-weight: bold; color: #facc15; letter-spacing: 4px; padding: 8px 14px; background: rgba(0,0,0,0.5); border-radius: 6px; display: inline-block; margin: 6px 0;">
+          ${safeCode}
+        </div>
+        <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600; margin-top: 8px;">
+          GIẢM ${discountPercent}% TỔNG HOÁ ĐƠN ĐẦU TIÊN
+        </div>
+        <div style="font-size: 0.8rem; color: #a89f91; margin-top: 6px;">
+          Áp dụng cho mọi khung giờ và tất cả món trong thực đơn Cocktail &amp; Mocktail.
+        </div>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px 16px; font-size: 0.82rem; color: #a89f91; margin-bottom: 22px;">
+        <p style="margin: 0 0 6px;"><strong>Điều kiện áp dụng:</strong></p>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.5;">
+          <li>Mã chỉ áp dụng cho <strong>đơn hàng đầu tiên</strong> của tài khoản này.</li>
+          <li>Được gửi chính thức đến hộp thư: <strong>${safeEmail}</strong>.</li>
+          <li>Hạn sử dụng: 60 ngày kể từ ngày đăng ký thành viên.</li>
+        </ul>
+      </div>
+
+      <div style="text-align: center;">
+        <a href="order.html?voucher=${encodeURIComponent(safeCode)}" style="display: inline-block; background: linear-gradient(135deg, #d4af37, #b8860b); color: #0b0907; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px;">
+          Đặt Bàn &amp; Dùng Mã Ngay
+        </a>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Gửi email chào mừng thành viên mới kèm mã voucher giảm 50%
+ * @param {object} param0
+ * @returns {Promise<object>} emailRecord
+ */
+export async function sendWelcomeVoucherEmail({ name, email, phone, voucherCode, discountPercent = 50 }) {
+  if (!email) return null;
+  const targetEmail = String(email).trim().toLowerCase();
+  const safeCode = String(voucherCode || "WELCOME50").trim().toUpperCase();
+  const bodyHtml = buildWelcomeVoucherHtml({ name, email: targetEmail, voucherCode: safeCode, discountPercent });
+
+  const emailRecord = {
+    id: uid("mail"),
+    to: targetEmail,
+    phone: phone || "",
+    recipient: targetEmail,
+    voucherCode: safeCode,
+    discountPercent,
+    subject: `🎁 [Quán Bar Đêm] Chào Mừng Thành Viên Mới — Tặng Bạn Mã Giảm ${discountPercent}% Đơn Đầu Tiên!`,
+    type: "welcome_voucher",
+    sentAt: new Date().toISOString(),
+    bodyHtml,
+    orderSummary: {
+      code: safeCode,
+      name: name || "Thành viên mới",
+      phone: phone || "",
+      total: 0,
+      status: "active",
+      paymentStatus: "voucher",
+      serviceType: "welcome_gift",
+      itemsCount: 1,
+    },
+  };
+
+  // 1. Lưu bản đệm vào localStorage
+  try {
+    const list = getItem(EMAILS_KEY, []) || [];
+    list.unshift(emailRecord);
+    setItem(EMAILS_KEY, list.slice(0, 50));
+  } catch (err) {
+    console.warn("Không thể lưu email vào localStorage:", err);
+  }
+
+  // 2. Đồng bộ lên máy chủ REST /emails
+  try {
+    await api.post("/emails", emailRecord);
+  } catch {
+    // Không chặn luồng
+  }
+
+  return emailRecord;
+}
+
+/**
+ * Mở modal xem thư chào mừng và mã giảm giá 50%
+ * @param {object} emailRecord
+ */
+export function openWelcomeVoucherModal(emailRecord) {
+  if (!emailRecord) return;
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay show";
+  modal.id = "welcome-voucher-modal";
+  modal.style.zIndex = "99999";
+  modal.innerHTML = `
+    <div class="modal-box modal-wide" role="dialog" aria-modal="true" style="max-width: 640px; padding: 20px;">
+      <div class="modal-head" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">🎁</span>
+          <h3 style="margin: 0; font-size: 1.15rem; color: var(--cream);">Quà Tặng Thành Viên Mới — Giảm 50%</h3>
+        </div>
+        <button type="button" class="modal-close-x" id="voucher-modal-close" aria-label="Đóng">&times;</button>
+      </div>
+
+      <div style="margin-bottom: 14px; background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 8px; padding: 10px 14px; color: #facc15; font-size: 0.85rem;">
+        Thư xác nhận quà tặng đã gửi tới: <strong>${escapeHtml(emailRecord.to || "")}</strong>
+      </div>
+
+      <div class="voucher-modal-body">
+        ${emailRecord.bodyHtml || buildWelcomeVoucherHtml({ name: emailRecord.orderSummary?.name, email: emailRecord.to, voucherCode: emailRecord.voucherCode, discountPercent: emailRecord.discountPercent || 50 })}
+      </div>
+
+      <div style="margin-top: 18px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-copy-welcome-voucher" data-code="${escapeHtml(emailRecord.voucherCode || '')}">
+          📋 Sao chép mã
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-use-welcome-voucher" data-code="${escapeHtml(emailRecord.voucherCode || '')}">
+          Đến Đặt Bàn Ngay &amp; Dùng Mã
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector("#voucher-modal-close")?.addEventListener("click", close);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+
+  modal.querySelector("#btn-copy-welcome-voucher")?.addEventListener("click", () => {
+    const code = emailRecord.voucherCode || "WELCOME50";
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(() => {
+        alert(`Đã sao chép mã ưu đãi: ${code}`);
+      }).catch(() => {
+        prompt("Sao chép mã giảm giá của bạn:", code);
+      });
+    } else {
+      prompt("Sao chép mã giảm giá của bạn:", code);
+    }
+  });
+
+  modal.querySelector("#btn-use-welcome-voucher")?.addEventListener("click", () => {
+    const code = emailRecord.voucherCode || "WELCOME50";
+    localStorage.setItem("applied_voucher", code);
+    window.location.href = `order.html?voucher=${encodeURIComponent(code)}`;
+  });
+}
+
