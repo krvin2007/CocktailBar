@@ -198,13 +198,15 @@ export function parseCsv(csvText) {
   return result;
 }
 
+const VALID_DRINK_CATEGORIES = ["classic", "signature", "sour-fizz", "aperitivo", "spirits", "zero-proof"];
+
 /** Tải file CSV mẫu để người dùng điền và import thực đơn */
 export function downloadDrinkTemplateCsv() {
-  const headers = ["Tên món", "Danh mục (classic/signature/mocktail/heritage)", "Giá bán (VNĐ)", "Nồng độ cồn (% ABV)", "Ly phục vụ", "Mô tả", "Hương vị (cách nhau dấu phẩy)"];
+  const headers = ["Tên món", "Danh mục (classic/signature/sour-fizz/aperitivo/spirits/zero-proof)", "Giá bán (VNĐ)", "Nồng độ cồn (% ABV)", "Ly phục vụ", "Mô tả", "Hương vị (cách nhau dấu phẩy)"];
   const sampleRows = [
     ["Gold Velvet Negroni", "signature", "145000", "22", "Crystal Rocks", "Biến tấu Negroni phủ bột vàng 24K óng ánh cùng tinh dầu bưởi hồng.", "Ngọt thanh, Thảo mộc, Cam quýt"],
-    ["Smoked Highland Mist", "heritage", "185000", "28", "Glencairn Snifter", "Single Malt 16 năm hun khói gỗ sồi than bùn đảo Islay.", "Khói đậm, Vani, Gỗ sồi"],
-    ["Virgin Passion Fizz", "mocktail", "85000", "0", "Highball Glass", "Chanh dây tươi, sả đập dập và soda tonic thanh mát không cồn.", "Chua ngọt, Sảng khoái, Trái cây"]
+    ["Smoked Highland Mist", "spirits", "185000", "28", "Glencairn Snifter", "Single Malt 16 năm hun khói gỗ sồi than bùn đảo Islay.", "Khói đậm, Vani, Gỗ sồi"],
+    ["Virgin Passion Fizz", "zero-proof", "85000", "0", "Highball Glass", "Chanh dây tươi, sả đập dập và soda tonic thanh mát không cồn.", "Chua ngọt, Sảng khoái, Trái cây"]
   ];
   exportToCsv("Mau-Nhap-Thuc-Don-Cocktail.csv", sampleRows, headers);
 }
@@ -226,7 +228,13 @@ export function parseDrinksFromCsvRows(rows) {
     const name = String(row[0] || "").trim();
     if (!name) return; // bỏ dòng trống
 
-    const category = String(row[1] || "signature").trim().toLowerCase();
+    // Chấp nhận cả tên cũ trong file mẫu đời đầu (mocktail/heritage) và quy về danh mục có thật của web
+    const CATEGORY_ALIASES = { mocktail: "zero-proof", heritage: "spirits" };
+    const rawCategory = String(row[1] || "signature").trim().toLowerCase();
+    const category = CATEGORY_ALIASES[rawCategory] || rawCategory;
+    if (!VALID_DRINK_CATEGORIES.includes(category)) {
+      throw new Error(`Dòng ${idx + 2} ("${name}"): danh mục "${rawCategory}" không hợp lệ. Dùng một trong: ${VALID_DRINK_CATEGORIES.join(", ")}.`);
+    }
     const price = Math.max(10000, Number(String(row[2] || "").replace(/[^0-9]/g, "")) || 120000);
     const abv = Math.max(0, Math.min(100, Number(row[3]) || 0));
     const glassType = String(row[4] || "Crystal Glass").trim();
@@ -312,7 +320,7 @@ export function printOrderInvoice(order) {
 
         <div class="meta-row"><span>MÃ HÓA ĐƠN: <strong>${escapeHtml(order.code)}</strong></span> <span>${formatDateTime(order.createdAt || new Date())}</span></div>
         <div class="meta-row"><span>Khách hàng: <strong>${escapeHtml(order.name)}</strong></span> <span>SĐT: ${escapeHtml(order.phone || "—")}</span></div>
-        <div class="meta-row"><span>Hình thức: ${escapeHtml(order.serviceType || "Tại quầy")}</span> <span>Trạng thái: <strong>${order.paymentStatus === "paid" ? "ĐÃ THANH TOÁN" : "CHƯA THANH TOÁN"}</strong></span></div>
+        <div class="meta-row"><span>Hình thức: ${escapeHtml({ "dine-in": "Tại quầy / Bàn", booking: "Đặt bàn trước", takeaway: "Mang đi" }[order.serviceType] || order.serviceType || "Tại quầy")}</span> <span>Trạng thái: <strong>${order.paymentStatus === "paid" ? "ĐÃ THANH TOÁN" : "CHƯA THANH TOÁN"}</strong></span></div>
 
         <table>
           <thead>

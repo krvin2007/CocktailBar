@@ -7,7 +7,6 @@
 import "./ui.js"; // đăng ký banner cảnh báo khi máy chủ API chưa chạy
 import { openModal, closeModal, toast } from "./ui.js";
 import { getCartSummary } from "./ordersService.js";
-import { getItem, removeItem } from "./storage.js";
 import { ICONS } from "./icons.js";
 import { getCurrentLang, setLanguage, toggleLanguage, t, applyI18n } from "./i18n.js";
 import { escapeHtml } from "./utils.js";
@@ -49,17 +48,8 @@ export function renderHeader() {
   const customer = staff ? null : getCurrentCustomer();
   const account = staff || customer;
 
-  // Nếu không có tài khoản nào đăng nhập -> dọn sạch giỏ hàng & vết đơn cũ
-  if (!account) {
-    if (getItem("cart") || getItem("quanbar_latest_order") || getItem("applied_voucher")) {
-      removeItem("cart");
-      removeItem("quanbar_latest_order");
-      removeItem("applied_voucher");
-    }
-  }
-
   const page = currentPage();
-  const { count } = account ? getCartSummary() : { count: 0 };
+  const { count } = getCartSummary();
   const currentLang = getCurrentLang();
   const navLinks = getNavLinks();
 

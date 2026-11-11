@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node tools/start.js",
-    "api": "json-server db.json --port 3000",
+    "api": "json-server db.json --port 3000 --foreignKeySuffix _fk",
     "web": "node tools/server.js",
     "seed": "node tools/tao-db.js",
     "images": "node tools/tao-anh.js",

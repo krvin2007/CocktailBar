@@ -61,6 +61,7 @@ const IN_SCOPE_KEYWORDS = [
   "negroni", "old fashioned", "martini", "daiquiri", "manhattan", "margarita", "mojito",
   "bartender", "pha chế", "ada coleman", "harry craddock", "dale degroff", "colin field",
   "hầm rượu", "nhà sưu tầm", "tuổi", "18", "say xe", "hút thuốc", "không gian", "3d", "chỗ ngồi",
+  "thanh toán", "chuyển khoản", "qr", "mbbank", "vietqr", "tiền mặt", "hoá đơn", "hóa đơn", "đơn hàng", "mã đơn", "vé", "huỷ", "hủy", "đặt món", "gọi món",
   "xin chào", "chào", "hello", "hi", "cảm ơn", "tạm biệt", "bye", "bạn là ai", "tư vấn", "gợi ý",
 ];
 
@@ -115,6 +116,17 @@ export async function getBotResponse(userMessage) {
     return (
       "Dạ em chào quý khách! Em là **Trợ lý Pha chế ảo của Quán Bar Đêm**. 🍸\n\n" +
       "Hôm nay quý khách muốn em tư vấn món cocktail nào, kiểm tra bàn trống, hay tìm hiểu về ưu đãi giảm giá của quán ạ?"
+    );
+  }
+
+  if (/(thanh toán|chuyển khoản|\bqr\b|mbbank|vietqr|tiền mặt|hoá đơn|hóa đơn|vé điện tử|huỷ đơn|hủy đơn)/i.test(lower)) {
+    return (
+      "Dạ quán hỗ trợ thanh toán rất đơn giản ạ:\n\n" +
+      "- 📱 **Quét mã VietQR (MBBank)**: tại trang *Đặt bàn & Gọi món*, bấm *Quét mã thanh toán* rồi chuyển khoản đúng số tiền và nội dung hiển thị, sau đó bấm *Tôi đã chuyển khoản xong*.\n" +
+      "- 💵 **Tiền mặt tại quầy**: thanh toán cho Bartender sau khi dùng món.\n" +
+      "- 🎟️ Sau khi đơn được xác nhận, quý khách nhận **vé điện tử** trong mục *Tài khoản* để check-in.\n" +
+      "- ❌ Đơn chỉ tự huỷ được khi **chưa thanh toán**; nếu đã thanh toán vui lòng gọi hotline " + VENUE.hotline + " để được hỗ trợ.\n\n" +
+      "Quý khách cần em hướng dẫn thêm bước nào không ạ?"
     );
   }
 
