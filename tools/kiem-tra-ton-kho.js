@@ -1190,6 +1190,60 @@ notificationService.playNotificationSound();
 await notificationService.checkOrderUpdates();
 check("checkOrderUpdates chạy kiểm tra định kỳ an toàn", true, true);
 
+section("[45] Giỏ hàng khi chưa đăng nhập & gộp vào tài khoản khi đăng nhập/đăng ký");
+resetDb();
+const guestD1 = await drinks.getDrinkById("d1");
+const guestD2 = await drinks.getDrinkById("d2");
+const guestD3 = await drinks.getDrinkById("d3");
+const guestD6 = await drinks.getDrinkById("d6");
+const guestD8 = await drinks.getDrinkById("d8");
+
+check("Ban đầu chưa đăng nhập", customerAuth.getCurrentCustomer(), null);
+orders.addToCart(guestD1, 2);
+orders.addToCart(guestD2, 1);
+check("Chưa đăng nhập vẫn thêm và giữ được món trong giỏ", [orders.getCart().length, orders.getCartSummary().count], [2, 3]);
+
+const loginCustA = await customerAuth.customerLogin("0909123456", "Khach@123");
+check("Khách A đăng nhập thành công", loginCustA.success, true);
+check("Món chọn trước khi đăng nhập được đưa vào giỏ của Khách A",
+  [orders.getCartSummary().count, orders.getCart().find((i) => i.drinkId === "d1")?.qty, orders.getCart().find((i) => i.drinkId === "d2")?.qty],
+  [3, 2, 1]);
+check("Giỏ tạm sau khi gộp đã được dọn sạch", localStorage.getItem("quanbar_cart"), null);
+
+orders.addToCart(guestD3, 1);
+check("Khách A thêm tiếp món khi đang đăng nhập -> giỏ có 4 ly", orders.getCartSummary().count, 4);
+
+customerAuth.customerLogout();
+check("Sau khi đăng xuất: giỏ khách vãng lai trống, không lộ giỏ Khách A", orders.getCart().length, 0);
+
+orders.addToCart(guestD1, 1);
+check("Chưa đăng nhập chọn thêm 1 ly d1", orders.getCartSummary().count, 1);
+
+await customerAuth.customerLogin("0909123456", "Khach@123");
+check("Khách A đăng nhập lại -> món mới chọn (d1 x1) cộng dồn vào giỏ đã lưu của Khách A (2+1 = 3)",
+  [orders.getCartSummary().count, orders.getCart().find((i) => i.drinkId === "d1")?.qty, orders.getCart().find((i) => i.drinkId === "d3")?.qty],
+  [5, 3, 1]);
+
+customerAuth.customerLogout();
+orders.addToCart(guestD6, 2);
+const loginCustB = await customerAuth.customerLogin("0918765432", "Khach@123");
+check("Khách B đăng nhập -> chỉ nhận món vừa chọn trước đó (d6 x2), không lẫn giỏ Khách A",
+  [loginCustB.success, orders.getCart().length, orders.getCart()[0]?.drinkId, orders.getCart()[0]?.qty],
+  [true, 1, "d6", 2]);
+
+customerAuth.customerLogout();
+orders.addToCart(guestD8, 2);
+const regNewCust = await customerAuth.customerRegister({
+  name: "Khách Mới Giỏ Hàng",
+  phone: "0988776655",
+  email: "khachmoi.cart@gmail.com",
+  password: "Abc@12345",
+  birthDate: "1998-01-01",
+});
+check("Đăng ký tài khoản mới -> món chọn trước đó (d8 x2) tự chuyển vào giỏ tài khoản mới",
+  [regNewCust.success, orders.getCart().length, orders.getCart()[0]?.drinkId, orders.getCart()[0]?.qty],
+  [true, 1, "d8", 2]);
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0

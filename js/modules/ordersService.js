@@ -6,17 +6,16 @@
      json-server tại /orders -> các hàm đơn hàng là async.
    ========================================================= */
 
-import { getItem, setItem } from "./storage.js";
+import { readCartByCustomer, writeCartByCustomer } from "./cartStorage.js";
 import { api, getCollection, getRecord } from "./api.js";
 import { getAllDrinks, adjustStock, isSoldOut, tracksStock, availableQty } from "./drinksService.js";
 import { uid, formatDateTime, normalizePhone } from "./utils.js";
-import { awardPoints, findCustomerByPhone, redeemPoints, refundPoints } from "./customerAuth.js";
+import { awardPoints, findCustomerByPhone, getCurrentCustomer, redeemPoints, refundPoints } from "./customerAuth.js";
 import { findVoucherByCode, adjustVoucherUsage, normalizeVoucherCode } from "./vouchersService.js";
 import { resolvePricing } from "./promotions.js";
 import { ageProblem } from "./age.js";
 import { BOOKING_RULES, VENUE } from "./venue.js";
 
-const CART_KEY = "cart";
 const COLLECTION = "orders";
 
 /** Sinh ngày giờ cách hiện tại "daysAgo" ngày, "hour" giờ trong ngày */
@@ -85,14 +84,16 @@ export const SEED_ORDERS = [
 
 /* ============== GIỎ HÀNG (localStorage) ============== */
 
+function activeCustomerId() {
+  return getCurrentCustomer()?.id || "";
+}
+
 export function getCart() {
-  const cart = getItem(CART_KEY, []);
-  return Array.isArray(cart) ? cart : [];
+  return readCartByCustomer(activeCustomerId());
 }
 
 function saveCart(cart) {
-  setItem(CART_KEY, cart);
-  return cart;
+  return writeCartByCustomer(cart, activeCustomerId());
 }
 
 /** Thêm món vào giỏ; nếu đã có thì cộng dồn số lượng */
