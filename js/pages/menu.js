@@ -108,6 +108,8 @@ function bindFilterEvents() {
   [filters.category, filters.min, filters.max, filters.available, filters.favorites, filters.sort]
     .filter(Boolean)
     .forEach((el) => el.addEventListener("change", render));
+  // Ô giá: lọc ngay khi gõ (trước đây chỉ lọc khi rời ô, khách tưởng bộ lọc hỏng)
+  [filters.min, filters.max].filter(Boolean).forEach((el) => el.addEventListener("input", debouncedRender));
 
   window.addEventListener("favorites-change", () => {
     if (filters.favorites?.checked) render();

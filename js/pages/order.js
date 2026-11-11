@@ -609,6 +609,9 @@ function renderCart() {
     }
   }
 
+  // Tính lại giảm giá theo hạng/mã/điểm mỗi khi giỏ đổi (kể cả lần tải trang đầu) - trước đây chỉ tính khi
+  // khách đổi mã/điểm hoặc bấm gửi đơn, nên khách đã đăng nhập không thấy ô "Dùng điểm" và giá giảm khi vào trang
+  refreshPricing();
   updateSubmitState();
 }
 
@@ -1199,6 +1202,13 @@ function showOrderSuccessModal(order) {
   host.querySelector("#success-open-vietqr-btn")?.addEventListener("click", () => {
     close();
     if (currentUnpaidOrder && currentUnpaidOrder.id !== order.id && Array.isArray(currentUnpaidOrder.items) && currentUnpaidOrder.items.length > 0) {
+      // Mỗi đơn có thể đã được giảm riêng -> tính tiền từng món theo tỉ lệ (tổng đơn / tổng giá niêm yết)
+      const scaleOf = (o) => {
+        const listed = (o.items || []).reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 1), 0);
+        return listed > 0 && o.total > 0 && o.total < listed ? o.total / listed : 1;
+      };
+      const oldScale = scaleOf(currentUnpaidOrder);
+      const newScale = scaleOf(order);
       const combined = [
         ...currentUnpaidOrder.items.map((it) => ({
           ...it,
@@ -1206,7 +1216,7 @@ function showOrderSuccessModal(order) {
           orderCode: currentUnpaidOrder.code,
           orderId: currentUnpaidOrder.id,
           sourceTag: `Đơn cũ ${currentUnpaidOrder.code}`,
-          finalPrice: (Number(it.price) || 0) * (Number(it.qty) || 1),
+          finalPrice: Math.round((Number(it.price) || 0) * (Number(it.qty) || 1) * oldScale),
           checked: true,
         })),
         ...order.items.map((it) => ({
@@ -1215,7 +1225,7 @@ function showOrderSuccessModal(order) {
           orderCode: order.code,
           orderId: order.id,
           sourceTag: `Đơn mới ${order.code}`,
-          finalPrice: (Number(it.price) || 0) * (Number(it.qty) || 1),
+          finalPrice: Math.round((Number(it.price) || 0) * (Number(it.qty) || 1) * newScale),
           checked: true,
         })),
       ];

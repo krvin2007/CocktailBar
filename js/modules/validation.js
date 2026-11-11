@@ -23,8 +23,8 @@ const RULES = {
   vnphone: (v) => !v.trim() || /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(v.trim().replace(/[\s.-]/g, ""))
     || "Số điện thoại di động không hợp lệ (10 số, đầu 03, 05, 07, 08, 09)",
 
-  username: (v) => !v.trim() || /^[a-zA-Z0-9_]{4,20}$/.test(v.trim())
-    || "Tên đăng nhập từ 4-20 ký tự, chỉ gồm chữ cái, số và dấu gạch dưới (_)",
+  username: (v) => !v.trim() || /^[a-zA-Z0-9_.]{4,20}$/.test(v.trim())
+    || "Tên đăng nhập từ 4-20 ký tự, chỉ gồm chữ cái, số, dấu gạch dưới (_) và dấu chấm (.)",
 
   password: (v) => !v || passwordProblem(v) === "" || passwordProblem(v),
 

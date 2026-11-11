@@ -7,10 +7,10 @@
 import "./ui.js"; // đăng ký banner cảnh báo khi máy chủ API chưa chạy
 import { openModal, closeModal, toast } from "./ui.js";
 import { getCartSummary } from "./ordersService.js";
-import { getItem, removeItem } from "./storage.js";
 import { ICONS } from "./icons.js";
 import { getCurrentLang, setLanguage, toggleLanguage, t, applyI18n } from "./i18n.js";
 import { escapeHtml } from "./utils.js";
+import { getItem, removeItem } from "./storage.js";
 import {
   getCurrentCustomer, customerLogout, customerRegister, syncCustomerSession,
 } from "./customerAuth.js";

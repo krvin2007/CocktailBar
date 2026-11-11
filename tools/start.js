@@ -13,7 +13,11 @@ const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || "0.0.0.0";
 
 const app = jsonServer.create();
-const router = jsonServer.router(path.resolve("db.json"));
+const router = jsonServer.router(path.resolve("db.json"), {
+  // json-server 0.17 mặc định coi trường "xxxId" là khoá ngoại và TỰ XOÁ mọi bản ghi con khi xoá một bản ghi
+  // (VD xoá 1 khách hàng -> mất luôn các đơn có customerId). Đổi hậu tố để tắt hành vi nguy hiểm này.
+  foreignKeySuffix: "_fk",
+});
 const middlewares = jsonServer.defaults({
   static: process.cwd(),
   bodyParser: true,

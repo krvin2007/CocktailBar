@@ -809,3 +809,6 @@
     flex-shrink: 0 !important;
   }
 }
+
+/* Chặn thanh cuộn ngang toàn trang do hiệu ứng 3D/scroll-reveal tràn mép (clip không tạo scroll container nên không phá sticky) */
+html, body { overflow-x: clip; }
