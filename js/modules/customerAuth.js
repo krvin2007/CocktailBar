@@ -9,6 +9,7 @@
 
 import { api, getCollection } from "./api.js";
 import { getItem, setItem, removeItem } from "./storage.js";
+import { mergeGuestCartIntoCustomer } from "./cartStorage.js";
 import { uid, normalizePhone } from "./utils.js";
 import { hashPassword, verifyPassword, passwordProblem } from "./passwords.js";
 import { ageProblem } from "./age.js";
@@ -320,6 +321,7 @@ export async function customerLogin(identifier, password) {
     };
 
     setItem(SESSION_KEY, sessionData);
+    mergeGuestCartIntoCustomer(sessionData.id);
     dispatchAuthChange(sessionData);
 
     return { success: true, customer: sessionData };
@@ -418,6 +420,7 @@ export async function customerRegister({ name, phone, email, password, birthDate
     };
 
     setItem(SESSION_KEY, sessionData);
+    mergeGuestCartIntoCustomer(sessionData.id);
     dispatchAuthChange(sessionData);
 
     // Tạo mã giảm giá 50% chào mừng thành viên mới và gửi thư xác nhận về Email
