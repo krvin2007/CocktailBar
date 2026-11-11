@@ -71,10 +71,23 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
     ? allItems
     : (Array.isArray(order?.items) ? order.items : []);
 
+  // Đơn đã áp giảm hạng / mã giảm giá / điểm thì tổng tiền thật (order.total) THẤP HƠN tổng giá niêm yết của các món.
+  // Phân bổ phần giảm đó đều lên từng món để mã QR đòi đúng số tiền khách phải trả (trước đây QR đòi giá chưa giảm).
+  const listedSum = rawItems.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 1), 0);
+  const orderTotal = Number(order?.total) || 0;
+  const discountScale = !(Array.isArray(allItems) && allItems.length > 0) && listedSum > 0 && orderTotal > 0 && orderTotal < listedSum
+    ? orderTotal / listedSum
+    : 1;
+
+  // Không truyền allItems = đang thanh toán CHÍNH đơn này: món của nó là món của đơn đã lưu (isUnpaid), không phải
+  // món trong giỏ. Nếu không đánh dấu, nút "Tôi đã chuyển khoản" sẽ tạo thêm một đơn TRÙNG (không giảm giá, trừ kho lần nữa).
+  const itemsBelongToOrder = !(Array.isArray(allItems) && allItems.length > 0) && Boolean(order?.id);
+
   const items = rawItems.map((it) => {
+    const isUnpaidItem = itemsBelongToOrder || Boolean(it.isUnpaid);
     const qty = Number(it.qty) || 1;
     const price = Number(it.price) || 0;
-    const finalPrice = it.finalPrice !== undefined ? Number(it.finalPrice) : (price * qty);
+    const finalPrice = it.finalPrice !== undefined ? Number(it.finalPrice) : Math.round(price * qty * discountScale);
     return {
       id: it.id || it.drinkId || it.name,
       drinkId: it.drinkId || it.id,
@@ -83,10 +96,10 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
       price,
       finalPrice,
       image: it.image || "",
-      isUnpaid: Boolean(it.isUnpaid),
-      orderCode: it.orderCode || (it.isUnpaid ? order?.code : "") || "",
-      orderId: it.orderId || (it.isUnpaid ? order?.id : "") || "",
-      sourceTag: it.sourceTag || (it.isUnpaid ? `Đơn cũ ${it.orderCode || order?.code}` : "Món mới chọn"),
+      isUnpaid: isUnpaidItem,
+      orderCode: it.orderCode || (isUnpaidItem ? order?.code : "") || "",
+      orderId: it.orderId || (isUnpaidItem ? order?.id : "") || "",
+      sourceTag: it.sourceTag || (isUnpaidItem ? `Đơn ${it.orderCode || order?.code}` : "Món mới chọn"),
       checked: it.checked !== false,
     };
   });
