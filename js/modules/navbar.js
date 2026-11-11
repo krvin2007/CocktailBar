@@ -10,6 +10,7 @@ import { getCartSummary } from "./ordersService.js";
 import { ICONS } from "./icons.js";
 import { getCurrentLang, setLanguage, toggleLanguage, t, applyI18n } from "./i18n.js";
 import { escapeHtml } from "./utils.js";
+import { getItem, removeItem } from "./storage.js";
 import {
   getCurrentCustomer, customerLogout, customerRegister, syncCustomerSession,
 } from "./customerAuth.js";
@@ -47,6 +48,11 @@ export function renderHeader() {
   const staff = currentAdmin();
   const customer = staff ? null : getCurrentCustomer();
   const account = staff || customer;
+
+  // Giữ nguyên giỏ hàng khi chưa đăng nhập; chỉ dọn vết đơn hàng cũ nếu không có tài khoản
+  if (!account && getItem("quanbar_latest_order")) {
+    removeItem("quanbar_latest_order");
+  }
 
   const page = currentPage();
   const { count } = getCartSummary();
@@ -683,8 +689,7 @@ export function renderFloatingContactWidget() {
 export function refreshCartBadge() {
   const badges = document.querySelectorAll('a[href="order.html"] .nav-badge');
   const cartDots = document.querySelectorAll(".cart-count-dot");
-  const account = currentAdmin() || getCurrentCustomer();
-  const { count } = account ? getCartSummary() : { count: 0 };
+  const { count } = getCartSummary();
 
   badges.forEach((b) => {
     if (count > 0) b.textContent = count;

@@ -1445,7 +1445,7 @@ function fillCustomerInfo() {
 
 fillCustomerInfo();
 
-window.addEventListener("customer-auth-change", () => {
+window.addEventListener("customer-auth-change", async () => {
   fillCustomerInfo();
   if (!getCurrentCustomer()) {
     promo.points = 0; // đăng xuất thì bỏ điểm đang định dùng
@@ -1455,8 +1455,10 @@ window.addEventListener("customer-auth-change", () => {
       unpaidBannerWrap.hidden = true;
     }
   }
-  refreshPricing();
-  checkAndRenderUnpaidOrderBanner();
+  await checkAndRenderUnpaidOrderBanner();
+  await syncAndRenderCart();
+  await refreshPricing();
+  refreshCartBadge();
 });
 
 // Đổi VI/EN: chữ tĩnh trong HTML do applyI18n() lo; phần do JS vẽ thì vẽ lại ở đây
@@ -1471,6 +1473,7 @@ cartListEl.innerHTML = loadingHtml("Đang kiểm tra danh sách món đã chọn
 async function initOrderPage() {
   await checkAndRenderUnpaidOrderBanner();
   await syncAndRenderCart();
+  await refreshPricing();
 }
 
 initOrderPage();
