@@ -27,12 +27,18 @@ const TIMEOUT_MS = 6000;
 /**
  * Địa chỉ gốc của API.
  * - Mở web bằng `npm start` (json-server phục vụ cả web lẫn API ở cổng 3000)
- *   -> dùng chung địa chỉ trang hiện tại.
- * - Mở web bằng Live Server (cổng 5500...) như hướng dẫn bài giảng
+ *   hoặc khi deploy lên cloud (HTTPS/domain thật) -> dùng chung địa chỉ trang hiện tại.
+ * - Mở web bằng Live Server / `npm run web` ở localhost (cổng 5500...)
  *   -> gọi sang http://localhost:3000 (json-server đã bật CORS sẵn).
  */
 const loc = globalThis.location;
-export const API_BASE = loc && loc.port === API_PORT ? loc.origin : `http://localhost:${API_PORT}`;
+const isHttp = Boolean(loc?.protocol?.startsWith("http"));
+const isLocalHost =
+  Boolean(loc) && (loc.hostname === "localhost" || loc.hostname === "127.0.0.1");
+export const API_BASE =
+  isHttp && (loc.port === API_PORT || !isLocalHost)
+    ? loc.origin
+    : `http://localhost:${API_PORT}`;
 
 /** Lỗi API đã được chuẩn hoá - trang chỉ cần đọc .message để báo người dùng */
 export class ApiError extends Error {
