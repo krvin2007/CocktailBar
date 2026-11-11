@@ -4,7 +4,7 @@
 
 import "../modules/navbar.js";
 import { refreshCartBadge } from "../modules/navbar.js";
-import { getDrinkById, queryDrinks, CATEGORY_LABELS, getCategoryLabel, servingLabel, isSoldOut } from "../modules/drinksService.js";
+import { getDrinkById, queryDrinks, CATEGORY_LABELS, getCategoryLabel, servingLabel, isSoldOut, availableQty } from "../modules/drinksService.js";
 import { addToCart, checkCanAdd } from "../modules/ordersService.js";
 import { drinkCardHtml } from "../modules/drinkCard.js";
 import { formatMoney, formatDateTime, escapeHtml, getQueryParam, clamp } from "../modules/utils.js";
@@ -38,7 +38,7 @@ function renderNotFound() {
 
 function renderDetail() {
   const soldout = isSoldOut(drink);
-  const maxQty = 20;
+  const maxQty = Math.max(1, Math.min(20, availableQty(drink))); // không cho chọn quá số chai còn trong kho
   const customer = getCurrentCustomer();
   const discountPercent = getCustomerDiscountPercent(customer);
   const hasDiscount = discountPercent > 0;
