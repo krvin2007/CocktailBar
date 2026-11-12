@@ -499,14 +499,21 @@ export async function updateCustomerStatus(customerId, status, reason = "") {
   });
 }
 
+/** Mức chiết khấu riêng tối đa Quản lý được cấp (khớp ô nhập trong admin-customers.html) */
+export const MAX_CUSTOM_DISCOUNT = 50;
+
 /**
  * Cập nhật chiết khấu ưu đãi riêng cho khách hàng (dành cho Admin / Quản lý)
  * @param {string} customerId
- * @param {number} customDiscount Tỷ lệ giảm giá % (0 - 100)
+ * @param {number} customDiscount Tỷ lệ giảm giá % (0 - MAX_CUSTOM_DISCOUNT)
  * @param {string} [discountNote] Lý do ưu đãi riêng
  */
 export async function updateCustomerDiscount(customerId, customDiscount, discountNote = "") {
-  const discount = Math.max(0, Math.min(100, Math.round(Number(customDiscount) || 0)));
+  const raw = customDiscount === "" || customDiscount === null || customDiscount === undefined ? 0 : Number(customDiscount);
+  if (!Number.isFinite(raw) || raw < 0 || raw > MAX_CUSTOM_DISCOUNT) {
+    throw new Error(`Chiết khấu riêng chỉ được từ 0% đến ${MAX_CUSTOM_DISCOUNT}%.`);
+  }
+  const discount = Math.round(raw);
   return await api.patch(`/${CUSTOMER_COLLECTION}/${encodeURIComponent(customerId)}`, {
     customDiscount: discount,
     discountNote: String(discountNote || "").trim(),

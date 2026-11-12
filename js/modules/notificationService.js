@@ -11,7 +11,6 @@ import { getCurrentCustomer } from "./customerAuth.js";
 import { currentAdmin } from "./auth.js";
 import { toast } from "./ui.js";
 import { getItem, setItem } from "./storage.js";
-import { escapeHtml } from "./utils.js";
 
 const LAST_ORDER_STATES_KEY = "quanbar_tracked_order_states";
 let pollingTimer = null;
@@ -86,19 +85,19 @@ export async function checkOrderUpdates() {
           // Báo trạng thái pha chế / hoàn tất
           if (order.status !== prevStatus) {
             if (order.status === "preparing") {
-              toast(`🍸 Đơn hàng <strong>${escapeHtml(order.code)}</strong> đang được Bartender bắt đầu pha chế!`, "info");
+              toast(`🍸 Đơn hàng ${order.code} đang được Bartender bắt đầu pha chế!`, "info");
               playNotificationSound();
             } else if (order.status === "completed") {
-              toast(`✨ Đơn hàng <strong>${escapeHtml(order.code)}</strong> đã hoàn tất! Chúc quý khách thưởng thức ngon miệng.`, "success");
+              toast(`✨ Đơn hàng ${order.code} đã hoàn tất! Chúc quý khách thưởng thức ngon miệng.`, "success");
               playNotificationSound();
             } else if (order.status === "cancelled") {
-              toast(`Đơn hàng <strong>${escapeHtml(order.code)}</strong> đã được ghi nhận huỷ.`, "warning");
+              toast(`Đơn hàng ${order.code} đã được ghi nhận huỷ.`, "warning");
             }
           }
 
           // Báo trạng thái thanh toán
           if (order.paymentStatus !== prevPayment && order.paymentStatus === "paid") {
-            toast(`💳 Đơn hàng <strong>${escapeHtml(order.code)}</strong> đã được quán xác nhận thanh toán thành công!`, "success");
+            toast(`💳 Đơn hàng ${order.code} đã được quán xác nhận thanh toán thành công!`, "success");
             playNotificationSound();
           }
         }
@@ -115,7 +114,7 @@ export async function checkOrderUpdates() {
       if (lastKnownCount !== null && currentOrderCount > lastKnownCount) {
         const newOrders = orders.slice(lastKnownCount);
         const latestCode = newOrders[newOrders.length - 1]?.code || "mới";
-        toast(`🔔 <strong>Có đơn hàng mới: ${escapeHtml(latestCode)}!</strong> Vui lòng kiểm tra mục Quản lý đơn.`, "warning");
+        toast(`🔔 Có đơn hàng mới: ${latestCode}! Vui lòng kiểm tra mục Quản lý đơn.`, "warning");
         playNotificationSound();
       }
       setItem("quanbar_staff_last_order_count", currentOrderCount);
