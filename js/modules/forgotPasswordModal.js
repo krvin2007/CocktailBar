@@ -10,6 +10,7 @@ import { toast, setButtonLoading } from "./ui.js";
 import { escapeHtml } from "./utils.js";
 import { ICONS } from "./icons.js";
 import { PASSWORD_RULE_TEXT } from "./passwords.js";
+import { otpChannelPickerHtml, selectedOtpChannel, otpMessageCardHtml, startResendCountdown } from "./otpUi.js";
 
 /**
  * Mở hộp thoại quên mật khẩu
@@ -47,6 +48,11 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
             <input type="text" id="fp-ident-input" class="form-control" placeholder="VD: 0909123456 hoặc email@domain.com" value="${escapeHtml(prefilledIdent)}" required style="width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.95rem;">
           </div>
 
+          <div class="form-group mb-3">
+            <label style="display: block; font-size: 0.84rem; font-weight: 600; color: var(--cream); margin-bottom: 6px;">Chọn cách nhận mã OTP</label>
+            ${otpChannelPickerHtml("fp-channel")}
+          </div>
+
           <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
             <button type="button" class="btn btn-ghost btn-sm" id="fp-cancel-btn">Huỷ</button>
             <button type="submit" class="btn btn-primary" id="fp-btn-send-otp">
@@ -59,12 +65,9 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
 
       <!-- BƯỚC 2: NHẬP OTP & ĐẶT MẬT KHẨU MỚI -->
       <div id="fp-step-2" hidden>
-        <div class="fp-otp-notice" style="background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.82rem; color: var(--gold-light);">
-          <div>Mã xác thực đã gửi tới: <strong id="fp-target-display" style="color: #fff;"></strong></div>
-          <div id="fp-demo-otp-chip" style="margin-top: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 4px; border: 1px dashed rgba(212, 175, 55, 0.5); font-size: 0.78rem;">
-            <span>Mã demo: <strong id="fp-demo-otp-val" style="color: var(--amber-soft); letter-spacing: 1px;"></strong></span>
-            <span style="font-size: 0.7rem; color: var(--muted);">(Bấm để điền)</span>
-          </div>
+        <div id="fp-otp-notice" style="margin-bottom: 14px;"></div>
+        <div style="text-align: right; margin: -6px 0 10px;">
+          <button type="button" class="btn btn-ghost btn-sm" id="fp-resend-btn">Gửi lại mã</button>
         </div>
 
         <form id="fp-form-step2" novalidate>
@@ -133,9 +136,8 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
   const form1 = host.querySelector("#fp-form-step1");
   const form2 = host.querySelector("#fp-form-step2");
   const identInput = host.querySelector("#fp-ident-input");
-  const targetDisplay = host.querySelector("#fp-target-display");
-  const demoOtpVal = host.querySelector("#fp-demo-otp-val");
-  const demoOtpChip = host.querySelector("#fp-demo-otp-chip");
+  const noticeEl = host.querySelector("#fp-otp-notice");
+  const resendBtn = host.querySelector("#fp-resend-btn");
   const otpInput = host.querySelector("#fp-otp-input");
   const newPassInput = host.querySelector("#fp-new-pass");
   const confirmPassInput = host.querySelector("#fp-confirm-pass");
@@ -144,6 +146,25 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
   const btnBack = host.querySelector("#fp-back-btn");
 
   let currentCustomerId = "";
+  let currentIdent = "";
+  let stopCountdown = () => {};
+
+  function showSentNotice(res) {
+    noticeEl.innerHTML = otpMessageCardHtml(res);
+    stopCountdown();
+    stopCountdown = startResendCountdown(resendBtn, res.resendInSeconds);
+  }
+
+  // Gửi lại mã (theo kênh đang chọn ở bước 1)
+  resendBtn.addEventListener("click", async () => {
+    const res = await requestPasswordResetOtp(currentIdent, selectedOtpChannel(host, "fp-channel"));
+    if (res.success) {
+      showSentNotice(res);
+      toast(res.message, "success");
+    } else {
+      toast(res.message, "danger");
+    }
+  });
 
   // Xử lý bước 1: Yêu cầu OTP
   form1.addEventListener("submit", async (e) => {
@@ -156,11 +177,11 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
 
     const restore = setButtonLoading(btnSendOtp, "Đang kiểm tra...");
     try {
-      const res = await requestPasswordResetOtp(ident);
+      const res = await requestPasswordResetOtp(ident, selectedOtpChannel(host, "fp-channel"));
       if (res.success) {
         currentCustomerId = res.customerId;
-        targetDisplay.textContent = res.target;
-        demoOtpVal.textContent = res.otp;
+        currentIdent = ident;
+        showSentNotice(res);
         toast(res.message, "success");
 
         step1El.hidden = true;
@@ -174,9 +195,11 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
     }
   });
 
-  // Bấm vào chip demo để tự động điền mã OTP
-  demoOtpChip?.addEventListener("click", () => {
-    otpInput.value = demoOtpVal.textContent.trim();
+  // Bấm vào dòng "tự điền mã" trong tin nhắn mô phỏng để điền OTP
+  noticeEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".otp-fill-btn");
+    if (!btn) return;
+    otpInput.value = btn.dataset.otp;
     newPassInput.focus();
     toast("Đã tự động điền mã OTP!", "info");
   });
