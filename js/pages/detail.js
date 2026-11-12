@@ -12,6 +12,7 @@ import { toast, loadingHtml, errorHtml, setButtonLoading } from "../modules/ui.j
 import { ICONS } from "../modules/icons.js";
 import { t } from "../modules/i18n.js";
 import { getCurrentCustomer, getCustomerDiscountPercent } from "../modules/customerAuth.js";
+import { canCustomer, syncRolePermissions } from "../modules/auth.js";
 import { isFavorite, toggleFavorite } from "../modules/favoritesService.js";
 import { getDrinkReviews, addDrinkReview } from "../modules/reviewsService.js";
 
@@ -251,6 +252,13 @@ async function initReviewSection() {
   const form = document.getElementById("drink-review-form");
   const commentInput = document.getElementById("review-comment-input");
   const submitBtn = document.getElementById("btn-submit-review");
+
+  // Quyền "Đánh giá & bình luận" của khách hàng bị tắt -> ẩn form, vẫn cho đọc đánh giá cũ
+  await syncRolePermissions();
+  if (!canCustomer("self:review")) {
+    const card = form?.closest(".review-form-card");
+    if (card) card.innerHTML = `<p class="text-muted" style="margin:0;">Quán đang tạm tắt chức năng đánh giá món. Bạn vẫn có thể đọc nhận xét của khách khác bên dưới.</p>`;
+  }
 
   const ratingLabels = {
     1: "Chưa hài lòng (1/5)",

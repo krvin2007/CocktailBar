@@ -29,12 +29,12 @@ let activeMessage = null;
 
 function rowHtml(m) {
   let badgeHtml;
-  if (m.reply) {
-    badgeHtml = '<span class="badge badge-success">Đã phản hồi</span>';
-  } else if (m.read) {
-    badgeHtml = '<span class="badge badge-muted">Đã xử lý</span>';
-  } else {
+  if (!m.read) {
     badgeHtml = '<span class="badge badge-warning">Chưa xử lý</span>';
+  } else if (m.reply) {
+    badgeHtml = '<span class="badge badge-success">Đã phản hồi</span>';
+  } else {
+    badgeHtml = '<span class="badge badge-muted">Đã xử lý</span>';
   }
 
   return `
@@ -125,7 +125,7 @@ function openMessage(m) {
     ${m.email ? `<div class="order-detail-row"><span>Email</span><strong><a href="mailto:${escapeHtml(m.email)}">${escapeHtml(m.email)}</a></strong></div>` : ""}
     <div class="order-detail-row"><span>Gửi lúc</span><strong>${formatDateTime(m.createdAt)}</strong></div>
     <div class="order-detail-row"><span>Chủ đề</span><strong>${escapeHtml(m.subject || "Khác")}</strong></div>
-    <div class="order-detail-row"><span>Trạng thái</span><strong>${m.reply ? '<span class="badge badge-success">Đã phản hồi</span>' : (m.read ? '<span class="badge badge-muted">Đã xử lý</span>' : '<span class="badge badge-warning">Chưa xử lý</span>')}</strong></div>
+    <div class="order-detail-row"><span>Trạng thái</span><strong>${!m.read ? '<span class="badge badge-warning">Chưa xử lý</span>' : (m.reply ? '<span class="badge badge-success">Đã phản hồi</span>' : '<span class="badge badge-muted">Đã xử lý</span>')}</strong></div>
 
     <div style="margin-top: 14px;">
       <label style="display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--amber-soft); font-weight: 600; margin-bottom: 6px;">Nội dung tin nhắn của khách:</label>

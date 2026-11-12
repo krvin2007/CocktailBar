@@ -11,9 +11,12 @@ import { getCurrentCustomer } from "./customerAuth.js";
 import { currentAdmin } from "./auth.js";
 import { toast } from "./ui.js";
 import { getItem, setItem } from "./storage.js";
-import { escapeHtml } from "./utils.js";
 
 const LAST_ORDER_STATES_KEY = "quanbar_tracked_order_states";
+const KNOWN_ORDER_IDS_KEY = "quanbar_staff_known_order_ids";
+/** Sự kiện phát ra (trên window) khi danh sách đơn trên máy chủ thay đổi - dành cho nhân viên đang mở trang */
+export const ORDERS_CHANGED_EVENT = "orders-changed";
+let lastOrdersSignature = null;
 let pollingTimer = null;
 
 /** Phát âm thanh chuông thông báo dịu nhẹ bằng Web Audio API (không cần tải file ngoài) */
@@ -86,19 +89,19 @@ export async function checkOrderUpdates() {
           // Báo trạng thái pha chế / hoàn tất
           if (order.status !== prevStatus) {
             if (order.status === "preparing") {
-              toast(`🍸 Đơn hàng <strong>${escapeHtml(order.code)}</strong> đang được Bartender bắt đầu pha chế!`, "info");
+              toast(`🍸 Đơn hàng ${order.code} đang được Bartender bắt đầu pha chế!`, "info");
               playNotificationSound();
             } else if (order.status === "completed") {
-              toast(`✨ Đơn hàng <strong>${escapeHtml(order.code)}</strong> đã hoàn tất! Chúc quý khách thưởng thức ngon miệng.`, "success");
+              toast(`✨ Đơn hàng ${order.code} đã hoàn tất! Chúc quý khách thưởng thức ngon miệng.`, "success");
               playNotificationSound();
             } else if (order.status === "cancelled") {
-              toast(`Đơn hàng <strong>${escapeHtml(order.code)}</strong> đã được ghi nhận huỷ.`, "warning");
+              toast(`Đơn hàng ${order.code} đã được ghi nhận huỷ.`, "warning");
             }
           }
 
           // Báo trạng thái thanh toán
           if (order.paymentStatus !== prevPayment && order.paymentStatus === "paid") {
-            toast(`💳 Đơn hàng <strong>${escapeHtml(order.code)}</strong> đã được quán xác nhận thanh toán thành công!`, "success");
+            toast(`💳 Đơn hàng ${order.code} đã được quán xác nhận thanh toán thành công!`, "success");
             playNotificationSound();
           }
         }
@@ -107,18 +110,29 @@ export async function checkOrderUpdates() {
       }
     }
 
-    // 2. Phía Quản trị / Nhân sự: Báo khi có đơn mới
+    // 2. Phía Quản trị / Nhân sự: Báo khi có đơn mới + báo cho trang đơn tự tải lại bảng
     if (staff) {
-      const currentOrderCount = orders.length;
-      const lastKnownCount = getItem("quanbar_staff_last_order_count", null);
-
-      if (lastKnownCount !== null && currentOrderCount > lastKnownCount) {
-        const newOrders = orders.slice(lastKnownCount);
-        const latestCode = newOrders[newOrders.length - 1]?.code || "mới";
-        toast(`🔔 <strong>Có đơn hàng mới: ${escapeHtml(latestCode)}!</strong> Vui lòng kiểm tra mục Quản lý đơn.`, "warning");
-        playNotificationSound();
+      // Nhận biết đơn mới theo MÃ (id) chứ không đếm số lượng: xoá 1 đơn rồi có 1 đơn mới cùng lúc vẫn báo đúng
+      const knownIds = getItem(KNOWN_ORDER_IDS_KEY, null);
+      const currentIds = orders.map((o) => String(o.id));
+      if (Array.isArray(knownIds)) {
+        const known = new Set(knownIds);
+        const newOrders = orders.filter((o) => !known.has(String(o.id)));
+        if (newOrders.length > 0) {
+          const latestCode = newOrders[newOrders.length - 1]?.code || "mới";
+          const extra = newOrders.length > 1 ? ` (và ${newOrders.length - 1} đơn khác)` : "";
+          toast(`🔔 Có đơn hàng mới: ${latestCode}!${extra} Vui lòng kiểm tra mục Quản lý đơn.`, "warning");
+          playNotificationSound();
+        }
       }
-      setItem("quanbar_staff_last_order_count", currentOrderCount);
+      setItem(KNOWN_ORDER_IDS_KEY, currentIds);
+
+      // Danh sách đổi (đơn mới / đổi trạng thái / đổi thanh toán / xoá đơn) -> phát sự kiện để trang đơn tự tải lại
+      const signature = orders.map((o) => `${o.id}|${o.status}|${o.paymentStatus}`).join(",");
+      if (lastOrdersSignature !== null && signature !== lastOrdersSignature && typeof globalThis.dispatchEvent === "function") {
+        globalThis.dispatchEvent(new CustomEvent(ORDERS_CHANGED_EVENT, { detail: { orders } }));
+      }
+      lastOrdersSignature = signature;
     }
 
     if (hasChanges) {

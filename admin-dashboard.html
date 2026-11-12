@@ -54,6 +54,43 @@
       </div>
     </div>
 
+    <!-- Doanh thu theo ngày / tháng / quý / năm -->
+    <div class="panel mt-2" id="period-revenue-panel">
+      <div class="panel-head">
+        <div class="panel-title-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <h3>Doanh thu theo ngày · tháng · quý · năm</h3>
+        </div>
+        <span class="panel-badge" title="Chỉ tính đơn đã thu tiền, không tính đơn huỷ. Ngày kinh doanh chốt 06:00 sáng; đơn đặt bàn tính theo giờ hẹn.">Đã thu tiền · không tính đơn huỷ</span>
+      </div>
+
+      <div class="stat-cards" id="period-summary" style="margin-bottom: 18px;"></div>
+
+      <div class="admin-tabs" role="tablist" id="period-tabs" style="margin-bottom: 12px;">
+        <button type="button" class="admin-tab active" role="tab" aria-selected="true" data-period="day">Theo ngày</button>
+        <button type="button" class="admin-tab" role="tab" aria-selected="false" data-period="month">Theo tháng</button>
+        <button type="button" class="admin-tab" role="tab" aria-selected="false" data-period="quarter">Theo quý</button>
+        <button type="button" class="admin-tab" role="tab" aria-selected="false" data-period="year">Theo năm</button>
+        <button type="button" class="btn btn-outline btn-sm" id="btn-export-period" style="margin-left: auto;" title="Tải bảng đang xem ra file CSV mở được bằng Excel">Xuất Excel</button>
+      </div>
+
+      <div class="table-wrap" style="border:none;">
+        <table class="data-table" id="period-table">
+          <thead>
+            <tr>
+              <th id="period-col-name">Ngày</th>
+              <th>Số đơn đã thu</th>
+              <th>Doanh thu</th>
+              <th style="min-width: 160px;">Tỷ trọng</th>
+              <th>So với kỳ trước</th>
+            </tr>
+          </thead>
+          <tbody id="period-body"></tbody>
+          <tfoot id="period-foot"></tfoot>
+        </table>
+      </div>
+    </div>
+
     <div class="panel mt-2">
       <div class="panel-head">
         <div class="panel-title-wrap">

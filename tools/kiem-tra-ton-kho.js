@@ -84,6 +84,7 @@ const drinks = await import(mod("drinksService.js"));
 const orders = await import(mod("ordersService.js"));
 const staff = await import(mod("staffService.js"));
 const customerAuth = await import(mod("customerAuth.js"));
+const otpService = await import(mod("otpService.js"));
 const vouchers = await import(mod("vouchersService.js"));
 const promotions = await import(mod("promotions.js"));
 const utils = await import(mod("utils.js"));
@@ -1093,31 +1094,201 @@ check("updateCustomerAvatar lưu thành công avatar", updatedWithAvatar.avatar,
 const currentSessionAfterAvatar = customerAuth.getCurrentCustomer();
 check("Session khách đồng bộ avatar mới", currentSessionAfterAvatar.avatar, dummyAvatar);
 
-// 3. Đổi mật khẩu
-const changeWrongOld = await customerAuth.changeCustomerPassword(testCustId, "WrongPass@123", "NewPass@456");
+// 3. Đổi mật khẩu (bắt buộc OTP gửi qua Email hoặc SMS)
+const channelsOfTest = otpService.availableChannels(regRes.customer);
+check("Tài khoản có đủ 2 kênh nhận OTP (Email + SMS)", channelsOfTest.join(","), "email,sms");
+
+const changeOtp = await customerAuth.requestChangePasswordOtp(testCustId, "sms");
+check("Gửi OTP đổi mật khẩu qua SMS thành công", changeOtp.success && changeOtp.channel === "sms", true);
+check("SMS che bớt số điện thoại (091****678)", /^091\*{4}678$/.test(changeOtp.target), true);
+
+const changeNoOtp = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456", "");
+check("Đổi mật khẩu thất bại khi không nhập OTP", changeNoOtp.success, false);
+
+const changeWrongOld = await customerAuth.changeCustomerPassword(testCustId, "WrongPass@123", "NewPass@456", changeOtp.otp);
 check("Đổi mật khẩu thất bại khi sai mật khẩu cũ", changeWrongOld.success, false);
 
-const changeWeakNew = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "weak");
+const changeWeakNew = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "weak", changeOtp.otp);
 check("Đổi mật khẩu thất bại khi mật khẩu mới không đạt chuẩn", changeWeakNew.success, false);
 
-const changeSuccess = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456");
-check("Đổi mật khẩu thành công với mật khẩu hợp lệ", changeSuccess.success, true);
+const changeBadOtp = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456", "000000");
+check("Đổi mật khẩu thất bại khi sai OTP", changeBadOtp.success, false);
+
+const changeSuccess = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456", changeOtp.otp);
+check("Đổi mật khẩu thành công với mật khẩu hợp lệ + OTP đúng (nhập sai MK cũ/mới không làm hao mã)", changeSuccess.success, true);
+
+const changeReuseOtp = await customerAuth.changeCustomerPassword(testCustId, "NewPass@456", "Another@789", changeOtp.otp);
+check("OTP chỉ dùng được 1 lần", changeReuseOtp.success, false);
 
 // 4. Đăng nhập lại với mật khẩu mới
 const loginWithNewPass = await customerAuth.customerLogin("0912345678", "NewPass@456");
 check("Đăng nhập thành công với mật khẩu mới sau khi đổi", loginWithNewPass.success, true);
 
-// 5. Quên mật khẩu & cấp OTP
-const otpReq = await customerAuth.requestPasswordResetOtp("0912345678");
+// 5. Quên mật khẩu & cấp OTP (2 kênh)
+const otpNoEmail = otpService.issueOtp({ customer: { id: "no-mail", phone: "0900000001" }, channel: "email", purpose: "reset" });
+check("Chọn nhận qua Email khi tài khoản chưa có email -> báo lỗi rõ ràng", otpNoEmail.success === false && /chưa có email/.test(otpNoEmail.message), true);
+const otpMailReq = await customerAuth.requestPasswordResetOtp("0912345678", "email");
+check("Quên mật khẩu: nhận OTP qua Email thành công", otpMailReq.success && otpMailReq.channel === "email" && /^lo\*+@gmail\.com$/.test(otpMailReq.target), true);
+
+const otpReq = { ...otpMailReq }; // mã Email vừa gửi; thử gửi lại ngay để kiểm tra giới hạn 30 giây
 check("Yêu cầu OTP quên mật khẩu thành công", otpReq.success, true);
 check("OTP có 6 chữ số", typeof otpReq.otp === "string" && otpReq.otp.length === 6, true);
 
+const otpTooSoon = await customerAuth.requestPasswordResetOtp("0912345678", "sms"); // đổi kênh cũng phải chờ
+check("Gửi lại OTP quá nhanh (<30s) bị chặn", otpTooSoon.success === false && otpTooSoon.waitSeconds > 0, true);
+
 // 6. Đặt lại mật khẩu với OTP
+const resetNoOtp = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: "" });
+check("Đặt lại MK thất bại khi không có OTP", resetNoOtp.success, false);
+
 const resetWrongOtp = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: "000000" });
 check("Đặt lại MK thất bại khi sai OTP", resetWrongOtp.success, false);
 
 const resetSuccess = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: otpReq.otp });
 check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true);
+
+const resetReuse = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "Reuse@123456", otp: otpReq.otp });
+check("OTP quên mật khẩu chỉ dùng 1 lần", resetReuse.success, false);
+
+// 6b. Quy tắc OTP: hết hạn, sai quá 5 lần, kênh Email
+{
+  const fakeCustomer = { id: "otp-test-1", email: "khach.test@example.com", phone: "0900111222" };
+  const t0 = 1_000_000;
+  const mailIssue = otpService.issueOtp({ customer: fakeCustomer, channel: "email", purpose: "reset", now: t0 });
+  check("Gửi OTP qua Email thành công, che bớt email (kh*******@example.com)", mailIssue.success && mailIssue.channel === "email" && /^kh\*+@example\.com$/.test(mailIssue.target), true);
+  check("Email OTP có tiêu đề, SMS thì không", Boolean(mailIssue.preview.subject), true);
+  check("OTP hết hạn sau 5 phút", otpService.verifyOtp(fakeCustomer.id, "reset", mailIssue.otp, t0 + 5 * 60 * 1000 + 1).ok, false);
+  const again = otpService.issueOtp({ customer: fakeCustomer, channel: "sms", purpose: "reset", now: t0 + 40_000 });
+  check("Sau 30 giây được gửi lại, đổi sang kênh SMS", again.success && again.channel === "sms", true);
+  let lastMsg = "";
+  for (let i = 0; i < 5; i += 1) lastMsg = otpService.verifyOtp(fakeCustomer.id, "reset", "000000", t0 + 41_000).message;
+  check("Nhập sai 5 lần thì mã bị huỷ", /quá 5 lần/.test(lastMsg), true);
+  check("Mã đã huỷ không dùng được nữa dù nhập đúng", otpService.verifyOtp(fakeCustomer.id, "reset", again.otp, t0 + 42_000).ok, false);
+  check("Tài khoản không có email & SĐT -> không gửi được", otpService.issueOtp({ customer: { id: "x" }, channel: "email" }).success, false);
+}
+
+// 6c. Chiết khấu riêng do Quản lý cấp: chỉ 0% - 50%
+{
+  const rejects = async (value) => { try { await customerAuth.updateCustomerDiscount(testCustId, value, "kiểm thử"); return false; } catch { return true; } };
+  check("Chiết khấu riêng 70% bị từ chối (tối đa 50%)", await rejects(70), true);
+  check("Chiết khấu riêng âm bị từ chối", await rejects(-5), true);
+  check("Chiết khấu riêng không phải số bị từ chối", await rejects("abc"), true);
+  await customerAuth.updateCustomerDiscount(testCustId, 12, "khách quen");
+  const withDiscount = (await customerAuth.getAllCustomers()).find((c) => c.id === testCustId);
+  check("Chiết khấu riêng 12% hợp lệ được lưu", withDiscount.customDiscount, 12);
+  await customerAuth.updateCustomerDiscount(testCustId, 0, "");
+  check("Chiết khấu riêng 0% = xoá ưu đãi", (await customerAuth.getAllCustomers()).find((c) => c.id === testCustId).customDiscount, 0);
+}
+
+// 6e. Doanh thu theo ngày / tháng / quý / năm
+{
+  const rev = await import(mod("revenueStats.js"));
+  const now = new Date(2026, 4, 15, 20, 0); // thứ Sáu 15/05/2026 20:00
+  const o = (t, total, extra = {}) => ({ paymentStatus: "paid", status: "completed", total, serviceTime: t, ...extra });
+  const orders6 = [
+    o(new Date(2026, 4, 15, 21, 0), 100000),                       // hôm nay
+    o(new Date(2026, 4, 16, 2, 0), 50000),                         // 02:00 sáng hôm sau -> vẫn thuộc đêm 15/05
+    o(new Date(2026, 4, 14, 21, 0), 200000),                       // hôm qua
+    o(new Date(2026, 3, 30, 21, 0), 300000),                       // tháng trước, cùng quý
+    o(new Date(2026, 2, 31, 21, 0), 400000),                       // quý trước (Q1)
+    o(new Date(2025, 11, 31, 21, 0), 500000),                      // năm trước
+    o(new Date(2026, 4, 15, 22, 0), 999999, { status: "cancelled" }), // đơn huỷ: không tính
+    o(new Date(2026, 4, 15, 22, 0), 888888, { paymentStatus: "awaiting" }), // chờ đối chiếu: chưa tính
+    o(new Date(2026, 4, 15, 22, 0), 777777, { paymentStatus: "unpaid" }),   // chưa trả: chưa tính
+  ];
+  const [d, m, q, y] = rev.buildRevenueSummary(orders6, now);
+  check("Doanh thu NGÀY hôm nay = 150.000 (gồm đơn 02:00 sáng hôm sau, 2 đơn)", `${d.revenue}/${d.orders}`, "150000/2");
+  check("Ngày: so với hôm qua (200.000) giảm 25%", d.change, -25);
+  check("Doanh thu THÁNG 05/2026 = 350.000 (3 đơn)", `${m.revenue}/${m.orders}`, "350000/3");
+  check("Tháng: so với tháng 04 (300.000) tăng 16,7%", m.change, 16.7);
+  check("Doanh thu QUÝ 2/2026 = 650.000 (4 đơn)", `${q.revenue}/${q.orders}`, "650000/4");
+  check("Quý: so với Quý 1 (400.000) tăng 62,5%", q.change, 62.5);
+  check("Doanh thu NĂM 2026 = 1.050.000 (5 đơn)", `${y.revenue}/${y.orders}`, "1050000/5");
+  check("Năm: so với 2025 (500.000) tăng 110%", y.change, 110);
+  check("Số đơn mỗi kỳ không đếm đơn huỷ / chờ đối chiếu / chưa trả (2, 3, 4, 5)", [d.orders, m.orders, q.orders, y.orders].join(), "2,3,4,5");
+  check("Nhãn kỳ: Quý 2/2026, Tháng 05/2026, Năm 2026", `${q.label}|${m.label}|${y.label}`, "Quý 2/2026|Tháng 05/2026|Năm 2026");
+  check("Nhãn ngày có thứ (15/05/2026 là Thứ 6)", d.label, "15/05/2026 (Thứ 6)");
+
+  check("Lùi 1 quý từ Q1/2026 -> Q4/2025", rev.shiftPeriod("quarter", "2026-Q1", -1), "2025-Q4");
+  check("Lùi 1 tháng từ 01/2026 -> 12/2025", rev.shiftPeriod("month", "2026-01", -1), "2025-12");
+  check("Lùi 1 ngày từ 01/03/2026 -> 28/02/2026", rev.shiftPeriod("day", "2026-03-01", -1), "2026-02-28");
+  check("Lùi 1 ngày từ 01/03/2028 -> 29/02/2028 (năm nhuận)", rev.shiftPeriod("day", "2028-03-01", -1), "2028-02-29");
+  check("Quý của tháng 3 / 4 / 12", ["2026-03-31", "2026-04-01", "2026-12-31"].map((k) => rev.periodKeyOf("quarter", k)).join(","), "2026-Q1,2026-Q2,2026-Q4");
+
+  const series = rev.buildPeriodSeries(orders6, "quarter", now);
+  check("Bảng theo quý có 8 kỳ, kỳ đầu là quý hiện tại", `${series.rows.length}|${series.rows[0].key}|${series.rows[0].isCurrent}`, "8|2026-Q2|true");
+  check("Quý trống (không có đơn) vẫn hiện với doanh thu 0 và so sánh '—'", `${series.rows[3].revenue}|${series.rows[3].change}`, "0|null");
+  const days = rev.buildPeriodSeries(orders6, "day", now);
+  check("Bảng theo ngày có 30 kỳ, tổng khớp tổng các dòng", `${days.rows.length}|${days.totalRevenue === days.rows.reduce((a, r) => a + r.revenue, 0)}`, "30|true");
+  const yearsSeries = rev.buildPeriodSeries(orders6, "year", now);
+  check("Bảng theo năm: 2026 = 1.050.000, 2025 = 500.000", `${yearsSeries.rows[0].revenue}|${yearsSeries.rows[1].revenue}`, "1050000|500000");
+  const early = rev.buildRevenueSummary([o(new Date(2026, 4, 15, 21, 0), 100000)], new Date(2026, 4, 16, 3, 0));
+  check("Mở trang lúc 03:00 sáng thì 'hôm nay' vẫn là đêm hôm trước (ngày kinh doanh)", early[0].key, "2026-05-15");
+}
+
+// 6d. Phân quyền KHÁCH HÀNG trong ma trận RBAC
+{
+  const ids = auth.CUSTOMER_PERMISSIONS.map((x) => x.id);
+  check("Có 5 quyền dành cho khách hàng (self:*)", ids.join(","), "self:order,self:voucher,self:redeem,self:review,self:cancel");
+  check("Quyền nhân viên không lẫn quyền khách", auth.STAFF_PERMISSIONS.some((x) => x.id.startsWith("self:")), false);
+  check("Mặc định khách được dùng đủ 5 quyền tự phục vụ", ids.every((id) => auth.canCustomer(id)), true);
+  check("Vai trò 'customer' có trong ma trận mặc định", Array.isArray(auth.getRolePermissions().customer), true);
+  check("Quản lý '*' KHÔNG làm mất tác dụng tắt quyền của khách (canCustomer chỉ xét vai trò customer)", auth.canCustomer("quyen:khong-ton-tai"), false);
+  auth.saveRolePermissions({ ...auth.getRolePermissions(), customer: ["self:order"] });
+  check("Tắt quyền dùng mã giảm giá -> canCustomer('self:voucher') = false", auth.canCustomer("self:voucher"), false);
+  check("Quyền còn bật vẫn đúng -> canCustomer('self:order') = true", auth.canCustomer("self:order"), true);
+  check("Admin luôn giữ '*' dù lưu ma trận thiếu admin", auth.getRolePermissions().admin.join(), "*");
+  auth.resetRolePermissions();
+  check("Khôi phục mặc định: khách lại có đủ quyền", ids.every((id) => auth.canCustomer(id)), true);
+}
+
+// 6f. QR chuyển khoản: số tiền từng món cộng ĐÚNG tổng đơn + nội dung chuyển khoản
+{
+  const vq = await import(mod("vietqrService.js"));
+  const sum = (arr) => arr.reduce((x, y) => x + y, 0);
+  check("Chia tiền: 3 món 33.333 + 33.333 + 33.334, đơn 96.999 -> tổng đúng 96.999", sum(vq.allocateOrderTotal([{ price: 33333, qty: 1 }, { price: 33333, qty: 1 }, { price: 33334, qty: 1 }], 96999)), 96999);
+  check("Chia tiền: đơn không giảm giá giữ nguyên giá từng món", vq.allocateOrderTotal([{ price: 50000, qty: 2 }, { price: 25000, qty: 1 }], 125000).join(), "100000,25000");
+  check("Chia tiền: đơn 0đ -> các món 0đ", vq.allocateOrderTotal([{ price: 50000, qty: 1 }], 0).join(), "0");
+  let drift = 0;
+  for (let n = 0; n < 500; n += 1) {
+    const items = Array.from({ length: 1 + (n % 5) }, (_, i) => ({ price: 10000 + ((n * 7919 + i * 104729) % 90000), qty: 1 + ((n + i) % 3) }));
+    const listed = sum(items.map((i) => i.price * i.qty));
+    const total = Math.max(1, listed - ((n * 3571) % Math.max(1, Math.floor(listed / 2))));
+    if (sum(vq.allocateOrderTotal(items, total)) !== total) drift += 1;
+  }
+  check("Chia tiền: 500 đơn ngẫu nhiên (nhiều món/giá lẻ/giảm giá) - tổng các món luôn = tổng đơn", drift, 0);
+  check("Nội dung CK 1 đơn: BAR DH0016", vq.buildTransferMemo(["DH0016"]), "BAR DH0016");
+  check("Nội dung CK 3 đơn vẫn đủ 25 ký tự: BAR DH0001 DH0002 DH0003", vq.buildTransferMemo(["DH0001", "DH0002", "DH0003"]), "BAR DH0001 DH0002 DH0003");
+  check("Nội dung CK 5 đơn quá 25 ký tự -> rút gọn BAR DH0001+4", vq.buildTransferMemo(["DH0001", "DH0002", "DH0003", "DH0004", "DH0005"]), "BAR DH0001+4");
+  check("Nội dung CK luôn ≤ 25 ký tự", vq.buildTransferMemo(Array.from({ length: 30 }, (_, i) => `DH${1000 + i}`)).length <= 25, true);
+  check("Không có mã đơn -> BAR ORDER", vq.buildTransferMemo([]), "BAR ORDER");
+  check("URL QR chứa đúng số tiền + nội dung + tài khoản", vq.generateVietQRUrl({ bankId: "MB", accountNumber: "123456789", accountName: "Nguyen Van A" }, { amount: 218250, memo: "bar dh0016" }), "https://img.vietqr.io/image/MB-123456789-compact2.png?amount=218250&addInfo=BAR%20DH0016&accountName=NGUYEN%20VAN%20A");
+}
+
+// 6g. Mail vé điện tử: nội dung đúng giai đoạn thanh toán, ngày giờ + món, không gửi tới địa chỉ giả
+{
+  const em = await import(mod("emailService.js"));
+  const bookingOrder = { id: "o-mail-1", code: "DH0777", name: "Lê Thu Hương", phone: "0918765432", email: "huong.le@gmail.com", serviceType: "booking", bookingTime: new Date(2026, 10, 15, 20, 0).toISOString(), guestCount: 4, createdAt: new Date(2026, 10, 12, 9, 0).toISOString(), items: [{ name: "Negroni Classico", price: 125000, qty: 2 }], discounts: [{ amount: 7500 }], total: 242500, paymentStatus: "unpaid" };
+  check("Nhãn thanh toán: unpaid", em.paymentStatusText({ paymentStatus: "unpaid" }), "CHƯA THANH TOÁN");
+  check("Nhãn thanh toán: awaiting (đã quét/báo chuyển khoản) KHÔNG còn ghi 'chưa thanh toán'", em.paymentStatusText({ paymentStatus: "awaiting" }), "ĐÃ BÁO CHUYỂN KHOẢN - ĐANG CHỜ QUÁN XÁC NHẬN");
+  check("Nhãn thanh toán: paid", em.paymentStatusText({ paymentStatus: "paid" }), "ĐÃ THANH TOÁN");
+  check("Tiêu đề mail đổi theo giai đoạn (chờ xác nhận / đã thanh toán)", [em.orderMailSubject({ ...bookingOrder, paymentStatus: "awaiting" }), em.orderMailSubject({ ...bookingOrder, paymentStatus: "paid" })].map((x) => /báo chuyển khoản|Đã thanh toán/.test(x)).join(), "true,true");
+  const params = em.buildOrderMailParams(bookingOrder, "huong.le@gmail.com");
+  check("Mail thật: có ngày giờ đặt bàn 15/11/2026 20:00", /15\/11\/2026/.test(params.booking_time) && /20:00/.test(params.booking_time), true);
+  check("Mail thật: có số khách + hình thức Đặt bàn trước", params.guests === "4 khách" && params.service_type === "Đặt bàn trước", true);
+  check("Mail thật: liệt kê món đã đặt (tên, số lượng, tiền)", /Negroni Classico x2/.test(params.items_text) && /250\.000/.test(params.items_text), true);
+  check("Mail thật: tổng tiền là số khách phải trả (sau giảm giá)", params.total.replace(/\D/g, ""), "242500");
+  check("Mail thật: tình trạng thanh toán + người nhận", `${params.payment_status}|${params.to_email}`, "CHƯA THANH TOÁN|huong.le@gmail.com");
+  const html = em.buildCinemaTicketHtml({ ...bookingOrder, paymentStatus: "awaiting" }, { toEmail: "huong.le@gmail.com" });
+  check("Vé HTML sau khi quét QR ghi 'chờ quán xác nhận', không ghi 'CHƯA THANH TOÁN'", /CHỜ QUÁN XÁC NHẬN/.test(html) && !/CHƯA THANH TOÁN/.test(html), true);
+  const noMail = await em.sendOrderConfirmationEmail({ ...bookingOrder, email: "" }, null);
+  check("Khách không có email: không tạo thư gửi tới địa chỉ giả (delivery = no_email)", `${noMail.delivery}|${noMail.id}|${noMail.to}`, "no_email|null|");
+  const withMail = await em.sendOrderConfirmationEmail(bookingOrder, null);
+  check("Có email nhưng quán chưa cấu hình EmailJS: lưu Hộp thư, báo trung thực (not_configured)", `${withMail.delivery}|${withMail.to}`, "not_configured|huong.le@gmail.com");
+  check("Câu thông báo không nói 'đã gửi email' khi chưa gửi thật", /Hộp thư/.test(em.describeMailDelivery(withMail, bookingOrder).message) && !/Đã gửi email/.test(em.describeMailDelivery(withMail, bookingOrder).message), true);
+  check("Câu thông báo khi gửi thật thành công", /Đã gửi email vé điện tử/.test(em.describeMailDelivery({ ...withMail, delivery: "sent" }, bookingOrder).message), true);
+  check("Chưa cấu hình EmailJS thì isRealEmailConfigured = false", em.isRealEmailConfigured(), false);
+}
 
 // 6h. Hiệu ứng hiện dần khi cuộn: ngưỡng theo % phần tử làm lưới món (cao > 8.000px) trong suốt mãi
 {
@@ -1285,6 +1456,168 @@ const importedRes = await orders.createOrder(parsedOrderRows[0].orderPayload);
 check("Tạo đơn hàng thật từ dữ liệu Excel thành công",
   [importedRes.success, importedRes.order?.name, importedRes.order?.items.length],
   [true, "Trần Minh Khang", 2]);
+
+section("[47] Đồng bộ quyền riêng nhân sự & ma trận RBAC khách giữa nhiều thiết bị");
+resetDb();
+await staff.updateStaffPermissions("s2", ["page:orders", "page:staff"]);
+localStorage.clear(); // mô phỏng trình duyệt / thiết bị khác chưa có cache cục bộ
+const staffLoginCustom = await auth.login("lan.nguyen", "Lan@123456");
+check("Đăng nhập nhân viên trên trình duyệt khác nhận đúng customPermissions từ máy chủ",
+  [staffLoginCustom.success, Array.isArray(staffLoginCustom.user?.customPermissions), auth.can("page:staff")],
+  [true, true, true]);
+
+// Khi quản lý bỏ quyền riêng trên máy chủ -> refreshSession cập nhật về null và bỏ qua cache cũ
+auth.saveStaffCustomPermissions("s2", ["page:staff"]);
+await staff.updateStaffPermissions("s2", null);
+const refreshedStaff = await auth.refreshSession();
+check("Xoá quyền riêng trên máy chủ -> refreshSession về null, không bị cache cũ đè",
+  [refreshedStaff?.customPermissions, auth.can("page:staff", refreshedStaff)],
+  [null, false]);
+
+// Đồng bộ ma trận quyền khách hàng qua /settings
+await auth.saveRolePermissionsRemote({ ...auth.getRolePermissions(), customer: ["self:order"] });
+localStorage.clear();
+await auth.syncRolePermissions();
+check("syncRolePermissions tải đúng quyền khách từ máy chủ (tắt self:cancel)",
+  [auth.canCustomer("self:order"), auth.canCustomer("self:cancel")],
+  [true, false]);
+await auth.resetRolePermissionsRemote();
+
+section("[48] Chính sách trả trước 70% & Nội quy quán khi đặt hàng");
+{
+  const venueMod = await import(mod("venue.js"));
+  const emailMod = await import(mod("emailService.js"));
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+
+  check("Tỷ lệ trả trước mặc định là 70% (0.7)", venueMod.PREPAY_RATE, 0.7);
+  check("Đơn 100.000đ -> trả trước 70.000đ, còn lại tại quán 30.000đ",
+    [venueMod.calcPrepayAmount(100000), venueMod.calcRemainingAmount(100000)],
+    [70000, 30000]);
+  check("Đơn 0đ hoặc âm -> trả trước 0đ, còn lại 0đ",
+    [venueMod.calcPrepayAmount(0), venueMod.calcRemainingAmount(-5000)],
+    [0, 0]);
+
+  let splitMismatch = 0;
+  for (let i = 0; i < 100; i += 1) {
+    const t = 12345 + i * 7919;
+    if (venueMod.calcPrepayAmount(t) + venueMod.calcRemainingAmount(t) !== t) splitMismatch += 1;
+  }
+  check("100 mức tiền lẻ bất kỳ: Trả trước 70% + Tại quán 30% luôn khớp đúng 100% tổng đơn", splitMismatch, 0);
+
+  const sampleOrder70 = orders.Order.from({
+    id: "o-prepay-1",
+    code: "DH0888",
+    name: "Nguyễn An",
+    phone: "0909888777",
+    serviceType: "booking",
+    bookingTime: new Date(Date.now() + 3 * 3600 * 1000).toISOString(),
+    guestCount: 2,
+    items: [{ drinkId: "d1", name: "Negroni Classico", price: 125000, qty: 2 }],
+  });
+  check("Order.prepayAmount / remainingAmount tính đúng 70% / 30% (250.000 -> 175.000 / 75.000)",
+    [sampleOrder70.total, sampleOrder70.prepayAmount, sampleOrder70.remainingAmount],
+    [250000, 175000, 75000]);
+
+  const mailParams70 = emailMod.buildOrderMailParams(sampleOrder70, "an@example.com");
+  const ticketHtml70 = emailMod.buildCinemaTicketHtml(sampleOrder70, { toEmail: "an@example.com" });
+  check("Email params & Cinema E-Ticket hiển thị rõ trả trước 70% và phần còn lại tại quán",
+    [/175\.000/.test(mailParams70.prepay_amount), /75\.000/.test(mailParams70.remaining_amount), /trả trước.*70%/i.test(ticketHtml70)],
+    [true, true, true]);
+
+  check("BAR_RULES có đủ 4 quy định (trả trước 70%, độ tuổi 18+, giờ/giữ bàn, văn hoá an toàn)",
+    [venueMod.BAR_RULES.length, venueMod.BAR_RULES.some((r) => r.id === "prepay"), venueMod.BAR_RULES.some((r) => r.id === "age")],
+    [4, true, true]);
+
+  const orderHtmlText = fs.readFileSync(path.resolve("order.html"), "utf8");
+  check("Trang order.html có khối hiển thị trả trước 70% & thông báo nội quy quán",
+    [orderHtmlText.includes('id="sum-prepay"'), orderHtmlText.includes('id="sum-remaining"'), orderHtmlText.includes('id="bar-rules-notice"')],
+    [true, true, true]);
+}
+
+section("[49] Quên mật khẩu: tách kênh Email / Số điện thoại (+84)");
+{
+  const fpMod = await import(mod("forgotPasswordModal.js"));
+  check("Bỏ tiền tố +84 / 84 / 0 khỏi số điện thoại để nhập sau +84",
+    [
+      fpMod.stripVietnamPhonePrefix("0909 123 456"),
+      fpMod.stripVietnamPhonePrefix("+84 909.123.456"),
+      fpMod.stripVietnamPhonePrefix("84909123456"),
+      fpMod.stripVietnamPhonePrefix("909123456"),
+    ],
+    ["909123456", "909123456", "909123456", "909123456"]);
+
+  check("Ghép lại chuẩn quốc tế +84 và giữ rỗng khi chưa nhập",
+    [fpMod.buildIntlVietnamPhone("0909123456"), fpMod.buildIntlVietnamPhone("909123456"), fpMod.buildIntlVietnamPhone("")],
+    ["+84909123456", "+84909123456", ""]);
+
+  check("Nhận diện kênh mặc định khi điền sẵn Email hoặc SĐT",
+    [fpMod.detectInitialOtpChannel("an@gmail.com"), fpMod.detectInitialOtpChannel("0912345678"), fpMod.detectInitialOtpChannel("")],
+    ["email", "sms", "email"]);
+
+  resetDb();
+  const sampleSeedPhone = customerAuth.SEED_CUSTOMERS[0].phone;
+  const otpViaPlus84 = await customerAuth.requestPasswordResetOtp(fpMod.buildIntlVietnamPhone(sampleSeedPhone), "sms");
+  check(`Gửi OTP với số dạng +84 sau khi ghép từ ô nhập khớp tài khoản ${sampleSeedPhone}`,
+    [otpViaPlus84.success, otpViaPlus84.channel, Boolean(otpViaPlus84.otp)],
+    [true, "sms", true]);
+}
+
+section("[50] Sơ đồ chỗ ngồi trong quán khi Đặt Bàn Trước");
+{
+  const venueMod = await import(mod("venue.js"));
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+
+  check("Có đủ 4 khu vực ngồi trong quán và danh sách bàn phẳng",
+    [venueMod.BAR_SEATING_ZONES.length, venueMod.ALL_BAR_TABLES.length >= 10],
+    [4, true]);
+
+  resetDb();
+  const slotSeat = inHours(8);
+  const bookedSeatRes = await createAdult({
+    name: "Trần Thanh Tú",
+    phone: "0908777666",
+    serviceType: "booking",
+    bookingTime: slotSeat,
+    guestCount: 4,
+    tableNumber: "Sofa VIP 01",
+    items: [],
+  });
+  check("Đơn Đặt Bàn Trước lưu và hiển thị đúng vị trí bàn đã chọn",
+    [
+      bookedSeatRes.success,
+      bookedSeatRes.order.tableNumber,
+      bookedSeatRes.order.serviceDetails().some(([k, v]) => k === "Vị trí bàn" && v === "Sofa VIP 01"),
+    ],
+    [true, "Sofa VIP 01", true]);
+
+  const occupiedSet = orders.getOccupiedTableSet(await orders.getAllOrders(), { serviceType: "booking", bookingTime: slotSeat });
+  check("getOccupiedTableSet đánh dấu đúng 'Sofa VIP 01' đã có người đặt trong khung giờ",
+    occupiedSet.has("sofa vip 01"),
+    true);
+
+  let doubleSeatBlocked = false;
+  try {
+    await createAdult({
+      name: "Lê Minh Khoa",
+      phone: "0908555444",
+      serviceType: "booking",
+      bookingTime: slotSeat,
+      guestCount: 4,
+      tableNumber: "Sofa VIP 01",
+      items: [],
+    });
+  } catch (err) {
+    doubleSeatBlocked = /đã có khách đặt/.test(err.message);
+  }
+  check("Chặn đặt trùng cùng một bàn trong cùng khung giờ", doubleSeatBlocked, true);
+
+  const orderHtmlText = fs.readFileSync(path.resolve("order.html"), "utf8");
+  check("Trang order.html hiển thị sơ đồ khu vực & bàn ngồi dùng chung cho cả Đặt Bàn Trước",
+    [orderHtmlText.includes('id="seating-map-zones"'), orderHtmlText.includes('id="seating-map-field"')],
+    [true, true]);
+}
 
 /* ================================================================ */
 console.log("\n==============================================================");
