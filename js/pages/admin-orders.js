@@ -19,6 +19,7 @@ import { ageOf } from "../modules/age.js";
 import { formatMoney, formatDate, formatDateTime, debounce, paginate, renderPagination, classNames, escapeHtml } from "../modules/utils.js";
 import { validateForm, clearFormErrors } from "../modules/validation.js";
 import { toast, confirmDialog, openModal, closeModal, setButtonLoading } from "../modules/ui.js";
+import { ORDERS_CHANGED_EVENT } from "../modules/notificationService.js";
 import { ICONS } from "../modules/icons.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
 import {
@@ -29,7 +30,7 @@ import {
   parseOrdersFromRows,
   printOrderInvoice,
 } from "../modules/exportService.js";
-import { sendOrderConfirmationEmail } from "../modules/emailService.js";
+import { sendOrderConfirmationEmail, describeMailDelivery } from "../modules/emailService.js";
 
 const bodyEl = document.getElementById("orders-body");
 const paginationEl = document.getElementById("pagination");
@@ -157,6 +158,9 @@ function openDetail(order) {
       <span class="font-bold">Tổng thanh toán</span>
       <strong class="text-amber text-lg">${formatMoney(order.total)}</strong>
     </div>
+    ${order.total > 0 ? `
+      <div class="order-detail-row text-sm"><span>Cần trả trước (70%)</span><strong class="text-amber">${formatMoney(order.prepayAmount)}</strong></div>
+      <div class="order-detail-row text-sm"><span>Thanh toán tại quán (30%)</span><span>${formatMoney(order.remainingAmount)}</span></div>` : ""}
 
     <div class="door-host-admin-panel">
       <div class="door-host-admin-title">
@@ -304,7 +308,7 @@ async function handleConfirmPayment(order = activeOrder, ask = true) {
   if (!order || !can("order:payment")) return;
   if (ask) {
     const ok = await confirmDialog(
-      `Xác nhận đã nhận đủ ${formatMoney(order.total)} cho đơn ${order.code}? Nếu khách chuyển khoản, hãy kiểm tra sao kê có nội dung "BAR ${order.code}".`,
+      `Xác nhận đã nhận đủ ${formatMoney(order.total)} (cọc 70%: ${formatMoney(order.prepayAmount)} + tại quán 30%: ${formatMoney(order.remainingAmount)}) cho đơn ${order.code}? Nếu khách chuyển khoản, hãy kiểm tra sao kê có nội dung "BAR ${order.code}".`,
       { title: "Xác nhận đã thu tiền", okText: "Đã nhận tiền" },
     );
     if (!ok) return;
@@ -312,12 +316,16 @@ async function handleConfirmPayment(order = activeOrder, ask = true) {
 
   try {
     await confirmPayment(order.id);
+    let mailNote = null;
     try {
-      await sendOrderConfirmationEmail({ ...order, paymentStatus: "paid" });
+      // toJSON(): {...order} làm mất total/subtotal (là getter) nên mail ghi tổng tiền trống
+      const plain = typeof order.toJSON === "function" ? order.toJSON() : order;
+      mailNote = describeMailDelivery(await sendOrderConfirmationEmail({ ...plain, paymentStatus: "paid" }), order);
     } catch (mErr) {
       console.warn("Lỗi gửi email xác nhận:", mErr);
     }
-    toast(`Đơn ${order.code}: đã thanh toán & gửi email xác nhận tới khách hàng.`, "success");
+    toast(`Đơn ${order.code}: đã xác nhận thanh toán.`, "success");
+    if (mailNote) toast(mailNote.message, mailNote.type);
     closeModal("order-modal");
     await reloadTable();
   } catch (err) {
@@ -502,6 +510,9 @@ function bindEvents() {
   keywordInput.addEventListener("input", debouncedRender);
   [statusSelect, paymentSelect, sortSelect].forEach((el) => el.addEventListener("change", () => { currentPage = 1; renderTable(); }));
 
+  // Có đơn mới / đơn đổi trạng thái do người khác thao tác -> tự tải lại bảng, không cần F5
+  window.addEventListener(ORDERS_CHANGED_EVENT, () => { reloadTable(); });
+
   document.getElementById("btn-export-orders-excel")?.addEventListener("click", () => {
     exportOrdersToExcel(allOrders);
   });
@@ -511,8 +522,9 @@ function bindEvents() {
   document.getElementById("btn-resend-order-ticket")?.addEventListener("click", async () => {
     if (!activeOrder) return;
     try {
-      await sendOrderConfirmationEmail(activeOrder);
-      toast(`Đã gửi lại vé điện tử đến email ${activeOrder.email || "của khách hàng"} thành công!`, "success");
+      const plain = typeof activeOrder.toJSON === "function" ? activeOrder.toJSON() : activeOrder;
+      const note = describeMailDelivery(await sendOrderConfirmationEmail(plain), activeOrder);
+      toast(note.message, note.type);
     } catch (err) {
       toast("Lỗi gửi email: " + err.message, "error");
     }
@@ -527,9 +539,12 @@ function bindEvents() {
   qrBtn.addEventListener("click", () => {
     if (!activeOrder) return;
     const order = activeOrder;
-    openVietQRPaymentModal(order, can("order:payment")
-      ? { confirmLabel: "Xác Nhận Đã Nhận Tiền", onConfirm: () => handleConfirmPayment(order, false) }
-      : {});
+    openVietQRPaymentModal(order, {
+      allowFullToggle: true,
+      ...(can("order:payment")
+        ? { confirmLabel: "Xác Nhận Đã Nhận Tiền", onConfirm: () => handleConfirmPayment(order, false) }
+        : {}),
+    });
   });
   paidBtn.addEventListener("click", () => handleConfirmPayment());
   saveStatusBtn.addEventListener("click", handleSaveStatus);

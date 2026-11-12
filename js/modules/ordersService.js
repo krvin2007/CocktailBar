@@ -14,7 +14,9 @@ import { awardPoints, findCustomerByPhone, getCurrentCustomer, redeemPoints, ref
 import { findVoucherByCode, adjustVoucherUsage, normalizeVoucherCode } from "./vouchersService.js";
 import { resolvePricing } from "./promotions.js";
 import { ageProblem } from "./age.js";
-import { BOOKING_RULES, VENUE } from "./venue.js";
+import { BOOKING_RULES, VENUE, PREPAY_RATE, calcPrepayAmount, calcRemainingAmount } from "./venue.js";
+
+export { PREPAY_RATE, calcPrepayAmount, calcRemainingAmount };
 
 const COLLECTION = "orders";
 
@@ -397,9 +399,19 @@ export class Order {
     return Math.min(sum, this.subtotal);
   }
 
-  /** Số tiền khách PHẢI TRẢ (sau ưu đãi): dùng cho QR thanh toán, doanh thu và tích điểm */
+  /** Số tiền khách PHẢI TRẢ (sau ưu đãi): dùng cho doanh thu, tích điểm và hoá đơn */
   get total() {
     return this.subtotal - this.discountTotal;
+  }
+
+  /** Số tiền khách cần trả trước khi đặt (70% tổng đơn) */
+  get prepayAmount() {
+    return calcPrepayAmount(this.total);
+  }
+
+  /** Số tiền còn lại khách thanh toán tại quán (30% tổng đơn) */
+  get remainingAmount() {
+    return calcRemainingAmount(this.total);
   }
 
   get itemCount() {
@@ -505,12 +517,13 @@ export class DineInOrder extends Order {
   }
 }
 
-/** Đơn đặt bàn trước: có thêm giờ đến và số khách */
+/** Đơn đặt bàn trước: có thêm giờ đến, số khách và vị trí bàn/chỗ ngồi đã chọn */
 export class BookingOrder extends Order {
   constructor(data = {}) {
     super({ ...data, serviceType: "booking" });
     this.bookingTime = data.bookingTime || "";
     this.guestCount = Number(data.guestCount) || 0;
+    this.tableNumber = data.tableNumber || "";
   }
 
   /** Ghi đè: doanh thu của đơn đặt bàn tính theo giờ hẹn, không theo lúc bấm đặt */
@@ -542,13 +555,42 @@ export class BookingOrder extends Order {
     return [
       ["Thời gian đến", formatDateTime(this.bookingTime)],
       ["Số lượng khách", `${this.guestCount} người`],
+      ...(this.tableNumber ? [["Vị trí bàn", this.tableNumber]] : []),
       ...(this.isTableOnly ? [["Gọi món", "Chỉ giữ bàn - gọi món khi đến quán"]] : []),
     ];
   }
 
   toJSON() {
-    return { ...super.toJSON(), bookingTime: this.bookingTime, guestCount: this.guestCount };
+    return { ...super.toJSON(), bookingTime: this.bookingTime, guestCount: this.guestCount, tableNumber: this.tableNumber };
   }
+}
+
+/**
+ * Tìm danh sách tên bàn đã có khách giữ trong khung giờ chọn (đặt bàn trước)
+ * hoặc đang có khách ngồi (tại quán chưa hoàn tất).
+ */
+export function getOccupiedTableSet(orders, { serviceType = "booking", bookingTime = "" } = {}) {
+  const occupied = new Set();
+  const slotMs = BOOKING_RULES.slotMinutes * 60 * 1000;
+  const targetMs = bookingTime ? new Date(bookingTime).getTime() : NaN;
+
+  (orders || []).forEach((o) => {
+    if (!o || o.status === "cancelled") return;
+    const rawTable = String(o.tableNumber || "").trim();
+    if (!rawTable) return;
+
+    if (serviceType === "booking" && !Number.isNaN(targetMs)) {
+      if (o.serviceType === "booking" && o.bookingTime) {
+        const otherMs = new Date(o.bookingTime).getTime();
+        if (!Number.isNaN(otherMs) && Math.abs(otherMs - targetMs) < slotMs) {
+          occupied.add(rawTable.toLowerCase());
+        }
+      }
+    } else if (o.serviceType === "dine-in" && (o.status === "pending" || o.status === "preparing")) {
+      occupied.add(rawTable.toLowerCase());
+    }
+  });
+  return occupied;
 }
 
 /** Đơn mang đi: khách tự nhận tại quầy */
@@ -664,6 +706,13 @@ export async function createOrder(customerInfo) {
       throw new Error(remaining > 0
         ? `Khung giờ này chỉ còn ${remaining} chỗ, không đủ cho ${guests} khách. Vui lòng chọn giờ khác.`
         : "Khung giờ này đã kín chỗ. Vui lòng chọn giờ khác.");
+    }
+    const wantedTable = String(customerInfo.tableNumber || "").trim();
+    if (wantedTable) {
+      const occupied = getOccupiedTableSet(orders, { serviceType: "booking", bookingTime });
+      if (occupied.has(wantedTable.toLowerCase())) {
+        throw new Error(`Vị trí "${wantedTable}" đã có khách đặt trong khung giờ này. Vui lòng chọn bàn khác trên sơ đồ.`);
+      }
     }
   }
 

@@ -10,20 +10,24 @@ import { refreshCartBadge } from "../modules/navbar.js";
 import {
   getCart, updateCartQty, removeFromCart, createOrder, clearCart,
   syncCartWithCatalog, findOrderByCodeAndPhone, reportTransferSent,
-  getRemainingSeats, cancelByCustomer, getAllOrders,
+  getRemainingSeats, cancelByCustomer, getAllOrders, getOccupiedTableSet,
 } from "../modules/ordersService.js";
 import { availableQty } from "../modules/drinksService.js";
 import { formatMoney, formatDateTime, escapeHtml, debounce } from "../modules/utils.js";
 import { validateForm, clearFormErrors, setFieldError } from "../modules/validation.js";
 import { toast, confirmDialog, setButtonLoading, loadingHtml, errorHtml } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
-import { openVietQRPaymentModal } from "../modules/vietqrService.js";
-import { isWithinOpeningHours, openingHoursText, BOOKING_RULES } from "../modules/venue.js";
+import { allocateOrderTotal, openVietQRPaymentModal } from "../modules/vietqrService.js";
+import {
+  isWithinOpeningHours, openingHoursText, BOOKING_RULES,
+  BAR_RULES, BAR_SEATING_ZONES, ALL_BAR_TABLES, calcPrepayAmount, calcRemainingAmount,
+} from "../modules/venue.js";
 import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCurrentCustomer, syncCustomerSession } from "../modules/customerAuth.js";
+import { canCustomer, syncRolePermissions } from "../modules/auth.js";
 import { resolvePricing, POINT_REDEEM_VND, MIN_POINT_REDEEM } from "../modules/promotions.js";
 import { getItem, setItem, removeItem } from "../modules/storage.js";
-import { sendOrderConfirmationEmail, openCinemaTicketModal } from "../modules/emailService.js";
+import { sendOrderConfirmationEmail, describeMailDelivery, openCinemaTicketModal } from "../modules/emailService.js";
 
 const APPLIED_VOUCHER_KEY = "applied_voucher";
 
@@ -31,6 +35,8 @@ const cartListEl = document.getElementById("cart-list");
 const sumCountEl = document.getElementById("sum-count");
 const sumTotalEl = document.getElementById("sum-total");
 const sumFinalEl = document.getElementById("sum-final");
+const sumPrepayEl = document.getElementById("sum-prepay");
+const sumRemainingEl = document.getElementById("sum-remaining");
 const slipPayBtn = document.getElementById("slip-pay-btn");
 const slipPayVal = document.getElementById("slip-pay-val");
 const promoLinesEl = document.getElementById("promo-lines");
@@ -48,6 +54,9 @@ const bookingDatePicker = document.getElementById("booking-date-picker");
 const bookingTimePicker = document.getElementById("booking-time-picker");
 const guestCountInput = formEl.elements.guestCount;
 const capacityHint = document.getElementById("capacity-hint");
+const tableNumberInput = document.getElementById("table-number-input") || formEl.elements.tableNumber;
+const seatingMapZonesEl = document.getElementById("seating-map-zones");
+const seatingCapacityHint = document.getElementById("seating-capacity-hint");
 const ageCheckbox = document.getElementById("age-confirm");
 
 const MINUTE = 60 * 1000;
@@ -80,15 +89,13 @@ function getCombinedItems() {
   const unpaidList = currentUnpaidOrders.length > 0 ? currentUnpaidOrders : (currentUnpaidOrder ? [currentUnpaidOrder] : []);
   unpaidList.forEach((order) => {
     if (!Array.isArray(order.items)) return;
-    const unpaidSub = Number(order.subtotal) || Number(order.total) || 1;
-    const unpaidTot = Number(order.total) || unpaidSub;
-    const ratio = unpaidTot / unpaidSub;
+    const allocated = allocateOrderTotal(order.items, order.total); // tổng các món = đúng tổng đơn
 
     order.items.forEach((it, idx) => {
       const key = `unpaid_${order.id}_${it.drinkId || it.id || idx}`;
       const qty = Number(it.qty) || 1;
       const basePrice = Number(it.price) || 0;
-      const finalPrice = Math.round(basePrice * qty * ratio);
+      const finalPrice = allocated[idx];
       const isChecked = !uncheckedItemKeys.has(key);
 
       list.push({
@@ -141,17 +148,51 @@ function getActiveCheckoutSummary() {
   const checked = allItems.filter((it) => it.checked);
   const count = checked.reduce((sum, it) => sum + (Number(it.qty) || 1), 0);
   const subtotal = checked.reduce((sum, it) => sum + ((Number(it.price) || 0) * (Number(it.qty) || 1)), 0);
-  const total = checked.reduce((sum, it) => sum + it.finalPrice, 0);
-  return { allItems, checked, count, subtotal, total };
+  // Món mới trong giỏ: ưu đãi (hạng / mã / điểm) chỉ tính trên các món này. Đơn cũ chưa trả đã được chốt giá khi đặt
+  // nên giữ nguyên tổng của đơn, KHÔNG giảm giá lần nữa.
+  const cartSubtotal = checked.filter((it) => !it.isUnpaid).reduce((sum, it) => sum + ((Number(it.price) || 0) * (Number(it.qty) || 1)), 0);
+  const unpaidTotal = checked.filter((it) => it.isUnpaid).reduce((sum, it) => sum + it.finalPrice, 0);
+  const cartPayable = pricing && pricing.subtotal === cartSubtotal ? pricing.total : cartSubtotal;
+  const total = unpaidTotal + cartPayable;
+  const prepayAmount = calcPrepayAmount(total);
+  const remainingAmount = calcRemainingAmount(total);
+  return { allItems, checked, count, subtotal, cartSubtotal, unpaidTotal, total, prepayAmount, remainingAmount };
+}
+
+function renderSlipTotals(count, total) {
+  const prepayAmount = calcPrepayAmount(total);
+  const remainingAmount = calcRemainingAmount(total);
+  if (sumFinalEl) sumFinalEl.textContent = formatMoney(total);
+  if (sumPrepayEl) sumPrepayEl.textContent = formatMoney(prepayAmount);
+  if (sumRemainingEl) sumRemainingEl.textContent = formatMoney(remainingAmount);
+  if (slipPayBtn) {
+    if (count > 0 && prepayAmount > 0) {
+      slipPayBtn.style.display = "flex";
+      if (slipPayVal) slipPayVal.textContent = formatMoney(prepayAmount);
+    } else {
+      slipPayBtn.style.display = "none";
+    }
+  }
 }
 
 /**
  * Cập nhật trạng thái và nhãn nút bấm xác nhận/thanh toán
  */
+/**
+ * Quyền "Đặt bàn & gọi món online" bị tắt thì chặn tạo ĐƠN MỚI, nhưng vẫn cho thanh toán đơn cũ đang chờ
+ * (khách đã gọi món trước đó, không nên bị kẹt không trả được tiền).
+ */
+function newOrderBlocked() {
+  if (canCustomer("self:order")) return false;
+  const { checked } = getActiveCheckoutSummary();
+  const onlyPayingOldOrder = checked.some((i) => i.isUnpaid) && !checked.some((i) => !i.isUnpaid);
+  return !onlyPayingOldOrder;
+}
+
 function updateSubmitState() {
-  const { checked, count, total } = getActiveCheckoutSummary();
+  const { checked, count, prepayAmount } = getActiveCheckoutSummary();
   const hasItems = count > 0;
-  submitBtn.disabled = !hasItems && !isBooking();
+  submitBtn.disabled = (!hasItems && !isBooking()) || newOrderBlocked();
 
   const submitLabel = document.getElementById("submit-order-label");
   if (!submitLabel) return;
@@ -160,14 +201,14 @@ function updateSubmitState() {
   const hasCart = checked.some((i) => !i.isUnpaid);
 
   if (hasUnpaid && hasCart) {
-    submitLabel.textContent = `Xác Nhận & Thanh Toán Chung (${formatMoney(total)})`;
+    submitLabel.textContent = `Xác Nhận & Trả Trước 70% (${formatMoney(prepayAmount)})`;
   } else if (hasUnpaid) {
     const codes = [...new Set(checked.filter((i) => i.isUnpaid).map((i) => i.orderCode))].join(", ");
-    submitLabel.textContent = `Thanh Toán Đơn Chờ ${codes} (${formatMoney(total)})`;
+    submitLabel.textContent = `Trả Trước 70% Đơn Chờ ${codes} (${formatMoney(prepayAmount)})`;
   } else if (hasCart) {
     submitLabel.textContent = isBooking()
-      ? t("order_btn_book_order", "Xác Nhận Đặt Bàn & Gọi Món")
-      : `Xác Nhận Gọi Món (${formatMoney(total)})`;
+      ? `${t("order_btn_book_order", "Xác Nhận Đặt Bàn & Gọi Món")} (Trả trước 70%: ${formatMoney(prepayAmount)})`
+      : `Xác Nhận Gọi Món (Trả trước 70%: ${formatMoney(prepayAmount)})`;
   } else {
     submitLabel.textContent = isBooking()
       ? t("order_btn_book", "Xác Nhận Giữ Bàn")
@@ -182,85 +223,41 @@ function updateSubmitState() {
  */
 function openCustomerPayment(order, afterReport, allItems = null) {
   const targetOrder = order || currentUnpaidOrder || currentUnpaidOrders[0] || null;
-  const itemsToPass = allItems || getCombinedItems();
+  // Mã QR chỉ thanh toán các ĐƠN ĐÃ LƯU (số tiền = tổng tiền thật của đơn). Món còn trong giỏ chưa là đơn nên không
+  // đưa vào đây - phải gửi form (kiểm tra tuổi, áp ưu đãi) để thành đơn rồi mới có QR đúng số tiền.
+  const itemsToPass = allItems || getCombinedItems().filter((i) => i.isUnpaid);
 
   openVietQRPaymentModal(targetOrder, {
     confirmLabel: "Tôi Đã Chuyển Khoản Xong",
     allItems: itemsToPass,
     onConfirm: async (payload) => {
       const selectedItems = payload?.selectedItems || itemsToPass.filter((i) => i.checked);
-      const hasUnpaid = selectedItems.some((it) => it.isUnpaid);
-      const hasCart = selectedItems.some((it) => !it.isUnpaid);
       const customer = getCurrentCustomer();
       let confirmedOrderForTicket = null;
+      let lastMail = null;
 
-      // 1. Cập nhật trạng thái chuyển khoản cho các đơn cũ nếu có tích chọn
-      if (hasUnpaid) {
-        const unpaidOrderIds = [...new Set(selectedItems.filter((i) => i.isUnpaid && (i.orderId || targetOrder?.id || currentUnpaidOrder?.id)).map((i) => i.orderId || targetOrder?.id || currentUnpaidOrder?.id))];
-        for (const oId of unpaidOrderIds) {
-          try {
-            await reportTransferSent(oId);
-            const freshOrder = await api.get(`/orders/${encodeURIComponent(oId)}`).catch(() => null);
-            const orderToEmail = freshOrder || targetOrder || currentUnpaidOrder;
-            if (orderToEmail) {
-              const updatedStatusOrder = { ...orderToEmail, paymentStatus: "awaiting" };
-              await sendOrderConfirmationEmail(updatedStatusOrder, customer);
-              if (!confirmedOrderForTicket) confirmedOrderForTicket = updatedStatusOrder;
-            }
-          } catch (err) {
-            console.warn("Không thể cập nhật báo chuyển khoản cho đơn cũ:", err);
-          }
-        }
-      }
-
-      // 2. Nếu có tích chọn món mới từ giỏ hàng: tạo đơn mới và làm sạch giỏ
-      if (hasCart) {
-        const cartItems = selectedItems.filter((it) => !it.isUnpaid);
-        if (cartItems.length > 0) {
-          const targetEmail = customer?.email || formEl.elements.email?.value || "";
-          const birthDate = customer?.birthDate || formEl.elements.birthDate?.value || "2000-01-01";
-          try {
-            const unpaidCodes = [...new Set(selectedItems.filter((i) => i.isUnpaid && i.orderCode).map((i) => i.orderCode))];
-            const newOrderRes = await createOrder({
-              name: customer?.name || formEl.elements.name?.value || "Khách hàng",
-              phone: customer?.phone || formEl.elements.phone?.value || "0900000000",
-              email: targetEmail,
-              birthDate,
-              serviceType: formEl.elements.serviceType?.value || "dine-in",
-              customerId: customer?.id || "",
-              tableNumber: formEl.elements.tableNumber?.value || "",
-              items: cartItems.map((i) => ({ drinkId: i.drinkId, name: i.name, price: i.price, qty: i.qty, image: i.image })),
-              paymentStatus: "awaiting",
-              note: unpaidCodes.length > 0 ? `Thanh toán chung đợt với đơn ${unpaidCodes.join(", ")}` : "",
-            });
-            if (newOrderRes?.order) {
-              await sendOrderConfirmationEmail(newOrderRes.order, customer);
-              if (!confirmedOrderForTicket) confirmedOrderForTicket = newOrderRes.order;
-            }
-          } catch (err) {
-            console.warn("Không thể lưu đơn gộp cho giỏ hàng:", err);
-          }
-          cartItems.forEach((i) => removeFromCart(i.drinkId));
-          refreshCartBadge();
-        }
-      }
-
-      // 3. Nếu thanh toán đơn đơn lẻ trực tiếp
-      if (!hasUnpaid && !hasCart && targetOrder) {
+      // Báo "đã chuyển khoản" cho từng đơn được tích chọn (cả đơn, không trả một phần đơn)
+      const orderIds = [...new Set(selectedItems.map((i) => i.orderId).filter(Boolean))];
+      if (orderIds.length === 0 && targetOrder?.id) orderIds.push(targetOrder.id);
+      for (const oId of orderIds) {
         try {
-          await reportTransferSent(targetOrder.id);
-          const freshOrder = await api.get(`/orders/${encodeURIComponent(targetOrder.id)}`).catch(() => targetOrder);
-          const updatedStatusOrder = { ...(freshOrder || targetOrder), paymentStatus: "awaiting" };
-          await sendOrderConfirmationEmail(updatedStatusOrder, customer);
-          confirmedOrderForTicket = updatedStatusOrder;
+          await reportTransferSent(oId);
+          const freshOrder = await api.get(`/orders/${encodeURIComponent(oId)}`).catch(() => null);
+          const orderToEmail = freshOrder || (targetOrder?.id === oId ? targetOrder : null);
+          if (orderToEmail) {
+            const updatedStatusOrder = { ...orderToEmail, paymentStatus: "awaiting" };
+            lastMail = await sendOrderConfirmationEmail(updatedStatusOrder, customer);
+            if (!confirmedOrderForTicket) confirmedOrderForTicket = updatedStatusOrder;
+          }
         } catch (err) {
-          console.warn("Không thể cập nhật báo chuyển khoản:", err);
+          console.warn("Không thể cập nhật báo chuyển khoản cho đơn:", err);
         }
       }
 
       const finalOrder = confirmedOrderForTicket || targetOrder || currentUnpaidOrder;
       const targetEmail = finalOrder?.email || customer?.email || "";
-      toast(`Đã ghi nhận thanh toán MBBank và gửi Vé Điện Tử đến email: ${targetEmail || "hòm thư tài khoản"}!`, "success");
+      toast("Đã ghi nhận bạn chuyển khoản - quán sẽ đối chiếu và xác nhận sớm.", "success");
+      if (lastMail) { const note = describeMailDelivery(lastMail, finalOrder); toast(note.message, note.type); }
       
       if (finalOrder) {
         openCinemaTicketModal(finalOrder, { toEmail: targetEmail });
@@ -349,9 +346,9 @@ async function checkAndRenderUnpaidOrderBanner() {
                 <span class="badge badge-danger" style="font-size: 0.72rem; padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4);">Chưa thanh toán</span>
               </div>
               <p class="text-xs text-muted" style="margin: 4px 0 0 0;">
-                Tổng tiền cần thanh toán: <strong class="text-amber" style="font-size: 0.95rem;">${formatMoney(totalAmount)}</strong>
+                Tổng đơn: <strong>${formatMoney(totalAmount)}</strong> · Cần trả trước 70%: <strong class="text-amber" style="font-size: 0.95rem;">${formatMoney(calcPrepayAmount(totalAmount))}</strong> <span style="opacity: 0.85;">(còn lại 30%: ${formatMoney(calcRemainingAmount(totalAmount))} tại quán)</span>
                 ${totalDiscounts > 0 ? `<span style="color: var(--amber-soft); margin-left: 6px;">(Đã giảm ${formatMoney(totalDiscounts)})</span>` : ""}
-                · Vui lòng thanh toán để Bartender bắt đầu pha chế món cho quý khách.
+                · Vui lòng cọc 70% để Bartender bắt đầu pha chế món cho quý khách.
               </p>
               ${hasCartItems ? `
               <div style="margin-top: 6px; padding: 5px 10px; background: rgba(197, 152, 67, 0.15); border-radius: 6px; border: 1px solid rgba(197, 152, 67, 0.3); font-size: 0.78rem; color: var(--amber-soft);">
@@ -362,7 +359,7 @@ async function checkAndRenderUnpaidOrderBanner() {
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto;">
             <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="banner-pay-btn" style="white-space: nowrap; font-size: 0.82rem; font-weight: 600; padding: 7px 14px;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <span>Quét mã QR MBBank thanh toán</span>
+              <span>Quét mã QR MBBank trả trước 70% (${formatMoney(calcPrepayAmount(totalAmount))})</span>
             </button>
             <button type="button" class="btn btn-outline btn-sm" id="banner-cancel-btn" style="font-size: 0.78rem; padding: 6px 10px; color: #f87171; border-color: rgba(239,68,68,0.4);" title="Huỷ đơn hàng này">
               Huỷ đơn
@@ -536,8 +533,7 @@ function renderCart() {
 
     if (sumCountEl) sumCountEl.textContent = "0 ly";
     if (sumTotalEl) sumTotalEl.textContent = "0₫";
-    if (sumFinalEl) sumFinalEl.textContent = "0₫";
-    if (slipPayBtn) slipPayBtn.style.display = "none";
+    renderSlipTotals(0, 0);
     updateSubmitState();
     return;
   }
@@ -597,17 +593,7 @@ function renderCart() {
   const { count, subtotal, total } = getActiveCheckoutSummary();
   if (sumCountEl) sumCountEl.textContent = `${count} ly`;
   if (sumTotalEl) sumTotalEl.textContent = formatMoney(subtotal);
-  if (sumFinalEl) sumFinalEl.textContent = formatMoney(total);
-
-  // Nút thanh toán trực tiếp trên Reservation Slip
-  if (slipPayBtn) {
-    if (count > 0 && total > 0) {
-      slipPayBtn.style.display = "flex";
-      if (slipPayVal) slipPayVal.textContent = formatMoney(total);
-    } else {
-      slipPayBtn.style.display = "none";
-    }
-  }
+  renderSlipTotals(count, total);
 
   // Tính lại giảm giá theo hạng/mã/điểm mỗi khi giỏ đổi (kể cả lần tải trang đầu) - trước đây chỉ tính khi
   // khách đổi mã/điểm hoặc bấm gửi đơn, nên khách đã đăng nhập không thấy ô "Dùng điểm" và giá giảm khi vào trang
@@ -640,32 +626,18 @@ function setPromoMessage(el, text, kind = "") {
 function renderPricing(result, customer) {
   pricing = result;
 
-  const { total, count } = getActiveCheckoutSummary();
-  if (currentUnpaidOrder) {
-    sumFinalEl.textContent = formatMoney(total);
-  } else {
-    sumFinalEl.textContent = formatMoney(result.total);
-  }
-
+  const { total, count } = getActiveCheckoutSummary(); // pricing vừa được gán = result -> total đã gồm ưu đãi của món mới
   promoLinesEl.innerHTML = result.discounts.map(discountLineHtml).join("");
-
-  if (slipPayBtn) {
-    if (count > 0 && total > 0) {
-      slipPayBtn.style.display = "flex";
-      if (slipPayVal) slipPayVal.textContent = formatMoney(total);
-    } else {
-      slipPayBtn.style.display = "none";
-    }
-  }
+  renderSlipTotals(count, total);
 
   const voucherAmount = result.discounts.find((d) => d.type === "voucher")?.amount || 0;
   if (result.voucherError) setPromoMessage(voucherMsgEl, result.voucherError, "error");
   else if (result.voucherCode) setPromoMessage(voucherMsgEl, fmt(t("order_voucher_ok", "Đã áp mã {code}: giảm {amount}."), { code: result.voucherCode, amount: formatMoney(voucherAmount) }), "ok");
   else setPromoMessage(voucherMsgEl, "");
 
-  pointsBoxEl.hidden = !customer;
+  pointsBoxEl.hidden = !customer || !canCustomer("self:redeem");
   loginHintEl.hidden = Boolean(customer);
-  if (!customer) return;
+  if (!customer || !canCustomer("self:redeem")) return;
 
   const balance = Number(result.customer?.points ?? customer.points) || 0;
   pointsBalanceEl.textContent = fmt(t("order_points_info", "({points} điểm · 1 điểm = {value})"), { points: balance, value: formatMoney(POINT_REDEEM_VND) });
@@ -683,8 +655,18 @@ function renderPricing(result, customer) {
  */
 async function refreshPricing() {
   const requestId = ++pricingRequestId;
-  const { subtotal } = getActiveCheckoutSummary();
+  const { cartSubtotal: subtotal } = getActiveCheckoutSummary(); // ưu đãi chỉ tính trên món MỚI trong giỏ
   const customer = getCurrentCustomer();
+  // Quyền của khách (ma trận phân quyền): bị tắt thì bỏ mã / điểm đang nhập và ẩn ô tương ứng
+  const voucherAllowed = canCustomer("self:voucher");
+  const redeemAllowed = canCustomer("self:redeem");
+  if (!voucherAllowed) promo.voucher = "";
+  if (!redeemAllowed) promo.points = 0;
+  // dùng style.display (không dùng thuộc tính hidden) vì .promo-row có display:flex đè lên [hidden]
+  const voucherRow = voucherInput?.closest(".promo-row");
+  if (voucherRow) voucherRow.style.display = voucherAllowed ? "" : "none";
+  const voucherMsg = document.getElementById("voucher-msg");
+  if (voucherMsg) voucherMsg.style.display = voucherAllowed ? "" : "none";
   try {
     const code = promo.voucher.trim();
     const orders = code ? await getAllOrders() : [];
@@ -704,7 +686,8 @@ async function refreshPricing() {
     if (requestId !== pricingRequestId) return null;
     pricing = null;
     promoLinesEl.innerHTML = "";
-    sumFinalEl.textContent = formatMoney(subtotal);
+    const fallback = getActiveCheckoutSummary();
+    renderSlipTotals(fallback.count, fallback.total);
     return null;
   }
 }
@@ -837,6 +820,11 @@ if (slipPayBtn) {
       toast("Vui lòng tích chọn ít nhất 1 món để thanh toán.", "warning");
       return;
     }
+    // Có món MỚI trong giỏ: phải qua form (kiểm tra tuổi 18+, áp ưu đãi) để thành đơn rồi mới có QR đúng số tiền
+    if (checked.some((i) => !i.isUnpaid)) {
+      formEl.requestSubmit();
+      return;
+    }
     openCustomerPayment(currentUnpaidOrder, () => {
       checkAndRenderUnpaidOrderBanner();
     });
@@ -918,6 +906,7 @@ function updateConditionalFields() {
   bookingTimeInput.dataset.rule = booking ? "required" : "";
   guestCountInput.dataset.rule = booking ? "required|integer|minval:1|maxval:50" : "";
   if (booking) setBookingTimeRange();
+  renderSeatingMap();
   renderCart(); // chữ trong giỏ trống + nút gửi khác nhau giữa 2 hình thức
 }
 
@@ -928,6 +917,100 @@ formEl.elements.serviceType.forEach((radio) => {
     updateCapacityHint();
   });
 });
+
+let seatingRequestId = 0;
+
+function updateSeatingHint() {
+  if (!seatingCapacityHint || !tableNumberInput) return;
+  const chosen = tableNumberInput.value.trim();
+  if (!chosen) {
+    seatingCapacityHint.textContent = isBooking()
+      ? "Bấm vào bàn còn trống trên sơ đồ để giữ đúng vị trí mong muốn (tuỳ chọn)."
+      : "Bấm chọn bàn bạn đang ngồi hoặc khu vực mong muốn.";
+    return;
+  }
+  const matched = ALL_BAR_TABLES.find((tb) => tb.label.toLowerCase() === chosen.toLowerCase());
+  const guests = isBooking() ? Number(guestCountInput?.value) || 0 : 0;
+  if (matched && guests > matched.seats) {
+    seatingCapacityHint.textContent = `Đã chọn: ${matched.label} (${matched.seats} chỗ). Lưu ý: nhóm ${guests} khách lớn hơn sức chứa tiêu chuẩn — quán sẽ hỗ trợ ghép bàn hoặc bạn chọn Sofa VIP lớn hơn.`;
+  } else if (matched) {
+    seatingCapacityHint.textContent = `Đã chọn: ${matched.label} (${matched.zoneName} · tối đa ${matched.seats} chỗ).`;
+  } else {
+    seatingCapacityHint.textContent = `Vị trí đã chọn: ${chosen}.`;
+  }
+}
+
+async function renderSeatingMap() {
+  if (!seatingMapZonesEl) return;
+  const requestId = ++seatingRequestId;
+  const currentType = formEl.elements.serviceType.value;
+  let bookingIso = "";
+  if (currentType === "booking" && bookingTimeInput?.value) {
+    const d = new Date(bookingTimeInput.value);
+    if (!Number.isNaN(d.getTime())) bookingIso = d.toISOString();
+  }
+
+  let occupied = new Set();
+  try {
+    const ordersList = await getAllOrders();
+    if (requestId !== seatingRequestId) return;
+    occupied = getOccupiedTableSet(ordersList, { serviceType: currentType, bookingTime: bookingIso });
+  } catch {
+    if (requestId !== seatingRequestId) return;
+  }
+
+  const selectedRaw = String(tableNumberInput?.value || "").trim().toLowerCase();
+  if (selectedRaw && occupied.has(selectedRaw)) {
+    tableNumberInput.value = "";
+    toast("Vị trí bạn chọn trước đó đã có khách đặt trong khung giờ này. Vui lòng chọn bàn khác!", "warning");
+  }
+
+  const currentSelected = String(tableNumberInput?.value || "").trim().toLowerCase();
+  seatingMapZonesEl.innerHTML = BAR_SEATING_ZONES.map((zone) => `
+    <div class="seating-zone-block">
+      <div class="seating-zone-header">
+        <span class="seating-zone-name">${zone.icon} ${escapeHtml(zone.name)}</span>
+        <span class="seating-zone-sub">${escapeHtml(zone.subtitle)}</span>
+      </div>
+      <div class="seating-table-grid">
+        ${zone.tables.map((tb) => {
+          const isBooked = occupied.has(tb.label.toLowerCase()) || occupied.has(tb.id.toLowerCase());
+          const isSelected = !isBooked && currentSelected === tb.label.toLowerCase();
+          return `
+            <button type="button" class="seat-card${isSelected ? " is-selected" : ""}${isBooked ? " is-booked" : ""}" data-table-label="${escapeHtml(tb.label)}" ${isBooked ? "disabled title=\"Đã có khách đặt trong khung giờ này\"" : ""}>
+              <span class="seat-card-title">${escapeHtml(tb.label)}</span>
+              <span class="seat-card-meta">${tb.seats} chỗ · ${isBooked ? "Đã đặt" : isSelected ? "Đang chọn" : "Còn trống"}</span>
+            </button>`;
+        }).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  updateSeatingHint();
+}
+
+if (seatingMapZonesEl) {
+  seatingMapZonesEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".seat-card");
+    if (!btn || btn.disabled) return;
+    const label = btn.dataset.tableLabel || "";
+    if (!tableNumberInput) return;
+    const isSame = tableNumberInput.value.trim().toLowerCase() === label.toLowerCase();
+    tableNumberInput.value = isSame ? "" : label;
+    renderSeatingMap();
+  });
+}
+
+if (tableNumberInput) {
+  tableNumberInput.addEventListener("input", () => {
+    const cur = tableNumberInput.value.trim().toLowerCase();
+    seatingMapZonesEl?.querySelectorAll(".seat-card").forEach((btn) => {
+      const label = String(btn.dataset.tableLabel || "").toLowerCase();
+      btn.classList.toggle("is-selected", !btn.disabled && cur === label);
+    });
+    updateSeatingHint();
+  });
+}
 
 /**
  * Luật nghiệp vụ của giờ đặt bàn (không khai báo được bằng data-rule),
@@ -998,13 +1081,17 @@ async function updateCapacityHint() {
 
 const debouncedCapacityHint = debounce(updateCapacityHint, 300);
 
-if (bookingTimeInput) bookingTimeInput.addEventListener("change", updateCapacityHint);
+if (bookingTimeInput) bookingTimeInput.addEventListener("change", () => {
+  updateCapacityHint();
+  renderSeatingMap();
+});
 
 if (bookingDatePicker) {
   bookingDatePicker.addEventListener("change", () => {
     syncBookingTime();
     validateBookingTime();
     updateCapacityHint();
+    renderSeatingMap();
   });
 }
 
@@ -1013,6 +1100,7 @@ if (bookingTimePicker) {
     syncBookingTime();
     validateBookingTime();
     updateCapacityHint();
+    renderSeatingMap();
   });
 }
 
@@ -1023,10 +1111,14 @@ document.querySelectorAll(".btn-time-slot").forEach((btn) => {
       syncBookingTime();
       validateBookingTime();
       updateCapacityHint();
+      renderSeatingMap();
     }
   });
 });
-guestCountInput.addEventListener("input", debouncedCapacityHint);
+guestCountInput.addEventListener("input", () => {
+  debouncedCapacityHint();
+  updateSeatingHint();
+});
 
 /* ---------------- Xác nhận đủ 18 tuổi ---------------- */
 
@@ -1044,6 +1136,7 @@ formEl.addEventListener("submit", async (e) => {
 
   const { checked, count } = getActiveCheckoutSummary();
   const hasUnpaid = checked.some((i) => i.isUnpaid);
+  const checkedCart = checked.filter((i) => !i.isUnpaid);
 
   // Gọi món tại bàn bắt buộc có món (cũ hoặc mới); đặt bàn trước thì gọi món là tuỳ chọn
   if (count === 0 && !isBooking()) {
@@ -1051,11 +1144,17 @@ formEl.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Nếu có món từ đơn cũ chưa thanh toán được tích chọn -> thanh toán MBBank (chung hoặc riêng)
-  if (hasUnpaid) {
+  // Chỉ chọn món của đơn cũ chưa thanh toán -> mở QR thanh toán các đơn đó.
+  // Có cả món mới: tạo đơn mới như bình thường (đủ kiểm tra), xong mới có QR gộp đúng tổng tiền.
+  if (hasUnpaid && checkedCart.length === 0) {
     openCustomerPayment(currentUnpaidOrder, () => {
       checkAndRenderUnpaidOrderBanner();
     });
+    return;
+  }
+
+  if (newOrderBlocked()) {
+    toast("Quán đang tạm tắt chức năng đặt bàn / gọi món online. Vui lòng gọi hotline để được hỗ trợ.", "error");
     return;
   }
 
@@ -1077,7 +1176,15 @@ formEl.addEventListener("submit", async (e) => {
   const restoreButton = setButtonLoading(submitBtn, "Đang gửi đơn đến quán...");
   try {
     const customer = getCurrentCustomer();
+    // Khách bỏ tích một số món mới -> chỉ đặt các món đang tích (giá + tồn kho lấy mới nhất từ thực đơn), món còn lại giữ trong giỏ
+    let subsetItems;
+    if (checkedCart.length > 0 && checkedCart.length < getCart().length) {
+      const synced = await syncCartWithCatalog();
+      const keep = new Set(checkedCart.map((i) => i.drinkId));
+      subsetItems = synced.cart.filter((i) => keep.has(i.drinkId));
+    }
     const result = await createOrder({
+      ...(subsetItems ? { items: subsetItems } : {}),
       birthDate: data.birthDate,
       voucherCode: latest?.voucherCode || "",
       pointsToUse: latest?.pointsUsed || 0,
@@ -1086,7 +1193,7 @@ formEl.addEventListener("submit", async (e) => {
       email: String(data.email || customer?.email || "").trim(),
       serviceType: data.serviceType,
       customerId: customer?.id || "", // khách đã đăng nhập -> được tích điểm khi đơn hoàn tất
-      tableNumber: data.serviceType === "dine-in" ? data.tableNumber || "" : "",
+      tableNumber: String(data.tableNumber || "").trim(),
       bookingTime: data.serviceType === "booking" ? data.bookingTime : "",
       guestCount: data.serviceType === "booking" ? Number(data.guestCount) : null,
       note: data.note || "",
@@ -1100,7 +1207,7 @@ formEl.addEventListener("submit", async (e) => {
       return;
     }
 
-    clearCart();
+    if (!subsetItems) clearCart(); // đặt một phần giỏ thì createOrder đã tự bỏ đúng các món vừa đặt
     renderCart();
     refreshCartBadge();
     formEl.reset();
@@ -1115,11 +1222,9 @@ formEl.addEventListener("submit", async (e) => {
 
     // Tự động gửi Vé Điện Tử (Cinema E-Ticket) về Email tài khoản khách đã đăng ký
     try {
-      await sendOrderConfirmationEmail(result.order, customer);
-      const sentTarget = result.order.email || customer?.email;
-      if (sentTarget) {
-        toast(`🎟️ Đã gửi Vé Điện Tử xác nhận về email: ${sentTarget}`, "success");
-      }
+      const mail = await sendOrderConfirmationEmail(result.order, customer);
+      const note = describeMailDelivery(mail, result.order);
+      toast(note.message, note.type);
     } catch (eMailErr) {
       console.warn("Không thể gửi email vé điện tử:", eMailErr);
     }
@@ -1172,14 +1277,19 @@ function showOrderSuccessModal(order) {
         ${order.discountTotal > 0 ? `
           <div class="receipt-row"><span>${t("order_subtotal", "Tổng tạm tính")}:</span><span>${formatMoney(order.subtotal)}</span></div>
           ${order.discounts.map((d) => `<div class="receipt-row"><span>${escapeHtml(d.label)}:</span><span>−${formatMoney(d.amount)}</span></div>`).join("")}` : ""}
-        <div class="receipt-row"><span>${t("order_rc_total", "Tổng thanh toán")}:</span><strong class="text-amber">${formatMoney(order.total)}</strong></div>
+        <div class="receipt-row"><span>${t("order_rc_total", "Tổng giá trị đơn")}:</span><strong>${formatMoney(order.total)}</strong></div>
+        ${order.total > 0 ? `
+          <div class="receipt-row"><span>${t("order_prepay_70", "Cần trả trước khi đặt (70%)")}:</span><strong class="text-amber">${formatMoney(order.prepayAmount)}</strong></div>
+          <div class="receipt-row"><span>${t("order_remaining_30", "Còn lại trả tại quán (30%)")}:</span><span class="text-muted">${formatMoney(order.remainingAmount)}</span></div>` : ""}
       </div>
 
-      <div class="door-host-notice-card" style="margin: 16px 0; text-align: left;">
-        <div class="notice-icon">🛡️</div>
+      <div class="door-host-notice-card bar-rules-notice-card" style="margin: 16px 0; text-align: left;">
+        <div class="notice-icon">📜</div>
         <div class="notice-content">
-          <div class="notice-title">QUY ĐỊNH CHECK-IN TẠI CỬA (DOOR HOST)</div>
-          <p class="notice-text">Quý khách vui lòng mang theo <strong>CCCD hoặc mở ứng dụng VNeID chính chủ</strong> để đối chiếu độ tuổi trước khi nhận bàn. Mọi trường hợp dưới 18 tuổi hoặc khai báo sai lệch sẽ bị từ chối phục vụ và hủy bàn theo quy định pháp luật.</p>
+          <div class="notice-title">NỘI QUY &amp; QUY ĐỊNH QUÁN BAR ĐÊM</div>
+          <ul class="bar-rules-list">
+            ${BAR_RULES.map((r) => `<li><strong>${escapeHtml(r.title)}:</strong> ${escapeHtml(r.text)}</li>`).join("")}
+          </ul>
         </div>
       </div>
 
@@ -1187,7 +1297,7 @@ function showOrderSuccessModal(order) {
         ${order.needsPayment ? `
         <button type="button" class="btn btn-primary btn-block btn-vqr-pay" id="success-open-vietqr-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span>${t("order_qr_now", "Quét Mã QR MBBank Chuyển Khoản Ngay")} (${formatMoney(order.total)})</span>
+          <span>${t("order_qr_now", "Quét Mã QR MBBank Trả Trước 70%")} (${formatMoney(order.prepayAmount)})</span>
         </button>` : ""}
         <button type="button" class="btn btn-ghost btn-block" id="success-close-btn">${t("order_close", "Đã hiểu & Đóng")}</button>
       </div>
@@ -1201,35 +1311,22 @@ function showOrderSuccessModal(order) {
   });
   host.querySelector("#success-open-vietqr-btn")?.addEventListener("click", () => {
     close();
-    if (currentUnpaidOrder && currentUnpaidOrder.id !== order.id && Array.isArray(currentUnpaidOrder.items) && currentUnpaidOrder.items.length > 0) {
-      // Mỗi đơn có thể đã được giảm riêng -> tính tiền từng món theo tỉ lệ (tổng đơn / tổng giá niêm yết)
-      const scaleOf = (o) => {
-        const listed = (o.items || []).reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 1), 0);
-        return listed > 0 && o.total > 0 && o.total < listed ? o.total / listed : 1;
+    // Các đơn chưa trả khác của khách (không tính đơn vừa tạo) được gộp chung vào một mã QR; khách tự bỏ tích đơn chưa muốn trả
+    const others = (currentUnpaidOrders || []).filter((o) => o.id !== order.id && Array.isArray(o.items) && o.items.length > 0);
+    if (others.length > 0) {
+      const itemsOf = (o, tag) => {
+        const allocated = allocateOrderTotal(o.items, o.total); // tổng các món = đúng tổng đơn
+        return o.items.map((it, idx) => ({
+          ...it,
+          isUnpaid: true, // đơn ĐÃ LƯU - nếu đánh dấu là món giỏ hàng, nút "Tôi đã chuyển khoản" sẽ tạo thêm đơn TRÙNG
+          orderCode: o.code,
+          orderId: o.id,
+          sourceTag: `${tag} ${o.code}`,
+          finalPrice: allocated[idx],
+          checked: true,
+        }));
       };
-      const oldScale = scaleOf(currentUnpaidOrder);
-      const newScale = scaleOf(order);
-      const combined = [
-        ...currentUnpaidOrder.items.map((it) => ({
-          ...it,
-          isUnpaid: true,
-          orderCode: currentUnpaidOrder.code,
-          orderId: currentUnpaidOrder.id,
-          sourceTag: `Đơn cũ ${currentUnpaidOrder.code}`,
-          finalPrice: Math.round((Number(it.price) || 0) * (Number(it.qty) || 1) * oldScale),
-          checked: true,
-        })),
-        ...order.items.map((it) => ({
-          ...it,
-          isUnpaid: false,
-          orderCode: order.code,
-          orderId: order.id,
-          sourceTag: `Đơn mới ${order.code}`,
-          finalPrice: Math.round((Number(it.price) || 0) * (Number(it.qty) || 1) * newScale),
-          checked: true,
-        })),
-      ];
-      openCustomerPayment(order, null, combined);
+      openCustomerPayment(order, null, [...others.flatMap((o) => itemsOf(o, "Đơn cũ")), ...itemsOf(order, "Đơn mới")]);
     } else {
       openCustomerPayment(order);
     }
@@ -1251,7 +1348,9 @@ function lookupResultHtml(o) {
 
   // Khách tự huỷ được không - quy tắc nằm trong chính đối tượng đơn (đa hình theo loại đơn)
   const cancel = o.customerCancelCheck();
-  const cancelHtml = cancel.ok
+  const cancelHtml = cancel.ok && !canCustomer("self:cancel")
+    ? `<p class="lookup-cancel-note">${escapeHtml(t("order_cancel_disabled", "Quán đang tắt chức năng tự huỷ đơn online - vui lòng gọi hotline để được hỗ trợ."))}</p>`
+    : cancel.ok
     ? `<button type="button" class="btn btn-ghost btn-sm" id="lookup-cancel-btn">
          ${ICONS.trash(14)} <span>${o.serviceType === "booking" ? t("order_cancel_booking", "Huỷ đặt bàn") : t("order_cancel_order", "Huỷ đơn")}</span>
        </button>`
@@ -1272,7 +1371,7 @@ function lookupResultHtml(o) {
         ${o.isTableOnly ? "" : `<p><strong>${t("order_rc_items", "Món đã gọi")}:</strong> ${items}</p>`}
         <p><strong>${t("order_rc_created", "Đặt lúc")}:</strong> ${formatDateTime(o.createdAt)}</p>
         ${o.isTableOnly ? "" : `
-        <p><strong>${t("order_rc_amount", "Tổng tiền")}:</strong> <strong class="text-amber">${formatMoney(o.total)}</strong></p>
+        <p><strong>${t("order_rc_amount", "Tổng tiền")}:</strong> <strong>${formatMoney(o.total)}</strong> <span class="text-muted text-xs">(Trả trước 70%: <strong class="text-amber">${formatMoney(o.prepayAmount)}</strong> · Tại quán 30%: ${formatMoney(o.remainingAmount)})</span></p>
         <p><strong>${t("order_rc_payment", "Thanh toán")}:</strong> <span class="badge ${o.paymentBadge}">${paymentText(o)}</span></p>`}
         ${o.holdsStock ? `
         <div class="door-host-notice-card" style="margin: 14px 0; text-align: left;">
@@ -1286,7 +1385,7 @@ function lookupResultHtml(o) {
           ${showQrBtn ? `
             <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="lookup-qr-btn">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <span>${t("order_lookup_qr", "Mở Mã QR MBBank Chuyển Khoản")} (${formatMoney(o.total)})</span>
+              <span>${t("order_lookup_qr", "Mở Mã QR MBBank Trả Trước 70%")} (${formatMoney(o.prepayAmount)})</span>
             </button>` : ""}
           <button type="button" class="btn btn-secondary btn-sm" id="lookup-ticket-btn" style="display: inline-flex; align-items: center; gap: 5px;">
             <span>🎟️</span> <span>Xem Vé Điện Tử</span>
@@ -1381,6 +1480,7 @@ function checkUrlParams() {
     if (tableInput) {
       tableInput.value = table;
     }
+    renderSeatingMap();
     toast(`Đã chọn vị trí: "${table}" từ mô hình 3D!`, "info");
     const orderBox = document.querySelector(".order-summary-box") || formEl;
     if (orderBox) {
@@ -1471,6 +1571,15 @@ window.addEventListener("languagechange", () => {
 cartListEl.innerHTML = loadingHtml("Đang kiểm tra danh sách món đã chọn...");
 
 async function initOrderPage() {
+  await syncRolePermissions(); // lấy phân quyền khách hàng mới nhất từ máy chủ
+  if (!canCustomer("self:order")) {
+    const notice = document.createElement("div");
+    notice.className = "unpaid-banner";
+    notice.setAttribute("role", "alert");
+    notice.style.cssText = "margin: 0 0 16px; padding: 14px 18px; border: 1px solid rgba(239,68,68,0.4); border-radius: 8px; background: rgba(239,68,68,0.08); color: #fca5a5;";
+    notice.textContent = "Quán đang tạm tắt chức năng đặt bàn / gọi món online. Vui lòng gọi hotline để được hỗ trợ.";
+    formEl.prepend(notice);
+  }
   await checkAndRenderUnpaidOrderBanner();
   await syncAndRenderCart();
   await refreshPricing();

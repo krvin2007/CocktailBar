@@ -9,6 +9,7 @@ import { formatMoney, formatDateTime, formatDate, escapeHtml, normalizePhone } f
 import { toast } from "./ui.js";
 import { buildXlsxBytes, parseXlsxBuffer } from "./xlsxHelper.js";
 import { ageProblem } from "./age.js";
+import { calcPrepayAmount, calcRemainingAmount } from "./venue.js";
 
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -622,6 +623,15 @@ export function printOrderInvoice(order) {
             <span>TỔNG THANH TOÁN:</span>
             <span style="color: #b45309;">${formatMoney(order.total)}</span>
           </div>
+          ${Number(order.total) > 0 ? `
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #333; margin-top: 6px;">
+              <span>Trả trước khi đặt (70%):</span>
+              <strong>${formatMoney(calcPrepayAmount(order.total))}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; margin-top: 2px;">
+              <span>Còn lại thanh toán tại quán (30%):</span>
+              <span>${formatMoney(calcRemainingAmount(order.total))}</span>
+            </div>` : ""}
         </div>
 
         <div class="footer-note">

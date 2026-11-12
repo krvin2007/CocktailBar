@@ -7,7 +7,8 @@
    - Hỗ trợ chuyển sang "Quên mật khẩu" nếu không nhớ mật khẩu cũ
    ========================================================= */
 
-import { changeCustomerPassword } from "./customerAuth.js";
+import { changeCustomerPassword, requestChangePasswordOtp } from "./customerAuth.js";
+import { otpChannelPickerHtml, selectedOtpChannel, otpMessageCardHtml, startResendCountdown } from "./otpUi.js";
 import { toast, setButtonLoading } from "./ui.js";
 import { escapeHtml } from "./utils.js";
 import { ICONS } from "./icons.js";
@@ -42,7 +43,7 @@ export function openChangePasswordModal(customer, onSuccess = null) {
       </div>
 
       <p class="text-xs text-muted" style="margin-bottom: 14px; line-height: 1.5;">
-        Tài khoản: <strong style="color: var(--cream);">${escapeHtml(customer.name)}</strong> (${escapeHtml(customer.phone || customer.email || "")}). Vui lòng nhập mật khẩu hiện tại để xác nhận quyền sở hữu.
+        Tài khoản: <strong style="color: var(--cream);">${escapeHtml(customer.name)}</strong> (${escapeHtml(customer.phone || customer.email || "")}). Vui lòng nhập mật khẩu hiện tại và mã OTP (gửi qua Email hoặc SMS) để xác nhận quyền sở hữu.
       </p>
 
       <form id="cp-form" novalidate>
@@ -91,6 +92,19 @@ export function openChangePasswordModal(customer, onSuccess = null) {
           </div>
         </div>
 
+        <!-- XÁC THỰC OTP: chọn Email hoặc SMS -->
+        <div class="form-group mb-2" style="margin-top: 16px;">
+          <label style="display: block; font-size: 0.82rem; font-weight: 600; color: var(--cream); margin-bottom: 6px;">
+            Xác thực bằng mã OTP <span class="req" style="color: #ef4444;">*</span>
+          </label>
+          ${otpChannelPickerHtml("cp-channel")}
+          <div style="margin-top: 8px;">
+            <button type="button" class="btn btn-outline btn-sm" id="cp-send-otp-btn">Gửi mã OTP</button>
+          </div>
+          <div id="cp-otp-notice" style="margin-top: 8px;"></div>
+          <input type="text" id="cp-otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="Nhập mã 6 số" disabled style="margin-top: 8px; width: 100%; padding: 9px 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 1.05rem; letter-spacing: 2px; text-align: center; font-weight: 700;">
+        </div>
+
         <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
           <button type="button" class="btn btn-ghost btn-sm" id="cp-cancel-btn">Huỷ bỏ</button>
           <button type="submit" class="btn btn-primary" id="cp-submit-btn">
@@ -130,6 +144,29 @@ export function openChangePasswordModal(customer, onSuccess = null) {
   const newPassInput = host.querySelector("#cp-new-pass");
   const confirmPassInput = host.querySelector("#cp-confirm-pass");
   const submitBtn = host.querySelector("#cp-submit-btn");
+  const sendOtpBtn = host.querySelector("#cp-send-otp-btn");
+  const otpNotice = host.querySelector("#cp-otp-notice");
+  const otpInput = host.querySelector("#cp-otp-input");
+
+  // Gửi OTP qua kênh đã chọn (Email / SMS)
+  sendOtpBtn.addEventListener("click", async () => {
+    const res = await requestChangePasswordOtp(customer.id, selectedOtpChannel(host, "cp-channel"));
+    if (!res.success) {
+      toast(res.message, "danger");
+      return;
+    }
+    otpNotice.innerHTML = otpMessageCardHtml(res);
+    otpInput.disabled = false;
+    otpInput.focus();
+    toast(res.message, "success");
+    startResendCountdown(sendOtpBtn, res.resendInSeconds, "Gửi lại mã");
+  });
+  otpNotice.addEventListener("click", (e) => {
+    const btn = e.target.closest(".otp-fill-btn");
+    if (!btn) return;
+    otpInput.value = btn.dataset.otp;
+    toast("Đã tự động điền mã OTP!", "info");
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -153,9 +190,15 @@ export function openChangePasswordModal(customer, onSuccess = null) {
       return;
     }
 
+    if (!otpInput.value.trim()) {
+      toast("Vui lòng bấm \"Gửi mã OTP\" (Email hoặc SMS) rồi nhập mã xác thực.", "warning");
+      (otpInput.disabled ? sendOtpBtn : otpInput).focus();
+      return;
+    }
+
     const restore = setButtonLoading(submitBtn, "Đang xử lý...");
     try {
-      const res = await changeCustomerPassword(customer.id, oldPass, newPass);
+      const res = await changeCustomerPassword(customer.id, oldPass, newPass, otpInput.value.trim());
       if (res.success) {
         toast(res.message, "success");
         close();

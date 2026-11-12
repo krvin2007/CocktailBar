@@ -403,9 +403,6 @@ function bindEvents() {
       setImagePreview(val, val ? "Đã nhập liên kết ảnh" : "Chưa có ảnh nào được chọn");
     });
   }
-}
-
-// Chưa đăng nhập -> initAdminLayout chuyển hướng và trả false: dừng, không gọi API
 
   // Xuất Excel thực đơn
   document.getElementById("btn-export-drinks-excel")?.addEventListener("click", () => {
@@ -503,13 +500,21 @@ function bindEvents() {
       }
     }
 
-    toast(`Đã thêm thành công ${successCount}/${parsedDrinksToImport.length} món vào thực đơn!`, "success");
+    if (successCount === 0) {
+      toast("Không nhập được món nào vào thực đơn.", "error");
+    } else if (successCount < parsedDrinksToImport.length) {
+      toast(`Đã thêm ${successCount}/${parsedDrinksToImport.length} món vào thực đơn.`, "warning");
+    } else {
+      toast(`Đã thêm thành công ${successCount}/${parsedDrinksToImport.length} món vào thực đơn!`, "success");
+    }
     closeModal("import-drinks-modal");
     confirmImportBtn.disabled = false;
     confirmImportBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><span>Xác nhận nhập vào thực đơn</span>`;
     await reloadTable();
   });
+}
 
+// Chưa đăng nhập -> initAdminLayout chuyển hướng và trả false: dừng, không gọi API
 if (initAdminLayout("Quản Lý Thực Đơn")) {
   fillCategorySelects();
   bindEvents();
