@@ -1142,6 +1142,31 @@ check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true)
   check("URL QR chứa đúng số tiền + nội dung + tài khoản", vq.generateVietQRUrl({ bankId: "MB", accountNumber: "123456789", accountName: "Nguyen Van A" }, { amount: 218250, memo: "bar dh0016" }), "https://img.vietqr.io/image/MB-123456789-compact2.png?amount=218250&addInfo=BAR%20DH0016&accountName=NGUYEN%20VAN%20A");
 }
 
+// 6g. Mail vé điện tử: nội dung đúng giai đoạn thanh toán, ngày giờ + món, không gửi tới địa chỉ giả
+{
+  const em = await import(mod("emailService.js"));
+  const bookingOrder = { id: "o-mail-1", code: "DH0777", name: "Lê Thu Hương", phone: "0918765432", email: "huong.le@gmail.com", serviceType: "booking", bookingTime: new Date(2026, 10, 15, 20, 0).toISOString(), guestCount: 4, createdAt: new Date(2026, 10, 12, 9, 0).toISOString(), items: [{ name: "Negroni Classico", price: 125000, qty: 2 }], discounts: [{ amount: 7500 }], total: 242500, paymentStatus: "unpaid" };
+  check("Nhãn thanh toán: unpaid", em.paymentStatusText({ paymentStatus: "unpaid" }), "CHƯA THANH TOÁN");
+  check("Nhãn thanh toán: awaiting (đã quét/báo chuyển khoản) KHÔNG còn ghi 'chưa thanh toán'", em.paymentStatusText({ paymentStatus: "awaiting" }), "ĐÃ BÁO CHUYỂN KHOẢN - ĐANG CHỜ QUÁN XÁC NHẬN");
+  check("Nhãn thanh toán: paid", em.paymentStatusText({ paymentStatus: "paid" }), "ĐÃ THANH TOÁN");
+  check("Tiêu đề mail đổi theo giai đoạn (chờ xác nhận / đã thanh toán)", [em.orderMailSubject({ ...bookingOrder, paymentStatus: "awaiting" }), em.orderMailSubject({ ...bookingOrder, paymentStatus: "paid" })].map((x) => /báo chuyển khoản|Đã thanh toán/.test(x)).join(), "true,true");
+  const params = em.buildOrderMailParams(bookingOrder, "huong.le@gmail.com");
+  check("Mail thật: có ngày giờ đặt bàn 15/11/2026 20:00", /15\/11\/2026/.test(params.booking_time) && /20:00/.test(params.booking_time), true);
+  check("Mail thật: có số khách + hình thức Đặt bàn trước", params.guests === "4 khách" && params.service_type === "Đặt bàn trước", true);
+  check("Mail thật: liệt kê món đã đặt (tên, số lượng, tiền)", /Negroni Classico x2/.test(params.items_text) && /250\.000/.test(params.items_text), true);
+  check("Mail thật: tổng tiền là số khách phải trả (sau giảm giá)", params.total.replace(/\D/g, ""), "242500");
+  check("Mail thật: tình trạng thanh toán + người nhận", `${params.payment_status}|${params.to_email}`, "CHƯA THANH TOÁN|huong.le@gmail.com");
+  const html = em.buildCinemaTicketHtml({ ...bookingOrder, paymentStatus: "awaiting" }, { toEmail: "huong.le@gmail.com" });
+  check("Vé HTML sau khi quét QR ghi 'chờ quán xác nhận', không ghi 'CHƯA THANH TOÁN'", /CHỜ QUÁN XÁC NHẬN/.test(html) && !/CHƯA THANH TOÁN/.test(html), true);
+  const noMail = await em.sendOrderConfirmationEmail({ ...bookingOrder, email: "" }, null);
+  check("Khách không có email: không tạo thư gửi tới địa chỉ giả (delivery = no_email)", `${noMail.delivery}|${noMail.id}|${noMail.to}`, "no_email|null|");
+  const withMail = await em.sendOrderConfirmationEmail(bookingOrder, null);
+  check("Có email nhưng quán chưa cấu hình EmailJS: lưu Hộp thư, báo trung thực (not_configured)", `${withMail.delivery}|${withMail.to}`, "not_configured|huong.le@gmail.com");
+  check("Câu thông báo không nói 'đã gửi email' khi chưa gửi thật", /Hộp thư/.test(em.describeMailDelivery(withMail, bookingOrder).message) && !/Đã gửi email/.test(em.describeMailDelivery(withMail, bookingOrder).message), true);
+  check("Câu thông báo khi gửi thật thành công", /Đã gửi email vé điện tử/.test(em.describeMailDelivery({ ...withMail, delivery: "sent" }, bookingOrder).message), true);
+  check("Chưa cấu hình EmailJS thì isRealEmailConfigured = false", em.isRealEmailConfigured(), false);
+}
+
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);

@@ -13,8 +13,101 @@
 import { api } from "./api.js";
 import { getItem, setItem } from "./storage.js";
 import { formatMoney, formatDateTime, escapeHtml, uid } from "./utils.js";
+import { EMAILJS_CONFIG } from "./emailConfig.js";
 
 const EMAILS_KEY = "quanbar_sent_emails";
+const EMAILJS_CDN = "https://cdn.jsdelivr.net/npm/@emailjs/browser@5.0.3/dist/email.min.js";
+const EMAILJS_TIMEOUT_MS = 10000;
+
+/** Đã điền đủ cấu hình EmailJS (gửi email THẬT) chưa */
+export function isRealEmailConfigured() {
+  return Boolean(EMAILJS_CONFIG.publicKey && EMAILJS_CONFIG.serviceId && EMAILJS_CONFIG.templateId);
+}
+
+let emailJsLoading = null;
+/** Nạp thư viện EmailJS từ CDN (chỉ khi thật sự cần gửi) */
+function loadEmailJs() {
+  if (globalThis.emailjs) return Promise.resolve(globalThis.emailjs);
+  if (!emailJsLoading) {
+    emailJsLoading = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = EMAILJS_CDN;
+      script.onload = () => resolve(globalThis.emailjs);
+      script.onerror = () => { emailJsLoading = null; reject(new Error("Không tải được thư viện gửi email (kiểm tra kết nối Internet).")); };
+      document.head.appendChild(script);
+    });
+  }
+  return emailJsLoading;
+}
+
+/** Nhãn tình trạng thanh toán đúng với thực tế (không ghi "chưa thanh toán" khi khách đã báo chuyển khoản) */
+export function paymentStatusText(order) {
+  if (order?.paymentStatus === "paid") return "ĐÃ THANH TOÁN";
+  if (order?.paymentStatus === "awaiting") return "ĐÃ BÁO CHUYỂN KHOẢN - ĐANG CHỜ QUÁN XÁC NHẬN";
+  return "CHƯA THANH TOÁN";
+}
+
+/** Tiêu đề mail theo từng giai đoạn của đơn */
+export function orderMailSubject(order) {
+  const code = order?.code || "";
+  if (order?.paymentStatus === "paid") return `✅ [Quán Bar Đêm] Đã thanh toán - Vé điện tử đơn #${code}`;
+  if (order?.paymentStatus === "awaiting") return `⏳ [Quán Bar Đêm] Đã nhận báo chuyển khoản - đơn #${code}`;
+  return `🎟️ [Quán Bar Đêm] Vé Điện Tử & Xác Nhận Đơn Hàng #${code}`;
+}
+
+/** Thông tin đơn dạng chữ thường cho mail thật (ngày giờ nhận bàn, món đã đặt, tổng tiền, tình trạng thanh toán) */
+export function buildOrderMailParams(order, toEmail) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const isBooking = order.serviceType === "booking";
+  const serviceLabel = { booking: "Đặt bàn trước", "dine-in": "Gọi món tại bàn", takeaway: "Mang đi" }[order.serviceType] || order.serviceType || "";
+  const discounts = Array.isArray(order.discounts) ? order.discounts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0) : 0;
+  const itemsText = items.length
+    ? items.map((it) => `• ${it.name} x${it.qty || 1} - ${formatMoney((Number(it.price) || 0) * (Number(it.qty) || 1))}`).join("\n")
+    : "(Chỉ giữ bàn - quý khách gọi đồ uống tại quầy khi đến)";
+  return {
+    to_email: toEmail,
+    subject: orderMailSubject(order),
+    customer_name: order.name || "Quý khách",
+    order_code: order.code || "",
+    service_type: serviceLabel,
+    booking_time: formatDateTime(isBooking && order.bookingTime ? order.bookingTime : order.createdAt),
+    guests: isBooking && order.guestCount ? `${order.guestCount} khách` : "",
+    seat: order.tableNumber ? `Bàn ${order.tableNumber}` : "",
+    items_text: itemsText,
+    discount_text: discounts > 0 ? `Ưu đãi: -${formatMoney(discounts)}` : "",
+    total: formatMoney(order.total || 0),
+    payment_status: paymentStatusText(order),
+    address: "74-76 Nam Kỳ Khởi Nghĩa, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh",
+    hotline: "0397 062 429",
+    message: isBooking
+      ? "Bàn đặt được giữ trong 20 phút kể từ giờ hẹn. Vui lòng xuất trình mã đơn hoặc CCCD/VNeID khi đến quán."
+      : "Vui lòng xuất trình mã đơn khi cần đối chiếu. Cảm ơn quý khách!",
+  };
+}
+
+/** Gửi mail thật bằng EmailJS (có giới hạn thời gian chờ) */
+async function sendRealEmail(params) {
+  const emailjs = await loadEmailJs();
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Gửi email quá thời gian chờ.")), EMAILJS_TIMEOUT_MS));
+  await Promise.race([
+    emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, params, { publicKey: EMAILJS_CONFIG.publicKey }),
+    timeout,
+  ]);
+}
+
+/**
+ * Câu thông báo trung thực cho khách sau khi gọi sendOrderConfirmationEmail (không báo "đã gửi" khi chưa gửi thật).
+ * @returns {{ message: string, type: "success"|"info"|"warning" }}
+ */
+export function describeMailDelivery(record, order) {
+  const to = record?.to || "";
+  switch (record?.delivery) {
+    case "sent": return { message: `🎟️ Đã gửi email vé điện tử (đơn ${order?.code || ""}) tới ${to}`, type: "success" };
+    case "failed": return { message: `Không gửi được email tới ${to}. Vé vẫn được lưu trong Hộp thư ở trang Tài khoản.`, type: "warning" };
+    case "no_email": return { message: `Bạn chưa nhập email nên không có thư xác nhận. Hãy lưu mã đơn ${order?.code || ""} để tra cứu.`, type: "info" };
+    default: return { message: `🎟️ Vé điện tử đơn ${order?.code || ""} đã lưu vào Hộp thư ở trang Tài khoản của ${to}.`, type: "info" };
+  }
+}
 
 /**
  * Sinh mã vạch chuẩn vé xem phim dạng SVG (Code 128 style)
@@ -182,8 +275,8 @@ export function buildCinemaTicketHtml(order, { toEmail = "" } = {}) {
             </div>
             <div style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
               <span style="font-size: 0.78rem; color: #baa998;">Trạng thái thanh toán:</span>
-              <span class="badge ${isPaid ? "badge-success" : "badge-danger"}" style="font-size: 0.78rem; padding: 2px 8px;">
-                ${isPaid ? "✓ ĐÃ THANH TOÁN (MBBank)" : "CHƯA THANH TOÁN (MBBank)"}
+              <span class="badge ${isPaid ? "badge-success" : order.paymentStatus === "awaiting" ? "badge-warning" : "badge-danger"}" style="font-size: 0.78rem; padding: 2px 8px;">
+                ${isPaid ? "✓ " : ""}${paymentStatusText(order)}
               </span>
             </div>
           </div>
@@ -231,16 +324,33 @@ export function buildCinemaTicketHtml(order, { toEmail = "" } = {}) {
 export async function sendOrderConfirmationEmail(order, customer = null) {
   if (!order) throw new Error("Dữ liệu đơn hàng không hợp lệ.");
 
-  const targetEmail = String(order.email || customer?.email || "").trim() || "khachhang@quanbar.vn";
+  // Khách không có email thì KHÔNG tạo thư gửi tới địa chỉ giả (không ai nhận được): báo lại để giao diện nhắc khách lưu mã đơn
+  const targetEmail = String(order.email || customer?.email || "").trim();
+  if (!targetEmail) {
+    return { id: null, to: "", orderId: order.id, orderCode: order.code, type: "order_ticket", delivery: "no_email" };
+  }
   const bodyHtml = buildCinemaTicketHtml(order, { toEmail: targetEmail });
+
+  // Gửi email THẬT (nếu quán đã điền cấu hình EmailJS); lỗi mạng không làm hỏng luồng đặt/thanh toán
+  let delivery = "not_configured";
+  if (isRealEmailConfigured()) {
+    try {
+      await sendRealEmail(buildOrderMailParams(order, targetEmail));
+      delivery = "sent";
+    } catch (err) {
+      console.warn("[email] Không gửi được email thật:", err);
+      delivery = "failed";
+    }
+  }
 
   const emailRecord = {
     id: uid("mail"),
     to: targetEmail,
     orderId: order.id,
     orderCode: order.code,
-    subject: `🎟️ [Quán Bar Đêm] Vé Điện Tử & Xác Nhận Đơn Hàng #${order.code}`,
+    subject: orderMailSubject(order),
     type: "order_ticket",
+    delivery,
     sentAt: new Date().toISOString(),
     bodyHtml,
     orderSummary: {

@@ -23,7 +23,7 @@ import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCurrentCustomer, syncCustomerSession } from "../modules/customerAuth.js";
 import { resolvePricing, POINT_REDEEM_VND, MIN_POINT_REDEEM } from "../modules/promotions.js";
 import { getItem, setItem, removeItem } from "../modules/storage.js";
-import { sendOrderConfirmationEmail, openCinemaTicketModal } from "../modules/emailService.js";
+import { sendOrderConfirmationEmail, describeMailDelivery, openCinemaTicketModal } from "../modules/emailService.js";
 
 const APPLIED_VOUCHER_KEY = "applied_voucher";
 
@@ -196,6 +196,7 @@ function openCustomerPayment(order, afterReport, allItems = null) {
       const selectedItems = payload?.selectedItems || itemsToPass.filter((i) => i.checked);
       const customer = getCurrentCustomer();
       let confirmedOrderForTicket = null;
+      let lastMail = null;
 
       // Báo "đã chuyển khoản" cho từng đơn được tích chọn (cả đơn, không trả một phần đơn)
       const orderIds = [...new Set(selectedItems.map((i) => i.orderId).filter(Boolean))];
@@ -207,7 +208,7 @@ function openCustomerPayment(order, afterReport, allItems = null) {
           const orderToEmail = freshOrder || (targetOrder?.id === oId ? targetOrder : null);
           if (orderToEmail) {
             const updatedStatusOrder = { ...orderToEmail, paymentStatus: "awaiting" };
-            await sendOrderConfirmationEmail(updatedStatusOrder, customer);
+            lastMail = await sendOrderConfirmationEmail(updatedStatusOrder, customer);
             if (!confirmedOrderForTicket) confirmedOrderForTicket = updatedStatusOrder;
           }
         } catch (err) {
@@ -217,7 +218,8 @@ function openCustomerPayment(order, afterReport, allItems = null) {
 
       const finalOrder = confirmedOrderForTicket || targetOrder || currentUnpaidOrder;
       const targetEmail = finalOrder?.email || customer?.email || "";
-      toast(`Đã ghi nhận thanh toán MBBank và gửi Vé Điện Tử đến email: ${targetEmail || "hòm thư tài khoản"}!`, "success");
+      toast("Đã ghi nhận bạn chuyển khoản - quán sẽ đối chiếu và xác nhận sớm.", "success");
+      if (lastMail) { const note = describeMailDelivery(lastMail, finalOrder); toast(note.message, note.type); }
       
       if (finalOrder) {
         openCinemaTicketModal(finalOrder, { toEmail: targetEmail });
@@ -1083,11 +1085,9 @@ formEl.addEventListener("submit", async (e) => {
 
     // Tự động gửi Vé Điện Tử (Cinema E-Ticket) về Email tài khoản khách đã đăng ký
     try {
-      await sendOrderConfirmationEmail(result.order, customer);
-      const sentTarget = result.order.email || customer?.email;
-      if (sentTarget) {
-        toast(`🎟️ Đã gửi Vé Điện Tử xác nhận về email: ${sentTarget}`, "success");
-      }
+      const mail = await sendOrderConfirmationEmail(result.order, customer);
+      const note = describeMailDelivery(mail, result.order);
+      toast(note.message, note.type);
     } catch (eMailErr) {
       console.warn("Không thể gửi email vé điện tử:", eMailErr);
     }

@@ -18,7 +18,7 @@ import { escapeHtml, formatMoney, formatDate, formatDateTime } from "../modules/
 import { t } from "../modules/i18n.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
 import { reportTransferSent, cancelByCustomer } from "../modules/ordersService.js";
-import { openCinemaTicketModal, openWelcomeVoucherModal, getEmailsByRecipient, sendOrderConfirmationEmail } from "../modules/emailService.js";
+import { openCinemaTicketModal, openWelcomeVoucherModal, getEmailsByRecipient, sendOrderConfirmationEmail, describeMailDelivery } from "../modules/emailService.js";
 import { openChangePasswordModal } from "../modules/changePasswordModal.js";
 import { openForgotPasswordModal } from "../modules/forgotPasswordModal.js";
 import { printOrderInvoice } from "../modules/exportService.js";
@@ -660,9 +660,11 @@ bodyEl.addEventListener("click", async (e) => {
       await reportTransferSent(order.id);
       const session = getCurrentCustomer();
       const freshOrder = await api.get(`/orders/${encodeURIComponent(order.id)}`).catch(() => ({ ...order, paymentStatus: "awaiting" }));
-      await sendOrderConfirmationEmail(freshOrder, session);
+      const mail = await sendOrderConfirmationEmail(freshOrder, session);
       const targetEmail = freshOrder.email || session?.email || "";
-      toast(`Đã ghi nhận chuyển khoản cho đơn ${order.code} và gửi vé điện tử về email: ${targetEmail}!`, "success");
+      toast(`Đã ghi nhận chuyển khoản cho đơn ${order.code} - quán sẽ đối chiếu và xác nhận sớm.`, "success");
+      const note = describeMailDelivery(mail, freshOrder);
+      toast(note.message, note.type);
       openCinemaTicketModal(freshOrder, { toEmail: targetEmail });
       init();
     },
