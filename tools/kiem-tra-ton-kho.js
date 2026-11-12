@@ -91,6 +91,7 @@ const favoritesService = await import(mod("favoritesService.js"));
 const reviewsService = await import(mod("reviewsService.js"));
 const exportService = await import(mod("exportService.js"));
 const notificationService = await import(mod("notificationService.js"));
+const xlsxHelper = await import(mod("xlsxHelper.js"));
 
 function resetDb() {
   fakeDb.drinks = structuredClone(JSON.parse(JSON.stringify(drinks.SEED_DRINKS)));
@@ -1243,6 +1244,39 @@ const regNewCust = await customerAuth.customerRegister({
 check("Đăng ký tài khoản mới -> món chọn trước đó (d8 x2) tự chuyển vào giỏ tài khoản mới",
   [regNewCust.success, orders.getCart().length, orders.getCart()[0]?.drinkId, orders.getCart()[0]?.qty],
   [true, 1, "d8", 2]);
+
+section("[46] Tạo & đọc file Excel (.xlsx) nhập thêm đơn hàng");
+resetDb();
+const allDrinks46 = await drinks.getAllDrinks();
+const sampleXlsxBytes = xlsxHelper.buildXlsxBytes(
+  exportService.ORDER_IMPORT_SAMPLE_ROWS,
+  exportService.ORDER_IMPORT_HEADERS,
+  "NhapDonHang",
+);
+check("File .xlsx bắt đầu bằng chữ ký ZIP (PK)", [sampleXlsxBytes[0], sampleXlsxBytes[1]], [0x50, 0x4b]);
+
+const parsedXlsxRows = await xlsxHelper.parseXlsxBuffer(sampleXlsxBytes.buffer);
+check("Đọc lại đúng số dòng từ .xlsx (1 tiêu đề + 3 đơn mẫu)", parsedXlsxRows.length, 4);
+check("Giữ nguyên dấu tiếng Việt và số 0 đầu SĐT", [parsedXlsxRows[1][0], parsedXlsxRows[1][1]], ["Trần Minh Khang", "0908112233"]);
+
+const parsedOrderRows = exportService.parseOrdersFromRows(parsedXlsxRows, allDrinks46);
+check("Phân tích đủ 3 đơn hợp lệ từ file .xlsx mẫu", parsedOrderRows.every((r) => r.valid), true);
+
+const edgeRows = [
+  exportService.ORDER_IMPORT_HEADERS,
+  ["Khách Excel Mất Số 0", "908112233", "", "1996-05-18", "Tại quán", "Bàn 5", "", "d1 x2; Mojito Havana Rum", "Đã thanh toán", "Test"],
+  ["Khách Dưới Tuổi", "0901119999", "", "2012-01-01", "dine-in", "Bàn 6", "", "d1 x1", "unpaid", ""],
+];
+const parsedEdge = exportService.parseOrdersFromRows(edgeRows, allDrinks46);
+check("Khôi phục SĐT 9 số thiếu số 0 và nhận diện mã/tên món",
+  [parsedEdge[0].valid, parsedEdge[0].orderPayload.phone, parsedEdge[0].orderPayload.items.length, parsedEdge[0].orderPayload.paymentStatus],
+  [true, "0908112233", 2, "paid"]);
+check("Chặn dòng khách dưới 18 tuổi khi nhập Excel", [parsedEdge[1].valid, parsedEdge[1].errors.some((e) => e.includes("18 tuổi"))], [false, true]);
+
+const importedRes = await orders.createOrder(parsedOrderRows[0].orderPayload);
+check("Tạo đơn hàng thật từ dữ liệu Excel thành công",
+  [importedRes.success, importedRes.order?.name, importedRes.order?.items.length],
+  [true, "Trần Minh Khang", 2]);
 
 /* ================================================================ */
 console.log("\n==============================================================");

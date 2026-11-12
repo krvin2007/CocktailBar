@@ -11,8 +11,9 @@ import { initAdminLayout } from "../modules/adminLayout.js";
 import { can, currentAdmin } from "../modules/auth.js";
 import {
   getAllOrders, filterOrders, updateOrderStatus, deleteOrder, confirmPayment,
-  verifyOrderDoorCheck, ORDER_STATUS, ORDER_TRANSITIONS,
+  verifyOrderDoorCheck, createOrder, ORDER_STATUS, ORDER_TRANSITIONS,
 } from "../modules/ordersService.js";
+import { getAllDrinks } from "../modules/drinksService.js";
 import { getBankSettings, saveBankSettings, VIETNAM_BANKS } from "../modules/settingsService.js";
 import { ageOf } from "../modules/age.js";
 import { formatMoney, formatDate, formatDateTime, debounce, paginate, renderPagination, classNames, escapeHtml } from "../modules/utils.js";
@@ -20,7 +21,14 @@ import { validateForm, clearFormErrors } from "../modules/validation.js";
 import { toast, confirmDialog, openModal, closeModal, setButtonLoading } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
-import { exportOrdersToExcel, printOrderInvoice } from "../modules/exportService.js";
+import {
+  exportOrdersToExcel,
+  downloadOrderTemplateExcel,
+  downloadOrderTemplateCsv,
+  parseRowsFromSpreadsheetFile,
+  parseOrdersFromRows,
+  printOrderInvoice,
+} from "../modules/exportService.js";
 import { sendOrderConfirmationEmail } from "../modules/emailService.js";
 
 const bodyEl = document.getElementById("orders-body");
@@ -374,6 +382,121 @@ bankForm.addEventListener("submit", async (e) => {
   }
 });
 
+function bindOrderImportModal() {
+  const openBtn = document.getElementById("btn-open-import-orders");
+  const closeBtn = document.getElementById("import-orders-close");
+  const cancelBtn = document.getElementById("import-orders-btn-cancel");
+  const tplXlsxBtn = document.getElementById("btn-download-order-tpl-xlsx");
+  const tplCsvBtn = document.getElementById("btn-download-order-tpl-csv");
+  const fileInput = document.getElementById("import-orders-file-input");
+  const previewWrap = document.getElementById("import-orders-preview-wrap");
+  const previewTbody = document.getElementById("import-orders-preview-tbody");
+  const validCountEl = document.getElementById("import-orders-valid-count");
+  const totalCountEl = document.getElementById("import-orders-total-count");
+  const confirmBtn = document.getElementById("import-orders-btn-confirm");
+
+  let parsedRows = [];
+
+  const resetPreview = () => {
+    parsedRows = [];
+    if (fileInput) fileInput.value = "";
+    if (previewWrap) previewWrap.style.display = "none";
+    if (previewTbody) previewTbody.innerHTML = "";
+    if (confirmBtn) confirmBtn.disabled = true;
+  };
+
+  openBtn?.addEventListener("click", () => {
+    resetPreview();
+    openModal("import-orders-modal");
+  });
+  closeBtn?.addEventListener("click", () => closeModal("import-orders-modal"));
+  cancelBtn?.addEventListener("click", () => closeModal("import-orders-modal"));
+  tplXlsxBtn?.addEventListener("click", () => downloadOrderTemplateExcel());
+  tplCsvBtn?.addEventListener("click", () => downloadOrderTemplateCsv());
+
+  fileInput?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const [rows, drinks] = await Promise.all([
+        parseRowsFromSpreadsheetFile(file),
+        getAllDrinks(),
+      ]);
+      parsedRows = parseOrdersFromRows(rows, drinks);
+      const validRows = parsedRows.filter((r) => r.valid);
+
+      if (validCountEl) validCountEl.textContent = validRows.length;
+      if (totalCountEl) totalCountEl.textContent = parsedRows.length;
+      if (previewTbody) {
+        previewTbody.innerHTML = parsedRows.map((r) => {
+          const p = r.orderPayload;
+          const statusCell = r.valid
+            ? `<span class="badge badge-success">Hợp lệ</span>`
+            : `<span class="badge badge-danger" title="${escapeHtml(r.errors.join(" | "))}">Lỗi: ${escapeHtml(r.errors[0])}</span>`;
+          return `
+            <tr>
+              <td>#${r.rowNumber}</td>
+              <td><strong>${escapeHtml(p.name || "—")}</strong></td>
+              <td>${escapeHtml(p.phone || "—")}</td>
+              <td>${escapeHtml(p.serviceType)}</td>
+              <td>${escapeHtml(r.itemsText)}</td>
+              <td>${formatMoney(r.subtotal)}</td>
+              <td>${statusCell}</td>
+            </tr>`;
+        }).join("");
+      }
+      if (previewWrap) previewWrap.style.display = "block";
+      if (confirmBtn) confirmBtn.disabled = validRows.length === 0;
+      toast(
+        validRows.length > 0
+          ? `Đã đọc ${validRows.length}/${parsedRows.length} đơn hàng hợp lệ từ file.`
+          : "Không có dòng đơn hàng hợp lệ để nhập.",
+        validRows.length > 0 ? "success" : "warning",
+      );
+    } catch (err) {
+      resetPreview();
+      toast(`Lỗi đọc file: ${err.message}`, "error");
+    }
+  });
+
+  confirmBtn?.addEventListener("click", async () => {
+    const validRows = parsedRows.filter((r) => r.valid);
+    if (validRows.length === 0) return;
+
+    const restoreBtn = setButtonLoading(confirmBtn, "Đang nhập đơn...");
+    let successCount = 0;
+    const failedMessages = [];
+
+    try {
+      for (const row of validRows) {
+        try {
+          const result = await createOrder(row.orderPayload);
+          if (result.success) {
+            successCount++;
+          } else {
+            failedMessages.push(`Dòng ${row.rowNumber}: món đã hết hàng hoặc tạm ngưng.`);
+          }
+        } catch (err) {
+          failedMessages.push(`Dòng ${row.rowNumber}: ${err.message}`);
+        }
+      }
+
+      if (successCount > 0) {
+        toast(`Đã nhập thành công ${successCount}/${validRows.length} đơn hàng!`, "success");
+        closeModal("import-orders-modal");
+        await reloadTable();
+      } else {
+        toast(failedMessages[0] || "Không thể nhập đơn hàng.", "error");
+      }
+      if (failedMessages.length > 0 && successCount > 0) {
+        toast(failedMessages[0], "warning");
+      }
+    } finally {
+      restoreBtn();
+    }
+  });
+}
+
 function bindEvents() {
   const debouncedRender = debounce(() => { currentPage = 1; renderTable(); }, 250);
   keywordInput.addEventListener("input", debouncedRender);
@@ -382,6 +505,7 @@ function bindEvents() {
   document.getElementById("btn-export-orders-excel")?.addEventListener("click", () => {
     exportOrdersToExcel(allOrders);
   });
+  bindOrderImportModal();
 
   
   document.getElementById("btn-resend-order-ticket")?.addEventListener("click", async () => {

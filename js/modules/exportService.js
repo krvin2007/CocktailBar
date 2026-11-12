@@ -5,8 +5,34 @@
    - In / Xuất hóa đơn Speakeasy ra PDF chuyên nghiệp
    ========================================================= */
 
-import { formatMoney, formatDateTime, formatDate, escapeHtml } from "./utils.js";
+import { formatMoney, formatDateTime, formatDate, escapeHtml, normalizePhone } from "./utils.js";
 import { toast } from "./ui.js";
+import { buildXlsxBytes, parseXlsxBuffer } from "./xlsxHelper.js";
+import { ageProblem } from "./age.js";
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Tải dữ liệu bảng về máy dưới định dạng Excel chuẩn (.xlsx) hỗ trợ tiếng Việt UTF-8.
+ */
+export function exportToXlsx(filename, rows, headers = [], sheetName = "DonHang") {
+  const bytes = buildXlsxBytes(rows, headers, sheetName);
+  const finalName = filename.endsWith(".xlsx") ? filename : `${filename}.xlsx`;
+  const blob = new Blob([bytes], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  triggerDownload(blob, finalName);
+  toast(`Đã tải file Excel "${finalName}" thành công!`, "success");
+}
 
 /**
  * Tải dữ liệu dạng bảng về máy dưới định dạng CSV (tương thích 100% Microsoft Excel có tiếng Việt)
@@ -33,17 +59,10 @@ export function exportToCsv(filename, rows, headers = []) {
   // Ký tự Byte Order Mark (\uFEFF) giúp Microsoft Excel hiển thị đúng tiếng Việt có dấu
   const csvContent = "\uFEFF" + lines.join("\r\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+  const finalName = filename.endsWith(".csv") ? filename : `${filename}.csv`;
+  triggerDownload(blob, finalName);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename.endsWith(".csv") ? filename : `${filename}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  toast(`Đã xuất file Excel "${filename}" thành công!`, "success");
+  toast(`Đã xuất file Excel "${finalName}" thành công!`, "success");
 }
 
 /** Xuất danh sách đơn hàng ra Excel */
@@ -258,6 +277,261 @@ export function parseDrinksFromCsvRows(rows) {
   });
 
   return drinks;
+}
+
+export const ORDER_IMPORT_HEADERS = [
+  "Tên khách hàng",
+  "Số điện thoại",
+  "Email",
+  "Ngày sinh (YYYY-MM-DD)",
+  "Hình thức (dine-in/booking/takeaway)",
+  "Bàn / Giờ hẹn",
+  "Số khách",
+  "Món đặt (Tên món x SL; ...)",
+  "Thanh toán (unpaid/paid)",
+  "Ghi chú",
+];
+
+export const ORDER_IMPORT_SAMPLE_ROWS = [
+  ["Trần Minh Khang", "0908112233", "khang.tran@gmail.com", "1996-05-18", "dine-in", "Bàn 3", "", "Negroni Classico x2; Smoked Old Fashioned x1", "unpaid", "Ít đá, thêm vỏ cam"],
+  ["Lê Bảo Ngọc", "0917334455", "ngoc.le@gmail.com", "1998-09-22", "booking", "2026-11-20 20:00", "4", "Bourbon Whiskey Sour x2; Mojito Havana Rum x2", "unpaid", "Bàn gần ban nhạc Jazz"],
+  ["Phạm Quốc Huy", "0939556677", "huy.pham@gmail.com", "1994-12-03", "takeaway", "", "", "Classic Margarita x1; Velvet Espresso Martini x1", "paid", "Đóng gói giữ lạnh"],
+];
+
+/** Tải file Excel (.xlsx) mẫu để nhập thêm đơn hàng */
+export function downloadOrderTemplateExcel() {
+  exportToXlsx("Mau-Nhap-Don-Hang.xlsx", ORDER_IMPORT_SAMPLE_ROWS, ORDER_IMPORT_HEADERS, "NhapDonHang");
+}
+
+/** Tải file CSV (.csv UTF-8) mẫu để nhập thêm đơn hàng */
+export function downloadOrderTemplateCsv() {
+  exportToCsv("Mau-Nhap-Don-Hang.csv", ORDER_IMPORT_SAMPLE_ROWS, ORDER_IMPORT_HEADERS);
+}
+
+/**
+ * Đọc File (.xlsx hoặc .csv) từ input trình duyệt thành mảng 2 chiều dòng/cột.
+ * @param {File} file
+ */
+export async function parseRowsFromSpreadsheetFile(file) {
+  if (!file) throw new Error("Vui lòng chọn file Excel hoặc CSV.");
+  const lower = String(file.name || "").toLowerCase();
+  if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
+    const buffer = await file.arrayBuffer();
+    return await parseXlsxBuffer(buffer);
+  }
+  const text = await file.text();
+  return parseCsv(text);
+}
+
+function excelSerialToDate(serialNum) {
+  const utcMs = Date.UTC(1899, 11, 30) + serialNum * 86400 * 1000;
+  return new Date(utcMs);
+}
+
+const pad2 = (n) => String(n).padStart(2, "0");
+
+function normalizeSpreadsheetPhone(raw) {
+  const normalized = normalizePhone(String(raw ?? "").trim());
+  if (/^[35789]\d{8}$/.test(normalized)) return `0${normalized}`;
+  return normalized;
+}
+
+function parseSpreadsheetDate(raw) {
+  const val = String(raw ?? "").trim();
+  if (!val) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+
+  const dmy = val.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (dmy) return `${dmy[3]}-${pad2(dmy[2])}-${pad2(dmy[1])}`;
+
+  const num = Number(val);
+  if (Number.isFinite(num) && num > 1000 && num < 100000) {
+    const d = excelSerialToDate(Math.floor(num));
+    return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+  }
+  return val;
+}
+
+function parseSpreadsheetDateTime(raw) {
+  const val = String(raw ?? "").trim();
+  if (!val) return "";
+  if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(val)) {
+    return val.replace(" ", "T").slice(0, 16);
+  }
+
+  const dmy = val.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})\s+(\d{1,2}):(\d{2})/);
+  if (dmy) {
+    return `${dmy[3]}-${pad2(dmy[2])}-${pad2(dmy[1])}T${pad2(dmy[4])}:${pad2(dmy[5])}`;
+  }
+
+  const num = Number(val);
+  if (Number.isFinite(num) && num > 1000 && num < 100000) {
+    const d = excelSerialToDate(num);
+    return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+  }
+  return val;
+}
+
+function normalizeOrderServiceType(raw) {
+  const text = String(raw ?? "").trim().toLowerCase();
+  if (!text || text === "dine-in" || text.includes("tại") || text.includes("bàn tại")) return "dine-in";
+  if (text === "booking" || text.includes("đặt bàn") || text.includes("dat ban")) return "booking";
+  if (text === "takeaway" || text.includes("mang")) return "takeaway";
+  return "";
+}
+
+function normalizeOrderPaymentStatus(raw) {
+  const text = String(raw ?? "").trim().toLowerCase();
+  if (text === "paid" || text.includes("đã thanh toán") || text.includes("da thanh toan")) return "paid";
+  if (text === "awaiting" || text.includes("chờ")) return "awaiting";
+  return "unpaid";
+}
+
+function parseOrderItemsCell(cellText, drinksList) {
+  const raw = String(cellText ?? "").trim();
+  if (!raw) return { items: [], unknownItems: [] };
+
+  const byId = new Map();
+  const byName = new Map();
+  drinksList.forEach((d) => {
+    if (d.id) byId.set(String(d.id).trim().toLowerCase(), d);
+    if (d.name) byName.set(String(d.name).trim().toLowerCase(), d);
+  });
+
+  const merged = new Map();
+  const unknownItems = [];
+  const segments = raw.split(/[;|\n,]+/).map((s) => s.trim()).filter(Boolean);
+
+  for (const seg of segments) {
+    let query = seg;
+    let qty = 1;
+
+    const suffixQty = seg.match(/^(.*?)\s*(?:\(\s*x\s*(\d+)\s*\)|[xX*×:]\s*(\d+))$/);
+    const prefixQty = seg.match(/^(\d+)\s*[xX*×]\s*(.+)$/);
+    if (suffixQty) {
+      query = suffixQty[1].trim();
+      qty = Math.max(1, Number(suffixQty[2] || suffixQty[3]) || 1);
+    } else if (prefixQty) {
+      qty = Math.max(1, Number(prefixQty[1]) || 1);
+      query = prefixQty[2].trim();
+    }
+
+    const qLower = query.toLowerCase();
+    let drink = byId.get(qLower) || byName.get(qLower);
+    if (!drink && qLower.length >= 3) {
+      const partialMatches = drinksList.filter((d) => String(d.name || "").toLowerCase().includes(qLower));
+      if (partialMatches.length === 1) drink = partialMatches[0];
+    }
+
+    if (!drink) {
+      unknownItems.push(query);
+      continue;
+    }
+
+    const existing = merged.get(drink.id);
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      merged.set(drink.id, {
+        drinkId: drink.id,
+        name: drink.name,
+        price: Number(drink.price) || 0,
+        image: drink.image || "",
+        qty,
+      });
+    }
+  }
+
+  return { items: [...merged.values()], unknownItems };
+}
+
+/**
+ * Chuyển dữ liệu bảng (Excel / CSV) thành danh sách đơn hàng kèm trạng thái kiểm tra hợp lệ từng dòng.
+ * @param {Array<Array<string>>} rows
+ * @param {Array<object>} drinksList
+ */
+export function parseOrdersFromRows(rows, drinksList = []) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error("File không có dữ liệu.");
+  }
+
+  const firstCell = String(rows[0]?.[0] || "").trim().toLowerCase();
+  const hasHeader = firstCell.includes("tên") || firstCell.includes("khách") || firstCell === "name";
+  const dataRows = hasHeader ? rows.slice(1) : rows;
+  const startRowNumber = hasHeader ? 2 : 1;
+
+  if (dataRows.length === 0) {
+    throw new Error("File chỉ có dòng tiêu đề, chưa có dòng đơn hàng nào.");
+  }
+
+  const parsed = [];
+  dataRows.forEach((row, index) => {
+    const cells = Array.isArray(row) ? row : [];
+    if (cells.every((c) => !String(c ?? "").trim())) return;
+
+    const rowNumber = startRowNumber + index;
+    const name = String(cells[0] ?? "").trim();
+    const phone = normalizeSpreadsheetPhone(cells[1]);
+    const email = String(cells[2] ?? "").trim();
+    const birthDate = parseSpreadsheetDate(cells[3]);
+    const serviceType = normalizeOrderServiceType(cells[4]);
+    const seatOrTime = String(cells[5] ?? "").trim();
+    const guestCountRaw = String(cells[6] ?? "").trim();
+    const { items, unknownItems } = parseOrderItemsCell(cells[7], drinksList);
+    const paymentStatus = normalizeOrderPaymentStatus(cells[8]);
+    const note = String(cells[9] ?? "").trim();
+
+    const errors = [];
+    if (name.length < 2) errors.push("Thiếu tên khách hàng");
+    if (!/^0[35789][0-9]{8}$/.test(phone)) errors.push("SĐT chưa đúng 10 số VN");
+    const ageErr = ageProblem(birthDate);
+    if (ageErr) errors.push(ageErr);
+    if (!serviceType) errors.push("Hình thức phải là dine-in / booking / takeaway");
+
+    const bookingTime = serviceType === "booking" ? parseSpreadsheetDateTime(seatOrTime) : "";
+    const guestCount = serviceType === "booking" ? Math.max(1, Number(guestCountRaw) || 2) : null;
+    if (serviceType === "booking" && (!bookingTime || Number.isNaN(new Date(bookingTime).getTime()))) {
+      errors.push("Đơn đặt bàn cần cột 'Bàn / Giờ hẹn' hợp lệ (VD: 2026-11-20 20:00)");
+    }
+
+    if (unknownItems.length > 0) {
+      errors.push(`Không tìm thấy món: ${unknownItems.join(", ")}`);
+    }
+    if (serviceType && serviceType !== "booking" && items.length === 0) {
+      errors.push("Cần ít nhất 1 món hợp lệ");
+    }
+
+    const subtotal = items.reduce((sum, it) => sum + it.price * it.qty, 0);
+    const itemsText = items.length > 0
+      ? items.map((it) => `${it.name} ×${it.qty}`).join(", ")
+      : (serviceType === "booking" ? "Chỉ giữ bàn" : "—");
+
+    parsed.push({
+      rowNumber,
+      valid: errors.length === 0,
+      errors,
+      subtotal,
+      itemsText,
+      orderPayload: {
+        name,
+        phone,
+        email,
+        birthDate,
+        serviceType: serviceType || "dine-in",
+        tableNumber: serviceType === "dine-in" ? seatOrTime : "",
+        bookingTime,
+        guestCount,
+        items,
+        paymentStatus,
+        note,
+      },
+    });
+  });
+
+  if (parsed.length === 0) {
+    throw new Error("Không tìm thấy dòng đơn hàng nào có dữ liệu.");
+  }
+  return parsed;
 }
 
 /**
