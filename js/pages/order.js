@@ -57,6 +57,11 @@ const capacityHint = document.getElementById("capacity-hint");
 const tableNumberInput = document.getElementById("table-number-input") || formEl.elements.tableNumber;
 const seatingMapZonesEl = document.getElementById("seating-map-zones");
 const seatingCapacityHint = document.getElementById("seating-capacity-hint");
+const seatingAvailabilityEl = document.getElementById("seating-availability");
+const sumBookingRowEl = document.getElementById("sum-booking-row");
+const sumBookingEl = document.getElementById("sum-booking");
+const sumSeatRowEl = document.getElementById("sum-seat-row");
+const sumSeatEl = document.getElementById("sum-seat");
 const ageCheckbox = document.getElementById("age-confirm");
 
 const MINUTE = 60 * 1000;
@@ -920,7 +925,22 @@ formEl.elements.serviceType.forEach((radio) => {
 
 let seatingRequestId = 0;
 
+/** Phiếu Đặt Chỗ luôn hiện giờ hẹn + bàn đã chọn để khách thấy chỗ mình giữ mà không phải cuộn xuống sơ đồ */
+function updateBookingSummary() {
+  if (!sumBookingRowEl || !sumSeatRowEl) return;
+  const booking = isBooking();
+  const guests = Number(guestCountInput?.value) || 0;
+  const when = booking && bookingTimeInput?.value ? new Date(bookingTimeInput.value) : null;
+  const whenOk = when && !Number.isNaN(when.getTime());
+  sumBookingRowEl.hidden = !booking;
+  if (booking) sumBookingEl.textContent = whenOk ? `${formatDateTime(when)}${guests ? ` · ${guests} khách` : ""}` : "Chưa chọn ngày giờ";
+  const chosen = String(tableNumberInput?.value || "").trim();
+  sumSeatRowEl.hidden = !booking && !chosen;
+  sumSeatEl.textContent = chosen || "Chưa chọn bàn (quán sẽ xếp chỗ)";
+}
+
 function updateSeatingHint() {
+  updateBookingSummary();
   if (!seatingCapacityHint || !tableNumberInput) return;
   const chosen = tableNumberInput.value.trim();
   if (!chosen) {
@@ -957,6 +977,18 @@ async function renderSeatingMap() {
     occupied = getOccupiedTableSet(ordersList, { serviceType: currentType, bookingTime: bookingIso });
   } catch {
     if (requestId !== seatingRequestId) return;
+  }
+
+  if (seatingAvailabilityEl) {
+    const total = ALL_BAR_TABLES.length;
+    const free = ALL_BAR_TABLES.filter((tb) => !occupied.has(tb.label.toLowerCase()) && !occupied.has(tb.id.toLowerCase())).length;
+    if (currentType === "booking" && !bookingIso) {
+      seatingAvailabilityEl.textContent = "Chọn ngày và giờ nhận bàn để xem bàn nào còn trống vào lúc đó.";
+    } else if (currentType === "booking") {
+      seatingAvailabilityEl.textContent = `Lúc ${formatDateTime(bookingIso)}: còn ${free}/${total} bàn trống (bàn màu đỏ đã có khách giữ).`;
+    } else {
+      seatingAvailabilityEl.textContent = `Hiện còn ${free}/${total} bàn trống tại quán (bàn màu đỏ đang có khách).`;
+    }
   }
 
   const selectedRaw = String(tableNumberInput?.value || "").trim().toLowerCase();

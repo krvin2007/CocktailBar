@@ -63,6 +63,15 @@ function historyRowHtml(entry) {
     </tr>`;
 }
 
+/** Chỗ khách đã đặt: giờ hẹn · số khách · bàn (hiện ngay trong lịch sử đơn) */
+function orderSeatLineHtml(o) {
+  const parts = [];
+  if (o.serviceType === "booking" && o.bookingTime) parts.push(`🕒 ${formatDateTime(o.bookingTime)}`);
+  if (o.serviceType === "booking" && o.guestCount) parts.push(`${o.guestCount} khách`);
+  if (o.tableNumber) parts.push(`🪑 ${o.tableNumber}`);
+  return parts.length ? `<div style="margin-top: 6px; font-size: 0.78rem; color: var(--amber-soft);">${escapeHtml(parts.join(" · "))}</div>` : "";
+}
+
 function orderRowHtml(o) {
   const code = escapeHtml(o.code || "");
   const total = formatMoney(o.total || 0);
@@ -114,7 +123,7 @@ function orderRowHtml(o) {
     <tr>
       <td class="text-sm font-mono"><strong class="text-amber">${code}</strong></td>
       <td class="text-sm">${o.createdAt ? formatDateTime(o.createdAt) : "—"}</td>
-      <td class="text-sm" style="min-width: 180px;">${itemsHtml}</td>
+      <td class="text-sm" style="min-width: 180px;">${itemsHtml}${orderSeatLineHtml(o)}</td>
       <td class="text-sm font-bold text-amber">${total}</td>
       <td>${statusHtml}</td>
       <td>${paymentBadgeHtml}</td>
