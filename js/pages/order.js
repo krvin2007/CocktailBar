@@ -21,6 +21,7 @@ import { openVietQRPaymentModal } from "../modules/vietqrService.js";
 import { isWithinOpeningHours, openingHoursText, BOOKING_RULES } from "../modules/venue.js";
 import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCurrentCustomer, syncCustomerSession } from "../modules/customerAuth.js";
+import { canCustomer, syncRolePermissions } from "../modules/auth.js";
 import { resolvePricing, POINT_REDEEM_VND, MIN_POINT_REDEEM } from "../modules/promotions.js";
 import { getItem, setItem, removeItem } from "../modules/storage.js";
 import { sendOrderConfirmationEmail, openCinemaTicketModal } from "../modules/emailService.js";
@@ -148,10 +149,21 @@ function getActiveCheckoutSummary() {
 /**
  * Cập nhật trạng thái và nhãn nút bấm xác nhận/thanh toán
  */
+/**
+ * Quyền "Đặt bàn & gọi món online" bị tắt thì chặn tạo ĐƠN MỚI, nhưng vẫn cho thanh toán đơn cũ đang chờ
+ * (khách đã gọi món trước đó, không nên bị kẹt không trả được tiền).
+ */
+function newOrderBlocked() {
+  if (canCustomer("self:order")) return false;
+  const { checked } = getActiveCheckoutSummary();
+  const onlyPayingOldOrder = checked.some((i) => i.isUnpaid) && !checked.some((i) => !i.isUnpaid);
+  return !onlyPayingOldOrder;
+}
+
 function updateSubmitState() {
   const { checked, count, total } = getActiveCheckoutSummary();
   const hasItems = count > 0;
-  submitBtn.disabled = !hasItems && !isBooking();
+  submitBtn.disabled = (!hasItems && !isBooking()) || newOrderBlocked();
 
   const submitLabel = document.getElementById("submit-order-label");
   if (!submitLabel) return;
@@ -663,9 +675,9 @@ function renderPricing(result, customer) {
   else if (result.voucherCode) setPromoMessage(voucherMsgEl, fmt(t("order_voucher_ok", "Đã áp mã {code}: giảm {amount}."), { code: result.voucherCode, amount: formatMoney(voucherAmount) }), "ok");
   else setPromoMessage(voucherMsgEl, "");
 
-  pointsBoxEl.hidden = !customer;
+  pointsBoxEl.hidden = !customer || !canCustomer("self:redeem");
   loginHintEl.hidden = Boolean(customer);
-  if (!customer) return;
+  if (!customer || !canCustomer("self:redeem")) return;
 
   const balance = Number(result.customer?.points ?? customer.points) || 0;
   pointsBalanceEl.textContent = fmt(t("order_points_info", "({points} điểm · 1 điểm = {value})"), { points: balance, value: formatMoney(POINT_REDEEM_VND) });
@@ -685,6 +697,16 @@ async function refreshPricing() {
   const requestId = ++pricingRequestId;
   const { subtotal } = getActiveCheckoutSummary();
   const customer = getCurrentCustomer();
+  // Quyền của khách (ma trận phân quyền): bị tắt thì bỏ mã / điểm đang nhập và ẩn ô tương ứng
+  const voucherAllowed = canCustomer("self:voucher");
+  const redeemAllowed = canCustomer("self:redeem");
+  if (!voucherAllowed) promo.voucher = "";
+  if (!redeemAllowed) promo.points = 0;
+  // dùng style.display (không dùng thuộc tính hidden) vì .promo-row có display:flex đè lên [hidden]
+  const voucherRow = voucherInput?.closest(".promo-row");
+  if (voucherRow) voucherRow.style.display = voucherAllowed ? "" : "none";
+  const voucherMsg = document.getElementById("voucher-msg");
+  if (voucherMsg) voucherMsg.style.display = voucherAllowed ? "" : "none";
   try {
     const code = promo.voucher.trim();
     const orders = code ? await getAllOrders() : [];
@@ -1059,6 +1081,11 @@ formEl.addEventListener("submit", async (e) => {
     return;
   }
 
+  if (newOrderBlocked()) {
+    toast("Quán đang tạm tắt chức năng đặt bàn / gọi món online. Vui lòng gọi hotline để được hỗ trợ.", "error");
+    return;
+  }
+
   const { isValid, data } = validateForm(formEl);
   const bookingOk = validateBookingTime();
   const ageOk = validateAge();
@@ -1251,7 +1278,9 @@ function lookupResultHtml(o) {
 
   // Khách tự huỷ được không - quy tắc nằm trong chính đối tượng đơn (đa hình theo loại đơn)
   const cancel = o.customerCancelCheck();
-  const cancelHtml = cancel.ok
+  const cancelHtml = cancel.ok && !canCustomer("self:cancel")
+    ? `<p class="lookup-cancel-note">${escapeHtml(t("order_cancel_disabled", "Quán đang tắt chức năng tự huỷ đơn online - vui lòng gọi hotline để được hỗ trợ."))}</p>`
+    : cancel.ok
     ? `<button type="button" class="btn btn-ghost btn-sm" id="lookup-cancel-btn">
          ${ICONS.trash(14)} <span>${o.serviceType === "booking" ? t("order_cancel_booking", "Huỷ đặt bàn") : t("order_cancel_order", "Huỷ đơn")}</span>
        </button>`
@@ -1471,6 +1500,15 @@ window.addEventListener("languagechange", () => {
 cartListEl.innerHTML = loadingHtml("Đang kiểm tra danh sách món đã chọn...");
 
 async function initOrderPage() {
+  await syncRolePermissions(); // lấy phân quyền khách hàng mới nhất từ máy chủ
+  if (!canCustomer("self:order")) {
+    const notice = document.createElement("div");
+    notice.className = "unpaid-banner";
+    notice.setAttribute("role", "alert");
+    notice.style.cssText = "margin: 0 0 16px; padding: 14px 18px; border: 1px solid rgba(239,68,68,0.4); border-radius: 8px; background: rgba(239,68,68,0.08); color: #fca5a5;";
+    notice.textContent = "Quán đang tạm tắt chức năng đặt bàn / gọi món online. Vui lòng gọi hotline để được hỗ trợ.";
+    formEl.prepend(notice);
+  }
   await checkAndRenderUnpaidOrderBanner();
   await syncAndRenderCart();
   await refreshPricing();

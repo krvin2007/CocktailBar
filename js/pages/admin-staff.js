@@ -7,8 +7,8 @@
 import { initAdminLayout } from "../modules/adminLayout.js";
 import {
   currentAdmin, can,
-  SYSTEM_PERMISSIONS, PERMISSION_GROUPS,
-  getRolePermissions, saveRolePermissions, resetRolePermissions,
+  SYSTEM_PERMISSIONS, STAFF_PERMISSIONS, PERMISSION_GROUPS,
+  getRolePermissions, saveRolePermissionsRemote, resetRolePermissionsRemote,
   getStaffCustomPermissions, saveStaffCustomPermissions,
 } from "../modules/auth.js";
 import { passwordProblem } from "../modules/passwords.js";
@@ -60,6 +60,7 @@ const MATRIX_ROLES = [
   { key: "cashier", label: "Thu ngân" },
   { key: "bartender", label: "Pha chế" },
   { key: "waiter", label: "Phục vụ" },
+  { key: "customer", label: "Khách hàng", isCustomer: true },
 ];
 
 /** Danh sách nhân viên tải từ API - tải lại sau mỗi lần thêm/sửa/xoá */
@@ -520,11 +521,17 @@ function renderRbacMatrix() {
           <div class="text-xs text-muted" style="font-family: monospace; font-size: 0.72rem; margin-top: 2px;">${escapeHtml(perm.id)}</div>
         </td>
         <td class="perm-cell-check">
-          <input type="checkbox" checked disabled title="Quản trị viên tối cao luôn sở hữu toàn quyền (*)">
+          ${perm.audience === "customer"
+            ? '<span class="text-muted" title="Quyền này chỉ dành cho khách hàng">—</span>'
+            : '<input type="checkbox" checked disabled title="Quản trị viên tối cao luôn sở hữu toàn quyền (*)">'}
         </td>
         ${editableRoles.map((r) => {
+          // Quyền nhân viên chỉ tick cho vai trò nhân viên; quyền khách hàng chỉ tick ở cột Khách hàng
+          if (Boolean(r.isCustomer) !== (perm.audience === "customer")) {
+            return `<td class="perm-cell-check"><span class="text-muted" title="${r.isCustomer ? "Khách hàng không dùng khu quản trị" : "Quyền này chỉ dành cho khách hàng"}">—</span></td>`;
+          }
           const rolePerms = roleMatrix[r.key] || [];
-          const isChecked = rolePerms.includes("*") || rolePerms.includes(perm.id);
+          const isChecked = r.isCustomer ? rolePerms.includes(perm.id) : (rolePerms.includes("*") || rolePerms.includes(perm.id));
           return `
             <td class="perm-cell-check">
               <input type="checkbox" data-role="${r.key}" data-perm="${perm.id}" ${isChecked ? "checked" : ""}>
@@ -555,16 +562,20 @@ async function handleSaveMatrix() {
     const checkedBoxes = Array.from(matrixTableEl.querySelectorAll(`input[data-role="${r.key}"]:checked`));
     const perms = checkedBoxes.map((cb) => cb.dataset.perm);
 
-    // Nếu chọn tất cả quyền thì quy về ["*"]
-    if (perms.length === SYSTEM_PERMISSIONS.length) {
+    // Nhân viên chọn đủ mọi quyền nhân viên thì quy về ["*"]; khách hàng luôn lưu danh sách cụ thể
+    if (!r.isCustomer && perms.length === STAFF_PERMISSIONS.length) {
       newMatrix[r.key] = ["*"];
     } else {
       newMatrix[r.key] = perms;
     }
   });
 
-  saveRolePermissions(newMatrix);
-  toast("Đã lưu thiết lập phân quyền thành công!", "success");
+  try {
+    await saveRolePermissionsRemote(newMatrix);
+    toast("Đã lưu phân quyền lên máy chủ - có hiệu lực ngay trên mọi thiết bị!", "success");
+  } catch (err) {
+    toast(`Không lưu được phân quyền: ${err.message}`, "error");
+  }
 }
 
 async function handleResetMatrix() {
@@ -579,9 +590,13 @@ async function handleResetMatrix() {
   );
   if (!ok) return;
 
-  resetRolePermissions();
-  renderRbacMatrix();
-  toast("Đã khôi phục phân quyền về mặc định thành công!", "success");
+  try {
+    await resetRolePermissionsRemote();
+    renderRbacMatrix();
+    toast("Đã khôi phục phân quyền về mặc định thành công!", "success");
+  } catch (err) {
+    toast(`Không khôi phục được phân quyền: ${err.message}`, "error");
+  }
 }
 
 /* =========================================================
@@ -593,7 +608,7 @@ function renderStaffPermChecklist(staff, isCustomMode) {
   const staffCustom = staff.customPermissions || getStaffCustomPermissions(staff.id);
   const rolePerms = roleMatrix[staff.role] || [];
 
-  permChecklistWrap.innerHTML = PERMISSION_GROUPS.map((group) => {
+  permChecklistWrap.innerHTML = PERMISSION_GROUPS.filter((g) => g.audience !== "customer").map((group) => {
     const groupPerms = SYSTEM_PERMISSIONS.filter((p) => p.group === group.id);
     return `
       <div class="perm-modal-group">
