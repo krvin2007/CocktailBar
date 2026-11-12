@@ -1118,6 +1118,52 @@ check("Đặt lại MK thất bại khi sai OTP", resetWrongOtp.success, false);
 const resetSuccess = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: otpReq.otp });
 check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true);
 
+// 6e. Doanh thu theo ngày / tháng / quý / năm
+{
+  const rev = await import(mod("revenueStats.js"));
+  const now = new Date(2026, 4, 15, 20, 0); // thứ Sáu 15/05/2026 20:00
+  const o = (t, total, extra = {}) => ({ paymentStatus: "paid", status: "completed", total, serviceTime: t, ...extra });
+  const orders6 = [
+    o(new Date(2026, 4, 15, 21, 0), 100000),                       // hôm nay
+    o(new Date(2026, 4, 16, 2, 0), 50000),                         // 02:00 sáng hôm sau -> vẫn thuộc đêm 15/05
+    o(new Date(2026, 4, 14, 21, 0), 200000),                       // hôm qua
+    o(new Date(2026, 3, 30, 21, 0), 300000),                       // tháng trước, cùng quý
+    o(new Date(2026, 2, 31, 21, 0), 400000),                       // quý trước (Q1)
+    o(new Date(2025, 11, 31, 21, 0), 500000),                      // năm trước
+    o(new Date(2026, 4, 15, 22, 0), 999999, { status: "cancelled" }), // đơn huỷ: không tính
+    o(new Date(2026, 4, 15, 22, 0), 888888, { paymentStatus: "awaiting" }), // chờ đối chiếu: chưa tính
+    o(new Date(2026, 4, 15, 22, 0), 777777, { paymentStatus: "unpaid" }),   // chưa trả: chưa tính
+  ];
+  const [d, m, q, y] = rev.buildRevenueSummary(orders6, now);
+  check("Doanh thu NGÀY hôm nay = 150.000 (gồm đơn 02:00 sáng hôm sau, 2 đơn)", `${d.revenue}/${d.orders}`, "150000/2");
+  check("Ngày: so với hôm qua (200.000) giảm 25%", d.change, -25);
+  check("Doanh thu THÁNG 05/2026 = 350.000 (3 đơn)", `${m.revenue}/${m.orders}`, "350000/3");
+  check("Tháng: so với tháng 04 (300.000) tăng 16,7%", m.change, 16.7);
+  check("Doanh thu QUÝ 2/2026 = 650.000 (4 đơn)", `${q.revenue}/${q.orders}`, "650000/4");
+  check("Quý: so với Quý 1 (400.000) tăng 62,5%", q.change, 62.5);
+  check("Doanh thu NĂM 2026 = 1.050.000 (5 đơn)", `${y.revenue}/${y.orders}`, "1050000/5");
+  check("Năm: so với 2025 (500.000) tăng 110%", y.change, 110);
+  check("Số đơn mỗi kỳ không đếm đơn huỷ / chờ đối chiếu / chưa trả (2, 3, 4, 5)", [d.orders, m.orders, q.orders, y.orders].join(), "2,3,4,5");
+  check("Nhãn kỳ: Quý 2/2026, Tháng 05/2026, Năm 2026", `${q.label}|${m.label}|${y.label}`, "Quý 2/2026|Tháng 05/2026|Năm 2026");
+  check("Nhãn ngày có thứ (15/05/2026 là Thứ 6)", d.label, "15/05/2026 (Thứ 6)");
+
+  check("Lùi 1 quý từ Q1/2026 -> Q4/2025", rev.shiftPeriod("quarter", "2026-Q1", -1), "2025-Q4");
+  check("Lùi 1 tháng từ 01/2026 -> 12/2025", rev.shiftPeriod("month", "2026-01", -1), "2025-12");
+  check("Lùi 1 ngày từ 01/03/2026 -> 28/02/2026", rev.shiftPeriod("day", "2026-03-01", -1), "2026-02-28");
+  check("Lùi 1 ngày từ 01/03/2028 -> 29/02/2028 (năm nhuận)", rev.shiftPeriod("day", "2028-03-01", -1), "2028-02-29");
+  check("Quý của tháng 3 / 4 / 12", ["2026-03-31", "2026-04-01", "2026-12-31"].map((k) => rev.periodKeyOf("quarter", k)).join(","), "2026-Q1,2026-Q2,2026-Q4");
+
+  const series = rev.buildPeriodSeries(orders6, "quarter", now);
+  check("Bảng theo quý có 8 kỳ, kỳ đầu là quý hiện tại", `${series.rows.length}|${series.rows[0].key}|${series.rows[0].isCurrent}`, "8|2026-Q2|true");
+  check("Quý trống (không có đơn) vẫn hiện với doanh thu 0 và so sánh '—'", `${series.rows[3].revenue}|${series.rows[3].change}`, "0|null");
+  const days = rev.buildPeriodSeries(orders6, "day", now);
+  check("Bảng theo ngày có 30 kỳ, tổng khớp tổng các dòng", `${days.rows.length}|${days.totalRevenue === days.rows.reduce((a, r) => a + r.revenue, 0)}`, "30|true");
+  const yearsSeries = rev.buildPeriodSeries(orders6, "year", now);
+  check("Bảng theo năm: 2026 = 1.050.000, 2025 = 500.000", `${yearsSeries.rows[0].revenue}|${yearsSeries.rows[1].revenue}`, "1050000|500000");
+  const early = rev.buildRevenueSummary([o(new Date(2026, 4, 15, 21, 0), 100000)], new Date(2026, 4, 16, 3, 0));
+  check("Mở trang lúc 03:00 sáng thì 'hôm nay' vẫn là đêm hôm trước (ngày kinh doanh)", early[0].key, "2026-05-15");
+}
+
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);
