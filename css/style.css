@@ -5826,3 +5826,7 @@ body.age-gate-locked {
   font-weight: 700;
   box-shadow: 0 2px 14px rgba(212, 175, 55, 0.55);
 }
+
+/* Sơ đồ chỗ ngồi: dòng "còn X/14 bàn trống" + khoảng cách khi nhảy tới từ nút "Xem sơ đồ" (tránh bị header che) */
+#seating-map-field { scroll-margin-top: 110px; }
+.seating-availability { margin: 4px 0 10px; font-size: 0.82rem; color: var(--amber-soft); font-weight: 600; }

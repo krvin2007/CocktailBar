@@ -56,13 +56,22 @@ let allOrders = [];
 let currentPage = 1;
 let activeOrder = null;
 
+/** Dòng nhỏ dưới "Hình thức": giờ hẹn · số khách · bàn - để nhân viên thấy ngay khách ngồi đâu, không cần mở chi tiết */
+function seatLineHtml(o) {
+  const parts = [];
+  if (o.serviceType === "booking" && o.bookingTime) parts.push(`🕒 ${formatDateTime(o.bookingTime)}`);
+  if (o.serviceType === "booking" && o.guestCount) parts.push(`${o.guestCount} khách`);
+  if (o.tableNumber) parts.push(`🪑 ${o.tableNumber}`);
+  return parts.length ? `<div class="text-xs text-muted" style="margin-top: 2px;">${escapeHtml(parts.join(" · "))}</div>` : "";
+}
+
 function rowHtml(o) {
   return `
     <tr data-id="${escapeHtml(o.id)}">
       <td><strong class="text-amber">${escapeHtml(o.code)}</strong></td>
       <td><strong>${escapeHtml(o.name)}</strong></td>
       <td><span class="text-muted text-sm">${escapeHtml(o.phone)}</span></td>
-      <td><span class="text-sm">${o.serviceLabel}</span></td>
+      <td><span class="text-sm">${o.serviceLabel}</span>${seatLineHtml(o)}</td>
       <td><strong>${formatMoney(o.total)}</strong></td>
       <td><span class="${classNames("badge", o.statusBadge)}">${o.statusLabel}</span></td>
       <td><span class="${classNames("badge", o.paymentBadge)}">${o.paymentLabel}</span></td>
