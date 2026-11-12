@@ -1290,6 +1290,14 @@ check("OTP quên mật khẩu chỉ dùng 1 lần", resetReuse.success, false);
   check("Chưa cấu hình EmailJS thì isRealEmailConfigured = false", em.isRealEmailConfigured(), false);
 }
 
+// 6h. Hiệu ứng hiện dần khi cuộn: ngưỡng theo % phần tử làm lưới món (cao > 8.000px) trong suốt mãi
+{
+  const { readFileSync } = await import("node:fs");
+  const motionSrc = readFileSync(new URL("../js/modules/motion3d.js", import.meta.url), "utf8");
+  const opts = motionSrc.slice(motionSrc.indexOf("const observerOptions"), motionSrc.indexOf("};", motionSrc.indexOf("const observerOptions")));
+  check("Hiệu ứng scroll-3d dùng threshold: 0 (phần tử cao hơn màn hình vẫn hiện)", /threshold:\s*0\s*,/.test(opts), true);
+}
+
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);
