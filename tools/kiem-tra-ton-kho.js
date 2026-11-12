@@ -84,6 +84,7 @@ const drinks = await import(mod("drinksService.js"));
 const orders = await import(mod("ordersService.js"));
 const staff = await import(mod("staffService.js"));
 const customerAuth = await import(mod("customerAuth.js"));
+const otpService = await import(mod("otpService.js"));
 const vouchers = await import(mod("vouchersService.js"));
 const promotions = await import(mod("promotions.js"));
 const utils = await import(mod("utils.js"));
@@ -1092,31 +1093,78 @@ check("updateCustomerAvatar lưu thành công avatar", updatedWithAvatar.avatar,
 const currentSessionAfterAvatar = customerAuth.getCurrentCustomer();
 check("Session khách đồng bộ avatar mới", currentSessionAfterAvatar.avatar, dummyAvatar);
 
-// 3. Đổi mật khẩu
-const changeWrongOld = await customerAuth.changeCustomerPassword(testCustId, "WrongPass@123", "NewPass@456");
+// 3. Đổi mật khẩu (bắt buộc OTP gửi qua Email hoặc SMS)
+const channelsOfTest = otpService.availableChannels(regRes.customer);
+check("Tài khoản có đủ 2 kênh nhận OTP (Email + SMS)", channelsOfTest.join(","), "email,sms");
+
+const changeOtp = await customerAuth.requestChangePasswordOtp(testCustId, "sms");
+check("Gửi OTP đổi mật khẩu qua SMS thành công", changeOtp.success && changeOtp.channel === "sms", true);
+check("SMS che bớt số điện thoại (091****678)", /^091\*{4}678$/.test(changeOtp.target), true);
+
+const changeNoOtp = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456", "");
+check("Đổi mật khẩu thất bại khi không nhập OTP", changeNoOtp.success, false);
+
+const changeWrongOld = await customerAuth.changeCustomerPassword(testCustId, "WrongPass@123", "NewPass@456", changeOtp.otp);
 check("Đổi mật khẩu thất bại khi sai mật khẩu cũ", changeWrongOld.success, false);
 
-const changeWeakNew = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "weak");
+const changeWeakNew = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "weak", changeOtp.otp);
 check("Đổi mật khẩu thất bại khi mật khẩu mới không đạt chuẩn", changeWeakNew.success, false);
 
-const changeSuccess = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456");
-check("Đổi mật khẩu thành công với mật khẩu hợp lệ", changeSuccess.success, true);
+const changeBadOtp = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456", "000000");
+check("Đổi mật khẩu thất bại khi sai OTP", changeBadOtp.success, false);
+
+const changeSuccess = await customerAuth.changeCustomerPassword(testCustId, "Password@123", "NewPass@456", changeOtp.otp);
+check("Đổi mật khẩu thành công với mật khẩu hợp lệ + OTP đúng (nhập sai MK cũ/mới không làm hao mã)", changeSuccess.success, true);
+
+const changeReuseOtp = await customerAuth.changeCustomerPassword(testCustId, "NewPass@456", "Another@789", changeOtp.otp);
+check("OTP chỉ dùng được 1 lần", changeReuseOtp.success, false);
 
 // 4. Đăng nhập lại với mật khẩu mới
 const loginWithNewPass = await customerAuth.customerLogin("0912345678", "NewPass@456");
 check("Đăng nhập thành công với mật khẩu mới sau khi đổi", loginWithNewPass.success, true);
 
-// 5. Quên mật khẩu & cấp OTP
-const otpReq = await customerAuth.requestPasswordResetOtp("0912345678");
+// 5. Quên mật khẩu & cấp OTP (2 kênh)
+const otpNoEmail = otpService.issueOtp({ customer: { id: "no-mail", phone: "0900000001" }, channel: "email", purpose: "reset" });
+check("Chọn nhận qua Email khi tài khoản chưa có email -> báo lỗi rõ ràng", otpNoEmail.success === false && /chưa có email/.test(otpNoEmail.message), true);
+const otpMailReq = await customerAuth.requestPasswordResetOtp("0912345678", "email");
+check("Quên mật khẩu: nhận OTP qua Email thành công", otpMailReq.success && otpMailReq.channel === "email" && /^lo\*+@gmail\.com$/.test(otpMailReq.target), true);
+
+const otpReq = { ...otpMailReq }; // mã Email vừa gửi; thử gửi lại ngay để kiểm tra giới hạn 30 giây
 check("Yêu cầu OTP quên mật khẩu thành công", otpReq.success, true);
 check("OTP có 6 chữ số", typeof otpReq.otp === "string" && otpReq.otp.length === 6, true);
 
+const otpTooSoon = await customerAuth.requestPasswordResetOtp("0912345678", "sms"); // đổi kênh cũng phải chờ
+check("Gửi lại OTP quá nhanh (<30s) bị chặn", otpTooSoon.success === false && otpTooSoon.waitSeconds > 0, true);
+
 // 6. Đặt lại mật khẩu với OTP
+const resetNoOtp = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: "" });
+check("Đặt lại MK thất bại khi không có OTP", resetNoOtp.success, false);
+
 const resetWrongOtp = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: "000000" });
 check("Đặt lại MK thất bại khi sai OTP", resetWrongOtp.success, false);
 
 const resetSuccess = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: otpReq.otp });
 check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true);
+
+const resetReuse = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "Reuse@123456", otp: otpReq.otp });
+check("OTP quên mật khẩu chỉ dùng 1 lần", resetReuse.success, false);
+
+// 6b. Quy tắc OTP: hết hạn, sai quá 5 lần, kênh Email
+{
+  const fakeCustomer = { id: "otp-test-1", email: "khach.test@example.com", phone: "0900111222" };
+  const t0 = 1_000_000;
+  const mailIssue = otpService.issueOtp({ customer: fakeCustomer, channel: "email", purpose: "reset", now: t0 });
+  check("Gửi OTP qua Email thành công, che bớt email (kh*******@example.com)", mailIssue.success && mailIssue.channel === "email" && /^kh\*+@example\.com$/.test(mailIssue.target), true);
+  check("Email OTP có tiêu đề, SMS thì không", Boolean(mailIssue.preview.subject), true);
+  check("OTP hết hạn sau 5 phút", otpService.verifyOtp(fakeCustomer.id, "reset", mailIssue.otp, t0 + 5 * 60 * 1000 + 1).ok, false);
+  const again = otpService.issueOtp({ customer: fakeCustomer, channel: "sms", purpose: "reset", now: t0 + 40_000 });
+  check("Sau 30 giây được gửi lại, đổi sang kênh SMS", again.success && again.channel === "sms", true);
+  let lastMsg = "";
+  for (let i = 0; i < 5; i += 1) lastMsg = otpService.verifyOtp(fakeCustomer.id, "reset", "000000", t0 + 41_000).message;
+  check("Nhập sai 5 lần thì mã bị huỷ", /quá 5 lần/.test(lastMsg), true);
+  check("Mã đã huỷ không dùng được nữa dù nhập đúng", otpService.verifyOtp(fakeCustomer.id, "reset", again.otp, t0 + 42_000).ok, false);
+  check("Tài khoản không có email & SĐT -> không gửi được", otpService.issueOtp({ customer: { id: "x" }, channel: "email" }).success, false);
+}
 
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
