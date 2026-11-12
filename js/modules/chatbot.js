@@ -61,7 +61,7 @@ const IN_SCOPE_KEYWORDS = [
   "negroni", "old fashioned", "martini", "daiquiri", "manhattan", "margarita", "mojito",
   "bartender", "pha chế", "ada coleman", "harry craddock", "dale degroff", "colin field",
   "hầm rượu", "nhà sưu tầm", "tuổi", "18", "say xe", "hút thuốc", "không gian", "3d", "chỗ ngồi",
-  "thanh toán", "chuyển khoản", "qr", "mbbank", "vietqr", "tiền mặt", "hoá đơn", "hóa đơn", "đơn hàng", "mã đơn", "vé", "huỷ", "hủy", "đặt món", "gọi món",
+  "thanh toán", "chuyển khoản", "qr", "mbbank", "vietqr", "tiền mặt", "trả trước", "đặt cọc", "cọc", "nội quy", "quy định", "luật", "hoá đơn", "hóa đơn", "đơn hàng", "mã đơn", "vé", "huỷ", "hủy", "đặt món", "gọi món",
   "xin chào", "chào", "hello", "hi", "cảm ơn", "tạm biệt", "bye", "bạn là ai", "tư vấn", "gợi ý",
 ];
 
@@ -119,13 +119,14 @@ export async function getBotResponse(userMessage) {
     );
   }
 
-  if (/(thanh toán|chuyển khoản|\bqr\b|mbbank|vietqr|tiền mặt|hoá đơn|hóa đơn|vé điện tử|huỷ đơn|hủy đơn)/i.test(lower)) {
+  if (/(thanh toán|chuyển khoản|\bqr\b|mbbank|vietqr|tiền mặt|hoá đơn|hóa đơn|vé điện tử|huỷ đơn|hủy đơn|trả trước|đặt cọc|nội quy|luật)/i.test(lower)) {
     return (
-      "Dạ quán hỗ trợ thanh toán rất đơn giản ạ:\n\n" +
-      "- 📱 **Quét mã VietQR (MBBank)**: tại trang *Đặt bàn & Gọi món*, bấm *Quét mã thanh toán* rồi chuyển khoản đúng số tiền và nội dung hiển thị, sau đó bấm *Tôi đã chuyển khoản xong*.\n" +
-      "- 💵 **Tiền mặt tại quầy**: thanh toán cho Bartender sau khi dùng món.\n" +
-      "- 🎟️ Sau khi đơn được xác nhận, quý khách nhận **vé điện tử** trong mục *Tài khoản* để check-in.\n" +
-      "- ❌ Đơn chỉ tự huỷ được khi **chưa thanh toán**; nếu đã thanh toán vui lòng gọi hotline " + VENUE.hotline + " để được hỗ trợ.\n\n" +
+      "Dạ chính sách thanh toán và quy định đặt đơn tại Quán Bar Đêm rất rõ ràng ạ:\n\n" +
+      "- 📱 **Trả trước 70% qua VietQR (MBBank):** Khi đặt đơn có đồ uống, quý khách chỉ cần chuyển khoản trước **70%** tổng đơn đúng số tiền và nội dung hiển thị, sau đó bấm *Tôi Đã Chuyển Khoản Xong*. **30% còn lại** thanh toán trực tiếp tại quán.\n" +
+      "- 💵 **Thanh toán phần còn lại tại quầy:** Hoàn tất 30% bằng tiền mặt hoặc chuyển khoản sau khi thưởng thức.\n" +
+      "- 🛡️ **Nội quy 18+ & Check-in:** Chỉ phục vụ khách từ đủ 18 tuổi trở lên (vui lòng mang CCCD/VNeID chính chủ); giữ bàn đặt trước tối đa 20 phút.\n" +
+      "- 🎟️ Sau khi đặt đơn, quý khách nhận **vé điện tử** trong mục *Tài khoản* để check-in.\n" +
+      "- ❌ Đơn chỉ tự huỷ online được khi **chưa thanh toán** (đặt bàn trước cần huỷ trước 2 tiếng); nếu đã chuyển khoản cọc vui lòng gọi hotline " + VENUE.hotline + " để được hỗ trợ.\n\n" +
       "Quý khách cần em hướng dẫn thêm bước nào không ạ?"
     );
   }

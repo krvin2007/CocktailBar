@@ -10,7 +10,7 @@ import { refreshCartBadge } from "../modules/navbar.js";
 import {
   getCart, updateCartQty, removeFromCart, createOrder, clearCart,
   syncCartWithCatalog, findOrderByCodeAndPhone, reportTransferSent,
-  getRemainingSeats, cancelByCustomer, getAllOrders,
+  getRemainingSeats, cancelByCustomer, getAllOrders, getOccupiedTableSet,
 } from "../modules/ordersService.js";
 import { availableQty } from "../modules/drinksService.js";
 import { formatMoney, formatDateTime, escapeHtml, debounce } from "../modules/utils.js";
@@ -18,7 +18,10 @@ import { validateForm, clearFormErrors, setFieldError } from "../modules/validat
 import { toast, confirmDialog, setButtonLoading, loadingHtml, errorHtml } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
 import { allocateOrderTotal, openVietQRPaymentModal } from "../modules/vietqrService.js";
-import { isWithinOpeningHours, openingHoursText, BOOKING_RULES } from "../modules/venue.js";
+import {
+  isWithinOpeningHours, openingHoursText, BOOKING_RULES,
+  BAR_RULES, BAR_SEATING_ZONES, ALL_BAR_TABLES, calcPrepayAmount, calcRemainingAmount,
+} from "../modules/venue.js";
 import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCurrentCustomer, syncCustomerSession } from "../modules/customerAuth.js";
 import { canCustomer, syncRolePermissions } from "../modules/auth.js";
@@ -32,6 +35,8 @@ const cartListEl = document.getElementById("cart-list");
 const sumCountEl = document.getElementById("sum-count");
 const sumTotalEl = document.getElementById("sum-total");
 const sumFinalEl = document.getElementById("sum-final");
+const sumPrepayEl = document.getElementById("sum-prepay");
+const sumRemainingEl = document.getElementById("sum-remaining");
 const slipPayBtn = document.getElementById("slip-pay-btn");
 const slipPayVal = document.getElementById("slip-pay-val");
 const promoLinesEl = document.getElementById("promo-lines");
@@ -49,6 +54,9 @@ const bookingDatePicker = document.getElementById("booking-date-picker");
 const bookingTimePicker = document.getElementById("booking-time-picker");
 const guestCountInput = formEl.elements.guestCount;
 const capacityHint = document.getElementById("capacity-hint");
+const tableNumberInput = document.getElementById("table-number-input") || formEl.elements.tableNumber;
+const seatingMapZonesEl = document.getElementById("seating-map-zones");
+const seatingCapacityHint = document.getElementById("seating-capacity-hint");
 const ageCheckbox = document.getElementById("age-confirm");
 
 const MINUTE = 60 * 1000;
@@ -146,7 +154,25 @@ function getActiveCheckoutSummary() {
   const unpaidTotal = checked.filter((it) => it.isUnpaid).reduce((sum, it) => sum + it.finalPrice, 0);
   const cartPayable = pricing && pricing.subtotal === cartSubtotal ? pricing.total : cartSubtotal;
   const total = unpaidTotal + cartPayable;
-  return { allItems, checked, count, subtotal, cartSubtotal, unpaidTotal, total };
+  const prepayAmount = calcPrepayAmount(total);
+  const remainingAmount = calcRemainingAmount(total);
+  return { allItems, checked, count, subtotal, cartSubtotal, unpaidTotal, total, prepayAmount, remainingAmount };
+}
+
+function renderSlipTotals(count, total) {
+  const prepayAmount = calcPrepayAmount(total);
+  const remainingAmount = calcRemainingAmount(total);
+  if (sumFinalEl) sumFinalEl.textContent = formatMoney(total);
+  if (sumPrepayEl) sumPrepayEl.textContent = formatMoney(prepayAmount);
+  if (sumRemainingEl) sumRemainingEl.textContent = formatMoney(remainingAmount);
+  if (slipPayBtn) {
+    if (count > 0 && prepayAmount > 0) {
+      slipPayBtn.style.display = "flex";
+      if (slipPayVal) slipPayVal.textContent = formatMoney(prepayAmount);
+    } else {
+      slipPayBtn.style.display = "none";
+    }
+  }
 }
 
 /**
@@ -164,7 +190,7 @@ function newOrderBlocked() {
 }
 
 function updateSubmitState() {
-  const { checked, count, total } = getActiveCheckoutSummary();
+  const { checked, count, prepayAmount } = getActiveCheckoutSummary();
   const hasItems = count > 0;
   submitBtn.disabled = (!hasItems && !isBooking()) || newOrderBlocked();
 
@@ -175,14 +201,14 @@ function updateSubmitState() {
   const hasCart = checked.some((i) => !i.isUnpaid);
 
   if (hasUnpaid && hasCart) {
-    submitLabel.textContent = `Xác Nhận & Thanh Toán Chung (${formatMoney(total)})`;
+    submitLabel.textContent = `Xác Nhận & Trả Trước 70% (${formatMoney(prepayAmount)})`;
   } else if (hasUnpaid) {
     const codes = [...new Set(checked.filter((i) => i.isUnpaid).map((i) => i.orderCode))].join(", ");
-    submitLabel.textContent = `Thanh Toán Đơn Chờ ${codes} (${formatMoney(total)})`;
+    submitLabel.textContent = `Trả Trước 70% Đơn Chờ ${codes} (${formatMoney(prepayAmount)})`;
   } else if (hasCart) {
     submitLabel.textContent = isBooking()
-      ? t("order_btn_book_order", "Xác Nhận Đặt Bàn & Gọi Món")
-      : `Xác Nhận Gọi Món (${formatMoney(total)})`;
+      ? `${t("order_btn_book_order", "Xác Nhận Đặt Bàn & Gọi Món")} (Trả trước 70%: ${formatMoney(prepayAmount)})`
+      : `Xác Nhận Gọi Món (Trả trước 70%: ${formatMoney(prepayAmount)})`;
   } else {
     submitLabel.textContent = isBooking()
       ? t("order_btn_book", "Xác Nhận Giữ Bàn")
@@ -320,9 +346,9 @@ async function checkAndRenderUnpaidOrderBanner() {
                 <span class="badge badge-danger" style="font-size: 0.72rem; padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4);">Chưa thanh toán</span>
               </div>
               <p class="text-xs text-muted" style="margin: 4px 0 0 0;">
-                Tổng tiền cần thanh toán: <strong class="text-amber" style="font-size: 0.95rem;">${formatMoney(totalAmount)}</strong>
+                Tổng đơn: <strong>${formatMoney(totalAmount)}</strong> · Cần trả trước 70%: <strong class="text-amber" style="font-size: 0.95rem;">${formatMoney(calcPrepayAmount(totalAmount))}</strong> <span style="opacity: 0.85;">(còn lại 30%: ${formatMoney(calcRemainingAmount(totalAmount))} tại quán)</span>
                 ${totalDiscounts > 0 ? `<span style="color: var(--amber-soft); margin-left: 6px;">(Đã giảm ${formatMoney(totalDiscounts)})</span>` : ""}
-                · Vui lòng thanh toán để Bartender bắt đầu pha chế món cho quý khách.
+                · Vui lòng cọc 70% để Bartender bắt đầu pha chế món cho quý khách.
               </p>
               ${hasCartItems ? `
               <div style="margin-top: 6px; padding: 5px 10px; background: rgba(197, 152, 67, 0.15); border-radius: 6px; border: 1px solid rgba(197, 152, 67, 0.3); font-size: 0.78rem; color: var(--amber-soft);">
@@ -333,7 +359,7 @@ async function checkAndRenderUnpaidOrderBanner() {
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto;">
             <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="banner-pay-btn" style="white-space: nowrap; font-size: 0.82rem; font-weight: 600; padding: 7px 14px;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <span>Quét mã QR MBBank thanh toán</span>
+              <span>Quét mã QR MBBank trả trước 70% (${formatMoney(calcPrepayAmount(totalAmount))})</span>
             </button>
             <button type="button" class="btn btn-outline btn-sm" id="banner-cancel-btn" style="font-size: 0.78rem; padding: 6px 10px; color: #f87171; border-color: rgba(239,68,68,0.4);" title="Huỷ đơn hàng này">
               Huỷ đơn
@@ -507,8 +533,7 @@ function renderCart() {
 
     if (sumCountEl) sumCountEl.textContent = "0 ly";
     if (sumTotalEl) sumTotalEl.textContent = "0₫";
-    if (sumFinalEl) sumFinalEl.textContent = "0₫";
-    if (slipPayBtn) slipPayBtn.style.display = "none";
+    renderSlipTotals(0, 0);
     updateSubmitState();
     return;
   }
@@ -568,17 +593,7 @@ function renderCart() {
   const { count, subtotal, total } = getActiveCheckoutSummary();
   if (sumCountEl) sumCountEl.textContent = `${count} ly`;
   if (sumTotalEl) sumTotalEl.textContent = formatMoney(subtotal);
-  if (sumFinalEl) sumFinalEl.textContent = formatMoney(total);
-
-  // Nút thanh toán trực tiếp trên Reservation Slip
-  if (slipPayBtn) {
-    if (count > 0 && total > 0) {
-      slipPayBtn.style.display = "flex";
-      if (slipPayVal) slipPayVal.textContent = formatMoney(total);
-    } else {
-      slipPayBtn.style.display = "none";
-    }
-  }
+  renderSlipTotals(count, total);
 
   // Tính lại giảm giá theo hạng/mã/điểm mỗi khi giỏ đổi (kể cả lần tải trang đầu) - trước đây chỉ tính khi
   // khách đổi mã/điểm hoặc bấm gửi đơn, nên khách đã đăng nhập không thấy ô "Dùng điểm" và giá giảm khi vào trang
@@ -612,18 +627,8 @@ function renderPricing(result, customer) {
   pricing = result;
 
   const { total, count } = getActiveCheckoutSummary(); // pricing vừa được gán = result -> total đã gồm ưu đãi của món mới
-  sumFinalEl.textContent = formatMoney(total);
-
   promoLinesEl.innerHTML = result.discounts.map(discountLineHtml).join("");
-
-  if (slipPayBtn) {
-    if (count > 0 && total > 0) {
-      slipPayBtn.style.display = "flex";
-      if (slipPayVal) slipPayVal.textContent = formatMoney(total);
-    } else {
-      slipPayBtn.style.display = "none";
-    }
-  }
+  renderSlipTotals(count, total);
 
   const voucherAmount = result.discounts.find((d) => d.type === "voucher")?.amount || 0;
   if (result.voucherError) setPromoMessage(voucherMsgEl, result.voucherError, "error");
@@ -681,7 +686,8 @@ async function refreshPricing() {
     if (requestId !== pricingRequestId) return null;
     pricing = null;
     promoLinesEl.innerHTML = "";
-    sumFinalEl.textContent = formatMoney(getActiveCheckoutSummary().total);
+    const fallback = getActiveCheckoutSummary();
+    renderSlipTotals(fallback.count, fallback.total);
     return null;
   }
 }
@@ -900,6 +906,7 @@ function updateConditionalFields() {
   bookingTimeInput.dataset.rule = booking ? "required" : "";
   guestCountInput.dataset.rule = booking ? "required|integer|minval:1|maxval:50" : "";
   if (booking) setBookingTimeRange();
+  renderSeatingMap();
   renderCart(); // chữ trong giỏ trống + nút gửi khác nhau giữa 2 hình thức
 }
 
@@ -910,6 +917,100 @@ formEl.elements.serviceType.forEach((radio) => {
     updateCapacityHint();
   });
 });
+
+let seatingRequestId = 0;
+
+function updateSeatingHint() {
+  if (!seatingCapacityHint || !tableNumberInput) return;
+  const chosen = tableNumberInput.value.trim();
+  if (!chosen) {
+    seatingCapacityHint.textContent = isBooking()
+      ? "Bấm vào bàn còn trống trên sơ đồ để giữ đúng vị trí mong muốn (tuỳ chọn)."
+      : "Bấm chọn bàn bạn đang ngồi hoặc khu vực mong muốn.";
+    return;
+  }
+  const matched = ALL_BAR_TABLES.find((tb) => tb.label.toLowerCase() === chosen.toLowerCase());
+  const guests = isBooking() ? Number(guestCountInput?.value) || 0 : 0;
+  if (matched && guests > matched.seats) {
+    seatingCapacityHint.textContent = `Đã chọn: ${matched.label} (${matched.seats} chỗ). Lưu ý: nhóm ${guests} khách lớn hơn sức chứa tiêu chuẩn — quán sẽ hỗ trợ ghép bàn hoặc bạn chọn Sofa VIP lớn hơn.`;
+  } else if (matched) {
+    seatingCapacityHint.textContent = `Đã chọn: ${matched.label} (${matched.zoneName} · tối đa ${matched.seats} chỗ).`;
+  } else {
+    seatingCapacityHint.textContent = `Vị trí đã chọn: ${chosen}.`;
+  }
+}
+
+async function renderSeatingMap() {
+  if (!seatingMapZonesEl) return;
+  const requestId = ++seatingRequestId;
+  const currentType = formEl.elements.serviceType.value;
+  let bookingIso = "";
+  if (currentType === "booking" && bookingTimeInput?.value) {
+    const d = new Date(bookingTimeInput.value);
+    if (!Number.isNaN(d.getTime())) bookingIso = d.toISOString();
+  }
+
+  let occupied = new Set();
+  try {
+    const ordersList = await getAllOrders();
+    if (requestId !== seatingRequestId) return;
+    occupied = getOccupiedTableSet(ordersList, { serviceType: currentType, bookingTime: bookingIso });
+  } catch {
+    if (requestId !== seatingRequestId) return;
+  }
+
+  const selectedRaw = String(tableNumberInput?.value || "").trim().toLowerCase();
+  if (selectedRaw && occupied.has(selectedRaw)) {
+    tableNumberInput.value = "";
+    toast("Vị trí bạn chọn trước đó đã có khách đặt trong khung giờ này. Vui lòng chọn bàn khác!", "warning");
+  }
+
+  const currentSelected = String(tableNumberInput?.value || "").trim().toLowerCase();
+  seatingMapZonesEl.innerHTML = BAR_SEATING_ZONES.map((zone) => `
+    <div class="seating-zone-block">
+      <div class="seating-zone-header">
+        <span class="seating-zone-name">${zone.icon} ${escapeHtml(zone.name)}</span>
+        <span class="seating-zone-sub">${escapeHtml(zone.subtitle)}</span>
+      </div>
+      <div class="seating-table-grid">
+        ${zone.tables.map((tb) => {
+          const isBooked = occupied.has(tb.label.toLowerCase()) || occupied.has(tb.id.toLowerCase());
+          const isSelected = !isBooked && currentSelected === tb.label.toLowerCase();
+          return `
+            <button type="button" class="seat-card${isSelected ? " is-selected" : ""}${isBooked ? " is-booked" : ""}" data-table-label="${escapeHtml(tb.label)}" ${isBooked ? "disabled title=\"Đã có khách đặt trong khung giờ này\"" : ""}>
+              <span class="seat-card-title">${escapeHtml(tb.label)}</span>
+              <span class="seat-card-meta">${tb.seats} chỗ · ${isBooked ? "Đã đặt" : isSelected ? "Đang chọn" : "Còn trống"}</span>
+            </button>`;
+        }).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  updateSeatingHint();
+}
+
+if (seatingMapZonesEl) {
+  seatingMapZonesEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".seat-card");
+    if (!btn || btn.disabled) return;
+    const label = btn.dataset.tableLabel || "";
+    if (!tableNumberInput) return;
+    const isSame = tableNumberInput.value.trim().toLowerCase() === label.toLowerCase();
+    tableNumberInput.value = isSame ? "" : label;
+    renderSeatingMap();
+  });
+}
+
+if (tableNumberInput) {
+  tableNumberInput.addEventListener("input", () => {
+    const cur = tableNumberInput.value.trim().toLowerCase();
+    seatingMapZonesEl?.querySelectorAll(".seat-card").forEach((btn) => {
+      const label = String(btn.dataset.tableLabel || "").toLowerCase();
+      btn.classList.toggle("is-selected", !btn.disabled && cur === label);
+    });
+    updateSeatingHint();
+  });
+}
 
 /**
  * Luật nghiệp vụ của giờ đặt bàn (không khai báo được bằng data-rule),
@@ -980,13 +1081,17 @@ async function updateCapacityHint() {
 
 const debouncedCapacityHint = debounce(updateCapacityHint, 300);
 
-if (bookingTimeInput) bookingTimeInput.addEventListener("change", updateCapacityHint);
+if (bookingTimeInput) bookingTimeInput.addEventListener("change", () => {
+  updateCapacityHint();
+  renderSeatingMap();
+});
 
 if (bookingDatePicker) {
   bookingDatePicker.addEventListener("change", () => {
     syncBookingTime();
     validateBookingTime();
     updateCapacityHint();
+    renderSeatingMap();
   });
 }
 
@@ -995,6 +1100,7 @@ if (bookingTimePicker) {
     syncBookingTime();
     validateBookingTime();
     updateCapacityHint();
+    renderSeatingMap();
   });
 }
 
@@ -1005,10 +1111,14 @@ document.querySelectorAll(".btn-time-slot").forEach((btn) => {
       syncBookingTime();
       validateBookingTime();
       updateCapacityHint();
+      renderSeatingMap();
     }
   });
 });
-guestCountInput.addEventListener("input", debouncedCapacityHint);
+guestCountInput.addEventListener("input", () => {
+  debouncedCapacityHint();
+  updateSeatingHint();
+});
 
 /* ---------------- Xác nhận đủ 18 tuổi ---------------- */
 
@@ -1083,7 +1193,7 @@ formEl.addEventListener("submit", async (e) => {
       email: String(data.email || customer?.email || "").trim(),
       serviceType: data.serviceType,
       customerId: customer?.id || "", // khách đã đăng nhập -> được tích điểm khi đơn hoàn tất
-      tableNumber: data.serviceType === "dine-in" ? data.tableNumber || "" : "",
+      tableNumber: String(data.tableNumber || "").trim(),
       bookingTime: data.serviceType === "booking" ? data.bookingTime : "",
       guestCount: data.serviceType === "booking" ? Number(data.guestCount) : null,
       note: data.note || "",
@@ -1167,14 +1277,19 @@ function showOrderSuccessModal(order) {
         ${order.discountTotal > 0 ? `
           <div class="receipt-row"><span>${t("order_subtotal", "Tổng tạm tính")}:</span><span>${formatMoney(order.subtotal)}</span></div>
           ${order.discounts.map((d) => `<div class="receipt-row"><span>${escapeHtml(d.label)}:</span><span>−${formatMoney(d.amount)}</span></div>`).join("")}` : ""}
-        <div class="receipt-row"><span>${t("order_rc_total", "Tổng thanh toán")}:</span><strong class="text-amber">${formatMoney(order.total)}</strong></div>
+        <div class="receipt-row"><span>${t("order_rc_total", "Tổng giá trị đơn")}:</span><strong>${formatMoney(order.total)}</strong></div>
+        ${order.total > 0 ? `
+          <div class="receipt-row"><span>${t("order_prepay_70", "Cần trả trước khi đặt (70%)")}:</span><strong class="text-amber">${formatMoney(order.prepayAmount)}</strong></div>
+          <div class="receipt-row"><span>${t("order_remaining_30", "Còn lại trả tại quán (30%)")}:</span><span class="text-muted">${formatMoney(order.remainingAmount)}</span></div>` : ""}
       </div>
 
-      <div class="door-host-notice-card" style="margin: 16px 0; text-align: left;">
-        <div class="notice-icon">🛡️</div>
+      <div class="door-host-notice-card bar-rules-notice-card" style="margin: 16px 0; text-align: left;">
+        <div class="notice-icon">📜</div>
         <div class="notice-content">
-          <div class="notice-title">QUY ĐỊNH CHECK-IN TẠI CỬA (DOOR HOST)</div>
-          <p class="notice-text">Quý khách vui lòng mang theo <strong>CCCD hoặc mở ứng dụng VNeID chính chủ</strong> để đối chiếu độ tuổi trước khi nhận bàn. Mọi trường hợp dưới 18 tuổi hoặc khai báo sai lệch sẽ bị từ chối phục vụ và hủy bàn theo quy định pháp luật.</p>
+          <div class="notice-title">NỘI QUY &amp; QUY ĐỊNH QUÁN BAR ĐÊM</div>
+          <ul class="bar-rules-list">
+            ${BAR_RULES.map((r) => `<li><strong>${escapeHtml(r.title)}:</strong> ${escapeHtml(r.text)}</li>`).join("")}
+          </ul>
         </div>
       </div>
 
@@ -1182,7 +1297,7 @@ function showOrderSuccessModal(order) {
         ${order.needsPayment ? `
         <button type="button" class="btn btn-primary btn-block btn-vqr-pay" id="success-open-vietqr-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span>${t("order_qr_now", "Quét Mã QR MBBank Chuyển Khoản Ngay")} (${formatMoney(order.total)})</span>
+          <span>${t("order_qr_now", "Quét Mã QR MBBank Trả Trước 70%")} (${formatMoney(order.prepayAmount)})</span>
         </button>` : ""}
         <button type="button" class="btn btn-ghost btn-block" id="success-close-btn">${t("order_close", "Đã hiểu & Đóng")}</button>
       </div>
@@ -1256,7 +1371,7 @@ function lookupResultHtml(o) {
         ${o.isTableOnly ? "" : `<p><strong>${t("order_rc_items", "Món đã gọi")}:</strong> ${items}</p>`}
         <p><strong>${t("order_rc_created", "Đặt lúc")}:</strong> ${formatDateTime(o.createdAt)}</p>
         ${o.isTableOnly ? "" : `
-        <p><strong>${t("order_rc_amount", "Tổng tiền")}:</strong> <strong class="text-amber">${formatMoney(o.total)}</strong></p>
+        <p><strong>${t("order_rc_amount", "Tổng tiền")}:</strong> <strong>${formatMoney(o.total)}</strong> <span class="text-muted text-xs">(Trả trước 70%: <strong class="text-amber">${formatMoney(o.prepayAmount)}</strong> · Tại quán 30%: ${formatMoney(o.remainingAmount)})</span></p>
         <p><strong>${t("order_rc_payment", "Thanh toán")}:</strong> <span class="badge ${o.paymentBadge}">${paymentText(o)}</span></p>`}
         ${o.holdsStock ? `
         <div class="door-host-notice-card" style="margin: 14px 0; text-align: left;">
@@ -1270,7 +1385,7 @@ function lookupResultHtml(o) {
           ${showQrBtn ? `
             <button type="button" class="btn btn-primary btn-sm btn-vqr-pay" id="lookup-qr-btn">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <span>${t("order_lookup_qr", "Mở Mã QR MBBank Chuyển Khoản")} (${formatMoney(o.total)})</span>
+              <span>${t("order_lookup_qr", "Mở Mã QR MBBank Trả Trước 70%")} (${formatMoney(o.prepayAmount)})</span>
             </button>` : ""}
           <button type="button" class="btn btn-secondary btn-sm" id="lookup-ticket-btn" style="display: inline-flex; align-items: center; gap: 5px;">
             <span>🎟️</span> <span>Xem Vé Điện Tử</span>
@@ -1365,6 +1480,7 @@ function checkUrlParams() {
     if (tableInput) {
       tableInput.value = table;
     }
+    renderSeatingMap();
     toast(`Đã chọn vị trí: "${table}" từ mô hình 3D!`, "info");
     const orderBox = document.querySelector(".order-summary-box") || formEl;
     if (orderBox) {

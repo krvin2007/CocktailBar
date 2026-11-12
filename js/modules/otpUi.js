@@ -7,12 +7,15 @@ import { OTP_CHANNELS } from "./otpService.js";
 import { escapeHtml } from "./utils.js";
 
 /** Hai nút chọn cách nhận mã. name = tên nhóm radio (mỗi hộp thoại một tên riêng) */
-export function otpChannelPickerHtml(name, { selected = "email" } = {}) {
-  const item = (key) => `
+export function otpChannelPickerHtml(name, { selected = "email", labels = null } = {}) {
+  const item = (key) => {
+    const labelText = labels?.[key] || `Nhận mã qua <strong>${OTP_CHANNELS[key].label}</strong>`;
+    return `
     <label class="otp-channel" style="flex:1; display:flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid rgba(255,255,255,0.15); border-radius:6px; background:rgba(0,0,0,0.25); cursor:pointer; font-size:0.86rem; color:var(--cream);">
       <input type="radio" name="${name}" value="${key}" ${selected === key ? "checked" : ""}>
-      <span>${OTP_CHANNELS[key].icon} Nhận mã qua <strong>${OTP_CHANNELS[key].label}</strong></span>
+      <span>${OTP_CHANNELS[key].icon} ${labelText}</span>
     </label>`;
+  };
   return `<div class="otp-channels" role="radiogroup" aria-label="Cách nhận mã OTP" style="display:flex; gap:8px; flex-wrap:wrap;">${item("email")}${item("sms")}</div>`;
 }
 

@@ -158,6 +158,9 @@ function openDetail(order) {
       <span class="font-bold">Tổng thanh toán</span>
       <strong class="text-amber text-lg">${formatMoney(order.total)}</strong>
     </div>
+    ${order.total > 0 ? `
+      <div class="order-detail-row text-sm"><span>Cần trả trước (70%)</span><strong class="text-amber">${formatMoney(order.prepayAmount)}</strong></div>
+      <div class="order-detail-row text-sm"><span>Thanh toán tại quán (30%)</span><span>${formatMoney(order.remainingAmount)}</span></div>` : ""}
 
     <div class="door-host-admin-panel">
       <div class="door-host-admin-title">
@@ -305,7 +308,7 @@ async function handleConfirmPayment(order = activeOrder, ask = true) {
   if (!order || !can("order:payment")) return;
   if (ask) {
     const ok = await confirmDialog(
-      `Xác nhận đã nhận đủ ${formatMoney(order.total)} cho đơn ${order.code}? Nếu khách chuyển khoản, hãy kiểm tra sao kê có nội dung "BAR ${order.code}".`,
+      `Xác nhận đã nhận đủ ${formatMoney(order.total)} (cọc 70%: ${formatMoney(order.prepayAmount)} + tại quán 30%: ${formatMoney(order.remainingAmount)}) cho đơn ${order.code}? Nếu khách chuyển khoản, hãy kiểm tra sao kê có nội dung "BAR ${order.code}".`,
       { title: "Xác nhận đã thu tiền", okText: "Đã nhận tiền" },
     );
     if (!ok) return;
@@ -536,9 +539,12 @@ function bindEvents() {
   qrBtn.addEventListener("click", () => {
     if (!activeOrder) return;
     const order = activeOrder;
-    openVietQRPaymentModal(order, can("order:payment")
-      ? { confirmLabel: "Xác Nhận Đã Nhận Tiền", onConfirm: () => handleConfirmPayment(order, false) }
-      : {});
+    openVietQRPaymentModal(order, {
+      allowFullToggle: true,
+      ...(can("order:payment")
+        ? { confirmLabel: "Xác Nhận Đã Nhận Tiền", onConfirm: () => handleConfirmPayment(order, false) }
+        : {}),
+    });
   });
   paidBtn.addEventListener("click", () => handleConfirmPayment());
   saveStatusBtn.addEventListener("click", handleSaveStatus);

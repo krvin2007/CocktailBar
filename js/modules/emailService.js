@@ -14,6 +14,7 @@ import { api } from "./api.js";
 import { getItem, setItem } from "./storage.js";
 import { formatMoney, formatDateTime, escapeHtml, uid } from "./utils.js";
 import { EMAILJS_CONFIG } from "./emailConfig.js";
+import { calcPrepayAmount, calcRemainingAmount } from "./venue.js";
 
 const EMAILS_KEY = "quanbar_sent_emails";
 const EMAILJS_CDN = "https://cdn.jsdelivr.net/npm/@emailjs/browser@5.0.3/dist/email.min.js";
@@ -76,6 +77,8 @@ export function buildOrderMailParams(order, toEmail) {
     items_text: itemsText,
     discount_text: discounts > 0 ? `Ưu đãi: -${formatMoney(discounts)}` : "",
     total: formatMoney(order.total || 0),
+    prepay_amount: formatMoney(calcPrepayAmount(order.total || 0)),
+    remaining_amount: formatMoney(calcRemainingAmount(order.total || 0)),
     payment_status: paymentStatusText(order),
     address: "74-76 Nam Kỳ Khởi Nghĩa, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh",
     hotline: "0397 062 429",
@@ -168,13 +171,13 @@ export function buildCinemaTicketHtml(order, { toEmail = "" } = {}) {
   const items = Array.isArray(order.items) ? order.items : [];
 
   let serviceTypeLabel = "Đặt bàn trước";
-  let seatLabel = "Khu vực Sảnh VIP Lounge";
+  let seatLabel = order.tableNumber || "Khu vực Sảnh VIP Lounge";
   let timeLabel = order.bookingTime ? formatDateTime(order.bookingTime) : formatDateTime(order.createdAt);
   let guestLabel = order.guestCount ? `${order.guestCount} Khách (Vé đoàn)` : "1 Khách";
 
   if (order.serviceType === "dine-in") {
     serviceTypeLabel = "Gọi món tại bàn";
-    seatLabel = order.tableNumber ? `Bàn số ${order.tableNumber}` : "Bàn tại chỗ";
+    seatLabel = order.tableNumber || "Bàn tại chỗ";
     timeLabel = formatDateTime(order.createdAt);
     guestLabel = items.length ? `${items.reduce((s, it) => s + (it.qty || 1), 0)} ly đồ uống` : "Tại quán";
   } else if (order.serviceType === "takeaway") {
@@ -273,6 +276,11 @@ export function buildCinemaTicketHtml(order, { toEmail = "" } = {}) {
               <span style="font-size: 0.88rem; font-weight: 600; text-transform: uppercase;">Tổng thanh toán:</span>
               <strong style="font-size: 1.25rem; color: #e8c682; font-family: monospace;">${formatMoney(order.total || 0)}</strong>
             </div>
+            ${Number(order.total) > 0 ? `
+            <div style="margin-top: 4px; display: flex; justify-content: space-between; font-size: 0.78rem; color: #e8c682;">
+              <span>Cần trả trước khi đặt (70%):</span>
+              <strong>${formatMoney(calcPrepayAmount(order.total || 0))} · Tại quán (30%): ${formatMoney(calcRemainingAmount(order.total || 0))}</strong>
+            </div>` : ""}
             <div style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
               <span style="font-size: 0.78rem; color: #baa998;">Trạng thái thanh toán:</span>
               <span class="badge ${isPaid ? "badge-success" : order.paymentStatus === "awaiting" ? "badge-warning" : "badge-danger"}" style="font-size: 0.78rem; padding: 2px 8px;">
@@ -309,7 +317,7 @@ export function buildCinemaTicketHtml(order, { toEmail = "" } = {}) {
       <div style="background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 10px 18px; font-size: 0.75rem; color: #baa998; display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 1rem;">🛡️</span>
         <div>
-          <strong>Lưu ý nhận bàn:</strong> Quý khách vui lòng xuất trình vé điện tử này hoặc CCCD/VNeID khi đến quán. Bàn đặt được giữ trong vòng 20 phút kể từ giờ hẹn. Hotline hỗ trợ: <strong>0397 062 429</strong>.
+          <strong>Lưu ý &amp; Nội quy nhận bàn:</strong> Quý khách chỉ cần trả trước <strong>70%</strong> đơn hàng để giữ bàn &amp; pha chế (30% còn lại thanh toán tại quán). Vui lòng xuất trình vé điện tử hoặc <strong>CCCD/VNeID đủ 18 tuổi</strong> tại cửa; bàn được giữ trong 20 phút từ giờ hẹn. Hotline: <strong>0397 062 429</strong>.
         </div>
       </div>
     </div>`;

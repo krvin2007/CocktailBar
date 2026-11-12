@@ -103,6 +103,103 @@ export function openingHoursText(lang = "vi") {
   return OPENING_HOURS.map((r) => `${localized(r.label, lang)}: ${r.open} – ${r.close}`).join("; ");
 }
 
+/** Tỷ lệ thanh toán trả trước (đặt cọc) khi khách đặt đơn online: 70% trả trước, 30% trả tại quán */
+export const PREPAY_RATE = 0.7;
+
+/** Tính số tiền khách cần trả trước (70% giá trị đơn hàng) */
+export function calcPrepayAmount(total) {
+  const clean = Math.max(0, Math.round(Number(total) || 0));
+  return Math.round(clean * PREPAY_RATE);
+}
+
+/** Tính số tiền còn lại khách thanh toán tại quán (30% giá trị đơn hàng) */
+export function calcRemainingAmount(total) {
+  const clean = Math.max(0, Math.round(Number(total) || 0));
+  return Math.max(0, clean - calcPrepayAmount(clean));
+}
+
+/** Nội quy & Chính sách phục vụ chung của Quán Bar Đêm (hiển thị khi đặt bàn / gọi món) */
+export const BAR_RULES = [
+  {
+    id: "prepay",
+    icon: "💳",
+    title: "Thanh toán trả trước 70%",
+    text: "Khi đặt đơn có đồ uống, quý khách chỉ cần chuyển khoản trước 70% tổng giá trị đơn qua VietQR (MBBank) để xác nhận giữ đơn và pha chế; 30% còn lại thanh toán trực tiếp tại quán.",
+  },
+  {
+    id: "age",
+    icon: "🛡️",
+    title: "Quy định 18+ & Check-in Door Host",
+    text: "Theo Điều 32 Luật Phòng chống tác hại của rượu, bia: chỉ phục vụ khách từ đủ 18 tuổi trở lên. Quý khách vui lòng xuất trình CCCD hoặc VNeID chính chủ tại cửa; thông tin sai lệch sẽ bị từ chối phục vụ và huỷ bàn.",
+  },
+  {
+    id: "booking",
+    icon: "🕒",
+    title: "Giờ mở cửa, giữ bàn & Huỷ đơn",
+    text: `Mở cửa 18:00 – 02:00 hàng ngày. Bàn đặt được giữ tối đa 20 phút kể từ giờ hẹn. Đơn chưa thanh toán có thể tự huỷ online (đặt bàn trước cần huỷ trước giờ hẹn ít nhất ${BOOKING_RULES.cancelDeadlineHours} tiếng); đơn đã cọc vui lòng gọi Hotline ${VENUE.hotline}.`,
+  },
+  {
+    id: "conduct",
+    icon: "🥂",
+    title: "Văn hoá Speakeasy & An toàn",
+    text: "Không mang đồ ăn, thức uống từ ngoài vào quán; giữ không gian thưởng thức văn minh, tôn trọng khách xung quanh. Đã sử dụng đồ uống có cồn không tự lái xe (quầy lễ tân hỗ trợ đặt xe an toàn).",
+  },
+];
+
+/** Sơ đồ các khu vực & bàn ngồi trong Quán Bar Đêm (dùng chung cho Đặt Bàn Trước và Tại Quầy) */
+export const BAR_SEATING_ZONES = [
+  {
+    id: "bar-counter",
+    icon: "🍸",
+    name: "Quầy Bar Pha Chế Trung Tâm",
+    subtitle: "Ngắm Bartender pha chế trực tiếp · 1–2 khách/vị trí",
+    tables: [
+      { id: "BAR-01", label: "Ghế Quầy Bar 01–02", seats: 2 },
+      { id: "BAR-02", label: "Ghế Quầy Bar 03–04", seats: 2 },
+      { id: "BAR-03", label: "Ghế Quầy Bar 05–06", seats: 2 },
+    ],
+  },
+  {
+    id: "vip-sofa",
+    icon: "🛋️",
+    name: "Khu Bàn Sofa VIP Hoàng Gia",
+    subtitle: "Riêng tư, sang trọng · Nhóm 4–8 khách",
+    tables: [
+      { id: "VIP-01", label: "Sofa VIP 01", seats: 6 },
+      { id: "VIP-02", label: "Sofa VIP 02", seats: 6 },
+      { id: "VIP-03", label: "Sofa VIP 03", seats: 8 },
+      { id: "VIP-04", label: "Sofa VIP 04", seats: 4 },
+    ],
+  },
+  {
+    id: "high-tables",
+    icon: "🪟",
+    name: "Khu Bàn Cao View Phố & Chill",
+    subtitle: "Ngắm cảnh phố đêm Quận 1 · 2–4 khách/bàn",
+    tables: [
+      { id: "C-01", label: "Bàn Cao C01", seats: 2 },
+      { id: "C-02", label: "Bàn Cao C02", seats: 2 },
+      { id: "C-03", label: "Bàn Cao C03", seats: 4 },
+      { id: "C-04", label: "Bàn Cao C04", seats: 4 },
+    ],
+  },
+  {
+    id: "dj-cellar",
+    icon: "🎧",
+    name: "Sân Khấu DJ & Hầm Rượu Di Sản",
+    subtitle: "Không khí âm nhạc hoặc thưởng lãm rượu quý · 4–6 khách",
+    tables: [
+      { id: "DJ-01", label: "Bàn Sân Khấu DJ 01", seats: 4 },
+      { id: "DJ-02", label: "Bàn Sân Khấu DJ 02", seats: 4 },
+      { id: "VAULT-01", label: "Bàn Hầm Rượu Di Sản", seats: 6 },
+    ],
+  },
+];
+
+export const ALL_BAR_TABLES = BAR_SEATING_ZONES.flatMap((zone) =>
+  zone.tables.map((t) => ({ ...t, zoneId: zone.id, zoneName: zone.name })),
+);
+
 /** Link mở Google Maps (tab mới) tại đúng toạ độ của quán */
 export const mapsSearchUrl = () =>
   `https://www.google.com/maps/search/?api=1&query=${VENUE.lat},${VENUE.lng}`;

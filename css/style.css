@@ -5310,6 +5310,228 @@ body.age-gate-locked {
   margin: 0;
 }
 
+.summary-deposit-breakdown {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(197, 152, 67, 0.08);
+  border: 1px solid rgba(197, 152, 67, 0.25);
+  border-radius: var(--radius-sm);
+}
+
+.summary-deposit-breakdown .summary-row {
+  padding: 3px 0;
+  font-size: 0.86rem;
+}
+
+.bar-rules-list {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bar-rules-list strong {
+  color: var(--cream);
+}
+
+/* Nhóm nhập Email / Số điện thoại (+84) trong hộp thoại Quên mật khẩu */
+.otp-channel:has(input:checked) {
+  border-color: var(--amber, #c59843) !important;
+  background: rgba(197, 152, 67, 0.14) !important;
+  color: #fff !important;
+}
+
+.fp-ident-wrap {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fp-ident-wrap:focus-within {
+  border-color: var(--amber, #c59843);
+  box-shadow: 0 0 0 2px rgba(197, 152, 67, 0.2);
+}
+
+.fp-phone-prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  background: rgba(197, 152, 67, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--amber-soft, #e8c682);
+  font-weight: 700;
+  font-size: 0.94rem;
+  letter-spacing: 0.4px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.fp-phone-prefix[hidden] {
+  display: none;
+}
+
+.fp-ident-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+/* Sơ đồ khu vực & bàn ngồi trong quán trên trang Đặt bàn & Gọi món */
+.seating-map-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.seating-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.seating-legend .legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.seating-legend .legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.free {
+  background: rgba(74, 222, 128, 0.85);
+}
+
+.legend-dot.selected {
+  background: var(--amber, #c59843);
+}
+
+.legend-dot.booked {
+  background: rgba(248, 113, 113, 0.75);
+}
+
+.seating-map-zones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.seating-zone-block {
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.seating-zone-block:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.seating-zone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-bottom: 7px;
+}
+
+.seating-zone-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--amber-soft);
+}
+
+.seating-zone-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.seating-table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.seat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  border-radius: 6px;
+  color: var(--cream);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.seat-card:hover:not(:disabled) {
+  border-color: var(--amber);
+  background: rgba(197, 152, 67, 0.12);
+  transform: translateY(-1px);
+}
+
+.seat-card.is-selected {
+  border-color: var(--amber);
+  background: rgba(197, 152, 67, 0.22);
+  box-shadow: 0 0 0 1px rgba(197, 152, 67, 0.45);
+}
+
+.seat-card.is-booked {
+  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--text-muted);
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.seat-card-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: inherit;
+}
+
+.seat-card-meta {
+  font-size: 0.71rem;
+  color: var(--text-muted);
+}
+
+.seat-card.is-selected .seat-card-meta {
+  color: var(--amber-soft);
+  font-weight: 600;
+}
+
 /* Badges cho trạng thái đối chiếu CCCD (Door Check) */
 .badge-door-pending {
   background: rgba(229, 167, 62, 0.15);

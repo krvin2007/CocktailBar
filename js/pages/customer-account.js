@@ -18,7 +18,7 @@ import { loadingHtml, errorHtml, toast, confirmDialog } from "../modules/ui.js";
 import { escapeHtml, formatMoney, formatDate, formatDateTime } from "../modules/utils.js";
 import { t } from "../modules/i18n.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
-import { reportTransferSent, cancelByCustomer } from "../modules/ordersService.js";
+import { reportTransferSent, cancelByCustomer, calcPrepayAmount, calcRemainingAmount } from "../modules/ordersService.js";
 import { openCinemaTicketModal, openWelcomeVoucherModal, getEmailsByRecipient, sendOrderConfirmationEmail, describeMailDelivery } from "../modules/emailService.js";
 import { openChangePasswordModal } from "../modules/changePasswordModal.js";
 import { openForgotPasswordModal } from "../modules/forgotPasswordModal.js";
@@ -87,9 +87,10 @@ function orderRowHtml(o) {
   } else {
     paymentBadgeHtml = `<span class="badge badge-danger" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">Chưa thanh toán</span>`;
     if (o.status !== "cancelled" && Number(o.total) > 0) {
+      const prepay = calcPrepayAmount(o.total);
       payBtnHtml = `
-        <button type="button" class="btn btn-primary btn-sm btn-pay-account-order" data-id="${escapeHtml(o.id)}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;">
-          Thanh toán MBBank
+        <button type="button" class="btn btn-primary btn-sm btn-pay-account-order" data-id="${escapeHtml(o.id)}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap;" title="Cọc trước 70% (${formatMoney(prepay)}), còn lại 30% (${formatMoney(calcRemainingAmount(o.total))}) trả tại quán">
+          Trả trước 70% MBBank (${formatMoney(prepay)})
         </button>`;
     }
   }
