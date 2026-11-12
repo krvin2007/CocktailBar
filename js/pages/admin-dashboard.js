@@ -138,8 +138,8 @@ function renderPeriodTable() {
       <td>${r.orders}</td>
       <td><strong>${formatMoney(r.revenue)}</strong></td>
       <td>
-        <div class="bar-chart-bar-wrap" style="height: 8px; width: 100%; background: rgba(255,255,255,0.06); border-radius: 4px;">
-          <div class="bar-chart-bar" style="height: 100%; width: ${series.maxRevenue ? Math.round((r.revenue / series.maxRevenue) * 100) : 0}%; border-radius: 4px;"></div>
+        <div class="period-bar-wrap">
+          <div class="period-bar" style="width: ${series.maxRevenue ? Math.round((r.revenue / series.maxRevenue) * 100) : 0}%;"></div>
         </div>
       </td>
       <td>${changeHtml(r.change)}</td>

@@ -79,7 +79,7 @@ function fillSelects() {
 }
 
 function rowHtml(s) {
-  const customPerms = s.customPermissions || getStaffCustomPermissions(s.id);
+  const customPerms = s.customPermissions !== undefined ? s.customPermissions : getStaffCustomPermissions(s.id);
   const permBadge = Array.isArray(customPerms)
     ? `<span class="perm-custom-badge" title="Nhân viên có ${customPerms.length} quyền riêng">${ICONS.key(12)} Quyền riêng (${customPerms.length})</span>`
     : `<span class="perm-inherited-badge" title="Thừa hưởng theo vai trò ${s.roleLabel}">${ICONS.shield(12)} Theo vai trò</span>`;
@@ -128,7 +128,7 @@ function renderTable() {
 
   bodyEl.innerHTML = items.length
     ? items.map(rowHtml).join("")
-    : `<tr><td colspan="8" class="table-empty py-4 text-center text-muted">
+    : `<tr><td colspan="7" class="table-empty py-4 text-center text-muted">
         ${allStaff.length ? "Không tìm thấy nhân viên phù hợp với bộ lọc." : "Chưa có nhân viên nào - bấm \"Thêm nhân sự mới\"."}
        </td></tr>`;
 
@@ -140,7 +140,7 @@ async function reloadTable() {
     allStaff = await getAllStaff();
     renderTable();
   } catch (err) {
-    bodyEl.innerHTML = `<tr><td colspan="8" class="table-empty py-4 text-center text-muted">${escapeHtml(err.message)}</td></tr>`;
+    bodyEl.innerHTML = `<tr><td colspan="7" class="table-empty py-4 text-center text-muted">${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
@@ -605,7 +605,7 @@ async function handleResetMatrix() {
 
 function renderStaffPermChecklist(staff, isCustomMode) {
   const roleMatrix = getRolePermissions();
-  const staffCustom = staff.customPermissions || getStaffCustomPermissions(staff.id);
+  const staffCustom = staff.customPermissions !== undefined ? staff.customPermissions : getStaffCustomPermissions(staff.id);
   const rolePerms = roleMatrix[staff.role] || [];
 
   permChecklistWrap.innerHTML = PERMISSION_GROUPS.filter((g) => g.audience !== "customer").map((group) => {
@@ -646,7 +646,7 @@ function renderStaffPermChecklist(staff, isCustomMode) {
 
 function openPermissionsModal(staff) {
   currentStaffForPerm = staff;
-  const staffCustom = staff.customPermissions || getStaffCustomPermissions(staff.id);
+  const staffCustom = staff.customPermissions !== undefined ? staff.customPermissions : getStaffCustomPermissions(staff.id);
   const isCustom = Array.isArray(staffCustom);
 
   permModalTitle.innerHTML = `${ICONS.key(18)} Thiết Lập Quyền Riêng: ${escapeHtml(staff.name)}`;
@@ -677,13 +677,13 @@ async function handleSaveStaffPermissions() {
     if (isCustom) {
       const checkedBoxes = Array.from(permChecklistWrap.querySelectorAll("input[data-staff-perm]:checked"));
       const perms = checkedBoxes.map((cb) => cb.dataset.staffPerm);
+      await updateStaffPermissions(staff.id, perms);
       saveStaffCustomPermissions(staff.id, perms);
-      await updateStaffPermissions(staff.id, perms).catch(() => {});
       staff.customPermissions = perms;
       toast(`Đã lưu ${perms.length} quyền riêng cho nhân viên "${staff.name}".`, "success");
     } else {
+      await updateStaffPermissions(staff.id, null);
       saveStaffCustomPermissions(staff.id, null);
-      await updateStaffPermissions(staff.id, null).catch(() => {});
       staff.customPermissions = null;
       toast(`Đã khôi phục quyền nhân viên "${staff.name}" về theo vai trò "${staff.roleLabel}".`, "success");
     }
@@ -704,8 +704,8 @@ async function handleRevertStaffPermissions() {
   if (!ok) return;
 
   try {
+    await updateStaffPermissions(staff.id, null);
     saveStaffCustomPermissions(staff.id, null);
-    await updateStaffPermissions(staff.id, null).catch(() => {});
     staff.customPermissions = null;
     toast(`Đã khôi phục quyền nhân viên "${staff.name}" về theo vai trò "${staff.roleLabel}".`, "success");
     closeModal("staff-perm-modal");
