@@ -1119,6 +1119,19 @@ check("Đặt lại MK thất bại khi sai OTP", resetWrongOtp.success, false);
 const resetSuccess = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: otpReq.otp });
 check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true);
 
+// 6c. Chiết khấu riêng do Quản lý cấp: chỉ 0% - 50%
+{
+  const rejects = async (value) => { try { await customerAuth.updateCustomerDiscount(testCustId, value, "kiểm thử"); return false; } catch { return true; } };
+  check("Chiết khấu riêng 70% bị từ chối (tối đa 50%)", await rejects(70), true);
+  check("Chiết khấu riêng âm bị từ chối", await rejects(-5), true);
+  check("Chiết khấu riêng không phải số bị từ chối", await rejects("abc"), true);
+  await customerAuth.updateCustomerDiscount(testCustId, 12, "khách quen");
+  const withDiscount = (await customerAuth.getAllCustomers()).find((c) => c.id === testCustId);
+  check("Chiết khấu riêng 12% hợp lệ được lưu", withDiscount.customDiscount, 12);
+  await customerAuth.updateCustomerDiscount(testCustId, 0, "");
+  check("Chiết khấu riêng 0% = xoá ưu đãi", (await customerAuth.getAllCustomers()).find((c) => c.id === testCustId).customDiscount, 0);
+}
+
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);

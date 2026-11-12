@@ -19,6 +19,7 @@ import { ageOf } from "../modules/age.js";
 import { formatMoney, formatDate, formatDateTime, debounce, paginate, renderPagination, classNames, escapeHtml } from "../modules/utils.js";
 import { validateForm, clearFormErrors } from "../modules/validation.js";
 import { toast, confirmDialog, openModal, closeModal, setButtonLoading } from "../modules/ui.js";
+import { ORDERS_CHANGED_EVENT } from "../modules/notificationService.js";
 import { ICONS } from "../modules/icons.js";
 import { openVietQRPaymentModal } from "../modules/vietqrService.js";
 import {
@@ -501,6 +502,9 @@ function bindEvents() {
   const debouncedRender = debounce(() => { currentPage = 1; renderTable(); }, 250);
   keywordInput.addEventListener("input", debouncedRender);
   [statusSelect, paymentSelect, sortSelect].forEach((el) => el.addEventListener("change", () => { currentPage = 1; renderTable(); }));
+
+  // Có đơn mới / đơn đổi trạng thái do người khác thao tác -> tự tải lại bảng, không cần F5
+  window.addEventListener(ORDERS_CHANGED_EVENT, () => { reloadTable(); });
 
   document.getElementById("btn-export-orders-excel")?.addEventListener("click", () => {
     exportOrdersToExcel(allOrders);
