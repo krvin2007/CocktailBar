@@ -3,7 +3,7 @@
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
-import { getAllDrinks } from "../modules/drinksService.js";
+import { getAllDrinks, getCategoryLabel } from "../modules/drinksService.js";
 import { getAllOrders } from "../modules/ordersService.js";
 import { formatMoney, formatDateTime, escapeHtml } from "../modules/utils.js";
 import { ICONS } from "../modules/icons.js";
@@ -109,17 +109,18 @@ function renderTopDrinks() {
 
   // Ưu tiên tên hiện tại trong thực đơn, món đã bị xoá thì dùng tên lúc bán
   const currentNames = new Map(drinks.map((d) => [d.id, d.name]));
+  const currentCategories = new Map(drinks.map((d) => [d.id, d.category]));
   const ranked = [...soldMap.entries()]
-    .map(([id, info]) => [currentNames.get(id) || info.name, info.qty])
+    .map(([id, info]) => [currentNames.get(id) || info.name, info.qty, currentCategories.get(id)])
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  host.innerHTML = ranked.length ? ranked.map(([name, qty], i) => `
+  host.innerHTML = ranked.length ? ranked.map(([name, qty, category], i) => `
     <div class="rank-item">
       <span class="rank-num ${i === 0 ? 'rank-first' : ''}">0${i + 1}</span>
       <div class="rank-info">
         <p class="rank-name">${escapeHtml(name)}</p>
-        <p class="rank-sub">Thức uống Signature</p>
+        <p class="rank-sub">${escapeHtml(category ? getCategoryLabel(category) : "Món đã ngừng bán")}</p>
       </div>
       <span class="rank-count"><strong>${qty}</strong> ly</span>
     </div>`).join("") : '<p class="text-muted p-3">Chưa có dữ liệu bán hàng.</p>';
