@@ -131,6 +131,8 @@ export const PERMISSION_GROUPS = [
   { id: "vouchers", name: "Mã Ưu Đãi & Khuyến Mãi", icon: "sparkle", desc: "Thiết lập chương trình giảm giá và voucher" },
   { id: "staff", name: "Nhân Sự & Phân Quyền", icon: "users", desc: "Quản lý hồ sơ nhân viên và thiết lập phân quyền" },
   { id: "settings", name: "Hệ Thống & Cấu Hình", icon: "shield", desc: "Cấu hình tài khoản ngân hàng và thiết lập hệ thống" },
+  // Nhóm dành cho vai trò KHÁCH HÀNG (cột "Khách hàng" trong ma trận phân quyền)
+  { id: "customer-self", name: "Quyền của Khách Hàng", icon: "user", desc: "Những việc khách hàng được làm trên website (tự phục vụ)", audience: "customer" },
 ];
 
 /**
@@ -169,7 +171,19 @@ export const SYSTEM_PERMISSIONS = [
 
   // 7. Cấu hình
   { id: "settings:bank", group: "settings", label: "Cấu hình ngân hàng MBBank", desc: "Thay đổi số tài khoản nhận tiền chuyển khoản của quán" },
+
+  // 8. Quyền của khách hàng (audience: "customer" - chỉ áp dụng cho cột Khách hàng, không dành cho nhân viên)
+  { id: "self:order", group: "customer-self", audience: "customer", label: "Đặt bàn & gọi món online", desc: "Gửi đơn đặt bàn / gọi món từ trang Đặt bàn & Gọi món" },
+  { id: "self:voucher", group: "customer-self", audience: "customer", label: "Dùng mã giảm giá", desc: "Nhập voucher (WELCOME10, HAPPYNIGHT...) khi đặt món" },
+  { id: "self:redeem", group: "customer-self", audience: "customer", label: "Dùng điểm thưởng", desc: "Đổi điểm tích luỹ lấy giảm giá khi đặt món (1 điểm = 500đ)" },
+  { id: "self:review", group: "customer-self", audience: "customer", label: "Đánh giá & bình luận món", desc: "Chấm sao và viết nhận xét ở trang chi tiết món" },
+  { id: "self:cancel", group: "customer-self", audience: "customer", label: "Tự huỷ đơn chưa thanh toán", desc: "Khách tự bấm huỷ đơn còn ở trạng thái chờ xử lý và chưa trả tiền" },
 ];
+
+/** Quyền dành cho NHÂN VIÊN (ma trận vai trò nhân sự, hộp thoại quyền riêng) */
+export const STAFF_PERMISSIONS = SYSTEM_PERMISSIONS.filter((p) => p.audience !== "customer");
+/** Quyền dành cho KHÁCH HÀNG */
+export const CUSTOMER_PERMISSIONS = SYSTEM_PERMISSIONS.filter((p) => p.audience === "customer");
 
 /** Ma trận phân quyền mặc định chuẩn nghiệp vụ quán bar */
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -178,6 +192,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
   cashier: ["page:dashboard", "page:orders", "page:customers", "order:status", "order:cancel", "order:payment", "customer:points"],
   bartender: ["page:orders", "order:status"],
   waiter: ["page:orders", "page:messages", "order:status"],
+  // Khách hàng: mặc định được dùng đủ các chức năng tự phục vụ
+  customer: ["self:order", "self:voucher", "self:redeem", "self:review", "self:cancel"],
 };
 
 export const ROLE_PERMISSIONS_STORAGE_KEY = "role_permissions";
@@ -210,6 +226,49 @@ export function saveRolePermissions(matrix) {
 export function resetRolePermissions() {
   removeItem(ROLE_PERMISSIONS_STORAGE_KEY);
   return JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
+}
+
+/**
+ * Ma trận phân quyền lưu ở máy chủ (/settings.rolePermissions) để có hiệu lực trên MỌI trình duyệt
+ * (trước đây chỉ nằm trong localStorage của máy quản lý nên khách / nhân viên ở máy khác không bao giờ thấy thay đổi).
+ */
+export async function saveRolePermissionsRemote(matrix) {
+  const sanitized = { ...matrix, admin: ["*"] };
+  await api.patch("/settings", { rolePermissions: sanitized });
+  setItem(ROLE_PERMISSIONS_STORAGE_KEY, sanitized);
+  return sanitized;
+}
+
+/** Khôi phục mặc định cả trên máy chủ lẫn bản đệm trình duyệt */
+export async function resetRolePermissionsRemote() {
+  await api.patch("/settings", { rolePermissions: null });
+  return resetRolePermissions();
+}
+
+/**
+ * Tải ma trận từ máy chủ về bản đệm trình duyệt.
+ * @returns {Promise<boolean>} true nếu bản đệm vừa thay đổi (trang nên vẽ lại / tải lại để áp dụng)
+ */
+export async function syncRolePermissions() {
+  try {
+    const data = await api.get("/settings");
+    const remote = data && typeof data.rolePermissions === "object" ? data.rolePermissions : null;
+    const before = JSON.stringify(getItem(ROLE_PERMISSIONS_STORAGE_KEY, null));
+    if (remote) setItem(ROLE_PERMISSIONS_STORAGE_KEY, { ...remote, admin: ["*"] });
+    else removeItem(ROLE_PERMISSIONS_STORAGE_KEY);
+    return before !== JSON.stringify(getItem(ROLE_PERMISSIONS_STORAGE_KEY, null));
+  } catch {
+    return false; // máy chủ chưa chạy: giữ bản đệm hiện có
+  }
+}
+
+/**
+ * Khách hàng (người dùng phía trang công khai) có được dùng chức năng "permission" không.
+ * Chỉ xét danh sách quyền của vai trò "customer" - dấu "*" của quản lý không áp dụng ở đây.
+ */
+export function canCustomer(permission) {
+  const list = getRolePermissions().customer;
+  return Array.isArray(list) && list.includes(permission);
 }
 
 /** Đọc toàn bộ danh sách phân quyền riêng của nhân viên */

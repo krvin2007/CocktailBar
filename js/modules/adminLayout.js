@@ -6,7 +6,7 @@
    ========================================================= */
 
 import { toast } from "./ui.js"; // (nạp ui.js cũng đăng ký banner cảnh báo khi máy chủ API chưa chạy)
-import { requireAuth, currentAdmin, logout, can, canAccessPage, homePageFor, refreshSession, LOGIN_PAGE } from "./auth.js";
+import { requireAuth, currentAdmin, logout, can, canAccessPage, homePageFor, refreshSession, syncRolePermissions, LOGIN_PAGE } from "./auth.js";
 import { countUnreadMessages } from "./messagesService.js";
 import { ICONS } from "./icons.js";
 import { escapeHtml } from "./utils.js";
@@ -184,5 +184,7 @@ export function initAdminLayout(pageTitle = "") {
   revalidateSessionOnce(admin);
   applyI18n();
   startOrderNotificationWatcher();
+  // Ma trận phân quyền do quản lý chỉnh ở máy khác -> tải về; nếu khác bản đang dùng thì tải lại 1 lần để áp dụng
+  syncRolePermissions().then((changed) => { if (changed) window.location.reload(); });
   return true;
 }

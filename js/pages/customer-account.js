@@ -11,6 +11,7 @@
 
 import "../modules/navbar.js";
 import { api } from "../modules/api.js";
+import { canCustomer } from "../modules/auth.js";
 import { getCurrentCustomer, MEMBER_RANKS, rankProgress, lifetimeOf, POINT_VALUE_VND, updateCustomerAvatar, updateCustomerProfile } from "../modules/customerAuth.js";
 import { POINT_REDEEM_VND, MIN_POINT_REDEEM, MAX_POINT_REDEEM_SHARE } from "../modules/promotions.js";
 import { loadingHtml, errorHtml, toast, confirmDialog } from "../modules/ui.js";
@@ -103,7 +104,7 @@ function orderRowHtml(o) {
       🎟️ Vé điện tử
     </button>`;
 
-  const cancelBtnHtml = o.status === "pending" ? `
+  const cancelBtnHtml = o.status === "pending" && canCustomer("self:cancel") ? `
     <button type="button" class="btn btn-ghost btn-sm btn-cancel-account-order" data-id="${escapeHtml(o.id)}" data-code="${escapeHtml(o.code)}" data-phone="${escapeHtml(o.phone || '')}" style="font-size: 0.75rem; padding: 3px 8px; white-space: nowrap; color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); margin-right: 4px;" title="Huỷ đơn đặt này (hoàn lại kho)">
       Huỷ đơn
     </button>` : "";
