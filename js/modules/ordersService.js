@@ -752,6 +752,28 @@ export async function createOrder(customerInfo) {
     throw err;
   }
 
+  // Hai khách bấm đặt CÙNG LÚC cùng một bàn: cả hai đều thấy bàn trống trước khi ai kịp ghi đơn. Sau khi ghi, đọc lại danh sách
+  // theo THỨ TỰ GHI (json-server nối đơn mới vào cuối): đơn nào ghi SAU mà thấy đơn khác đã giữ bàn trong khung giờ thì tự rút
+  // lại đơn của mình (xoá + hoàn điểm) và báo khách chọn bàn khác - nên chỉ một người giữ được bàn.
+  const wantedTableName = String(order.tableNumber || "").trim().toLowerCase();
+  if (isBooking && wantedTableName) {
+    let clash = false;
+    try {
+      const afterWrite = await getAllOrders();
+      const myIndex = afterWrite.findIndex((o) => o.id === saved.id);
+      clash = myIndex > 0 && afterWrite.slice(0, myIndex).some((o) => (
+        o.status !== "cancelled" && getOccupiedTableSet([o], { serviceType: "booking", bookingTime }).has(wantedTableName)
+      ));
+    } catch (verifyErr) {
+      console.warn("[booking] Không kiểm tra lại được bàn sau khi ghi đơn:", verifyErr); // lỗi mạng: giữ đơn, không chặn khách
+    }
+    if (clash) {
+      await api.delete(`/${COLLECTION}/${encodeURIComponent(saved.id)}`).catch(() => {});
+      if (order.pointsUsed > 0) await refundPoints(order.customerId, order).catch(() => {});
+      throw new Error(`Vị trí "${customerInfo.tableNumber}" vừa có khách khác đặt trong khung giờ này. Vui lòng chọn bàn khác trên sơ đồ.`);
+    }
+  }
+
   // Chỉ xoá giỏ hàng SAU KHI máy chủ đã lưu đơn thành công
   if (itemsProvided) {
     itemsProvided.forEach((item) => removeFromCart(item.drinkId));
