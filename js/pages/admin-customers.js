@@ -346,6 +346,7 @@ if (initAdminLayout("Khách Hàng Thành Viên")) {
       }
     };
     reader.readAsDataURL(file);
+    e.target.value = "";
   });
 
   // Gỡ avatar khách từ admin
@@ -372,7 +373,12 @@ if (initAdminLayout("Khách Hàng Thành Viên")) {
   discountForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const customerId = document.getElementById("discount-form-id").value;
-    const percent = Number(document.getElementById("discount-form-percent").value) || 0;
+    const rawPercent = document.getElementById("discount-form-percent").value.trim();
+    if (!rawPercent) {
+      toast("Vui lòng nhập tỷ lệ chiết khấu (từ 0% đến 50%).", "error");
+      return;
+    }
+    const percent = Number(rawPercent);
     const note = document.getElementById("discount-form-note").value.trim();
 
     try {
@@ -405,6 +411,6 @@ if (initAdminLayout("Khách Hàng Thành Viên")) {
     exportCustomersToExcel(currentList.length ? currentList : rows.map(r => r.customer));
   });
 
-  bodyEl.innerHTML = `<tr><td colspan="7" class="table-empty py-4 text-center text-muted">Đang tải danh sách khách hàng...</td></tr>`;
+  bodyEl.innerHTML = `<tr><td colspan="8" class="table-empty py-4 text-center text-muted">Đang tải danh sách khách hàng...</td></tr>`;
   reload();
 }

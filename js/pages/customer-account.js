@@ -11,7 +11,7 @@
 
 import "../modules/navbar.js";
 import { api } from "../modules/api.js";
-import { canCustomer } from "../modules/auth.js";
+import { canCustomer, syncRolePermissions } from "../modules/auth.js";
 import { getCurrentCustomer, MEMBER_RANKS, rankProgress, lifetimeOf, POINT_VALUE_VND, updateCustomerAvatar, updateCustomerProfile } from "../modules/customerAuth.js";
 import { POINT_REDEEM_VND, MIN_POINT_REDEEM, MAX_POINT_REDEEM_SHARE } from "../modules/promotions.js";
 import { loadingHtml, errorHtml, toast, confirmDialog } from "../modules/ui.js";
@@ -462,7 +462,8 @@ async function init() {
 
   bodyEl.innerHTML = loadingHtml(t("acc_loading", "Đang tải thông tin thành viên..."));
   try {
-    const [customer, rawOrders, rawMessages, rawDrinks, rawEmails] = await Promise.all([
+    const [, customer, rawOrders, rawMessages, rawDrinks, rawEmails] = await Promise.all([
+      syncRolePermissions(),
       api.get(`/customers/${encodeURIComponent(session.id)}`),
       api.get("/orders").catch(() => []),
       api.get("/messages").catch(() => []),

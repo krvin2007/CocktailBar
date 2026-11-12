@@ -1449,6 +1449,32 @@ check("Tạo đơn hàng thật từ dữ liệu Excel thành công",
   [importedRes.success, importedRes.order?.name, importedRes.order?.items.length],
   [true, "Trần Minh Khang", 2]);
 
+section("[47] Đồng bộ quyền riêng nhân sự & ma trận RBAC khách giữa nhiều thiết bị");
+resetDb();
+await staff.updateStaffPermissions("s2", ["page:orders", "page:staff"]);
+localStorage.clear(); // mô phỏng trình duyệt / thiết bị khác chưa có cache cục bộ
+const staffLoginCustom = await auth.login("lan.nguyen", "Lan@123456");
+check("Đăng nhập nhân viên trên trình duyệt khác nhận đúng customPermissions từ máy chủ",
+  [staffLoginCustom.success, Array.isArray(staffLoginCustom.user?.customPermissions), auth.can("page:staff")],
+  [true, true, true]);
+
+// Khi quản lý bỏ quyền riêng trên máy chủ -> refreshSession cập nhật về null và bỏ qua cache cũ
+auth.saveStaffCustomPermissions("s2", ["page:staff"]);
+await staff.updateStaffPermissions("s2", null);
+const refreshedStaff = await auth.refreshSession();
+check("Xoá quyền riêng trên máy chủ -> refreshSession về null, không bị cache cũ đè",
+  [refreshedStaff?.customPermissions, auth.can("page:staff", refreshedStaff)],
+  [null, false]);
+
+// Đồng bộ ma trận quyền khách hàng qua /settings
+await auth.saveRolePermissionsRemote({ ...auth.getRolePermissions(), customer: ["self:order"] });
+localStorage.clear();
+await auth.syncRolePermissions();
+check("syncRolePermissions tải đúng quyền khách từ máy chủ (tắt self:cancel)",
+  [auth.canCustomer("self:order"), auth.canCustomer("self:cancel")],
+  [true, false]);
+await auth.resetRolePermissionsRemote();
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0

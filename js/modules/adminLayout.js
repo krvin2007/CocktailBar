@@ -65,10 +65,13 @@ async function revalidateSessionOnce(admin) {
   if (!fresh) {
     toast("Tài khoản của bạn không còn hiệu lực. Vui lòng đăng nhập lại.", "warning");
     setTimeout(() => { window.location.href = LOGIN_PAGE; }, 1200);
-  } else if (fresh.role !== admin.role) {
+  } else if (fresh.role !== admin.role || JSON.stringify(fresh.customPermissions ?? null) !== JSON.stringify(admin.customPermissions ?? null)) {
     window.location.reload();
   }
 }
+
+let sidebarOutsideClickBound = false;
+let roleSyncedOnce = false;
 
 /**
  * Dựng khung giao diện quản trị.
@@ -168,16 +171,20 @@ export function initAdminLayout(pageTitle = "") {
 
   const mobileToggle = document.getElementById("admin-sidebar-toggle");
   if (mobileToggle && sidebar) {
-    mobileToggle.addEventListener("click", (e) => {
+    mobileToggle.onclick = (e) => {
       e.stopPropagation();
       sidebar.classList.toggle("open");
-    });
+    };
 
-    document.addEventListener("click", (e) => {
-      if (sidebar.classList.contains("open") && !sidebar.contains(e.target) && !e.target.closest("#admin-sidebar-toggle")) {
-        sidebar.classList.remove("open");
-      }
-    });
+    if (!sidebarOutsideClickBound) {
+      sidebarOutsideClickBound = true;
+      document.addEventListener("click", (e) => {
+        const sb = document.getElementById("admin-sidebar");
+        if (sb && sb.classList.contains("open") && !sb.contains(e.target) && !e.target.closest("#admin-sidebar-toggle")) {
+          sb.classList.remove("open");
+        }
+      });
+    }
   }
 
   refreshUnreadBadge();
@@ -185,6 +192,9 @@ export function initAdminLayout(pageTitle = "") {
   applyI18n();
   startOrderNotificationWatcher();
   // Ma trận phân quyền do quản lý chỉnh ở máy khác -> tải về; nếu khác bản đang dùng thì tải lại 1 lần để áp dụng
-  syncRolePermissions().then((changed) => { if (changed) window.location.reload(); });
+  if (!roleSyncedOnce) {
+    roleSyncedOnce = true;
+    syncRolePermissions().then((changed) => { if (changed) window.location.reload(); });
+  }
   return true;
 }

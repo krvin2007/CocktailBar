@@ -88,7 +88,7 @@
       <button type="button" class="modal-close-x" id="drink-modal-close" aria-label="Đóng">&times;</button>
     </div>
 
-    <form id="drink-form">
+    <form id="drink-form" novalidate>
       <input type="hidden" name="id">
       <div class="form-grid">
         <div class="form-group full">
@@ -206,10 +206,6 @@
   </div>
 </div>
 
-<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
-<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
-<script type="module" src="js/pages/admin-menu.js"></script>
-
 <!-- Modal Nhập Excel / CSV -->
 <div class="modal-overlay" id="import-drinks-modal" aria-hidden="true" hidden>
   <div class="modal-box modal-wide" style="max-width: 800px;">
@@ -271,6 +267,10 @@
     </div>
   </div>
 </div>
+
+<!-- axios (CDN) theo hướng dẫn bài giảng; không tải được thì js/modules/api.js tự dùng fetch() -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+<script type="module" src="js/pages/admin-menu.js"></script>
 
 </body>
 </html>

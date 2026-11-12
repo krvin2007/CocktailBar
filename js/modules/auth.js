@@ -111,6 +111,7 @@ export async function login(username, password) {
       staffCode: staffMember.displayStaffCode,
       email: staffMember.email || "",
       phone: staffMember.phone,
+      customPermissions: Array.isArray(staffMember.customPermissions) ? staffMember.customPermissions : null,
       loginAt: new Date().toISOString(),
     };
     setSession(SESSION_KEY, sessionData);
@@ -336,7 +337,7 @@ export function can(permission, user = currentAdmin()) {
 
   // 1. Nếu nhân viên có thiết lập quyền riêng (Custom Permissions Override)
   const staffId = user.staffId || user.id;
-  const customPerms = Array.isArray(user.customPermissions)
+  const customPerms = user.customPermissions !== undefined
     ? user.customPermissions
     : (staffId ? getStaffCustomPermissions(staffId) : null);
 
@@ -409,6 +410,7 @@ export async function refreshSession() {
     shiftLabel: staff.shiftLabel,
     phone: staff.phone,
     email: staff.email || "",
+    customPermissions: Array.isArray(staff.customPermissions) ? staff.customPermissions : null,
   };
   if (JSON.stringify(fresh) !== JSON.stringify(session)) setSession(SESSION_KEY, fresh);
   return fresh;
