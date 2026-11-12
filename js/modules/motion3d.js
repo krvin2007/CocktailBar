@@ -361,10 +361,13 @@ export function initScroll3DReveal() {
     ".about-split",
   ];
 
+  // threshold: 0 (chỉ cần chạm vào vùng nhìn thấy). KHÔNG dùng ngưỡng theo % phần tử (vd 0.1): lưới món cao hơn
+  // 8.000px thì một màn hình không bao giờ phủ tới 10% của nó -> không bao giờ "hiện" và bị trong suốt (opacity 0)
+  // mãi mãi trên laptop / điện thoại (Thực đơn dạng lưới, Hầm Rượu bị trống).
   const observerOptions = {
     root: null,
     rootMargin: "0px 0px -60px 0px",
-    threshold: 0.1,
+    threshold: 0,
   };
 
   const observer = new IntersectionObserver((entries, obs) => {

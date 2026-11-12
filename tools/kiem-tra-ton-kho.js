@@ -1119,6 +1119,14 @@ check("Đặt lại MK thất bại khi sai OTP", resetWrongOtp.success, false);
 const resetSuccess = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: otpReq.otp });
 check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true);
 
+// 6h. Hiệu ứng hiện dần khi cuộn: ngưỡng theo % phần tử làm lưới món (cao > 8.000px) trong suốt mãi
+{
+  const { readFileSync } = await import("node:fs");
+  const motionSrc = readFileSync(new URL("../js/modules/motion3d.js", import.meta.url), "utf8");
+  const opts = motionSrc.slice(motionSrc.indexOf("const observerOptions"), motionSrc.indexOf("};", motionSrc.indexOf("const observerOptions")));
+  check("Hiệu ứng scroll-3d dùng threshold: 0 (phần tử cao hơn màn hình vẫn hiện)", /threshold:\s*0\s*,/.test(opts), true);
+}
+
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);
