@@ -1118,6 +1118,22 @@ check("Đặt lại MK thất bại khi sai OTP", resetWrongOtp.success, false);
 const resetSuccess = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: otpReq.otp });
 check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true);
 
+// 6d. Phân quyền KHÁCH HÀNG trong ma trận RBAC
+{
+  const ids = auth.CUSTOMER_PERMISSIONS.map((x) => x.id);
+  check("Có 5 quyền dành cho khách hàng (self:*)", ids.join(","), "self:order,self:voucher,self:redeem,self:review,self:cancel");
+  check("Quyền nhân viên không lẫn quyền khách", auth.STAFF_PERMISSIONS.some((x) => x.id.startsWith("self:")), false);
+  check("Mặc định khách được dùng đủ 5 quyền tự phục vụ", ids.every((id) => auth.canCustomer(id)), true);
+  check("Vai trò 'customer' có trong ma trận mặc định", Array.isArray(auth.getRolePermissions().customer), true);
+  check("Quản lý '*' KHÔNG làm mất tác dụng tắt quyền của khách (canCustomer chỉ xét vai trò customer)", auth.canCustomer("quyen:khong-ton-tai"), false);
+  auth.saveRolePermissions({ ...auth.getRolePermissions(), customer: ["self:order"] });
+  check("Tắt quyền dùng mã giảm giá -> canCustomer('self:voucher') = false", auth.canCustomer("self:voucher"), false);
+  check("Quyền còn bật vẫn đúng -> canCustomer('self:order') = true", auth.canCustomer("self:order"), true);
+  check("Admin luôn giữ '*' dù lưu ma trận thiếu admin", auth.getRolePermissions().admin.join(), "*");
+  auth.resetRolePermissions();
+  check("Khôi phục mặc định: khách lại có đủ quyền", ids.every((id) => auth.canCustomer(id)), true);
+}
+
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);
