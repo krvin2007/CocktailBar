@@ -11,6 +11,9 @@
 import { formatMoney, escapeHtml } from "./utils.js";
 import { toast } from "./ui.js";
 import { getBankSettings, DEFAULT_SETTINGS } from "./settingsService.js";
+import { PREPAY_RATE, calcPrepayAmount, calcRemainingAmount } from "./venue.js";
+
+export { PREPAY_RATE, calcPrepayAmount, calcRemainingAmount };
 
 /**
  * Sinh URL ảnh mã QR theo chuẩn VietQR Napas 247
@@ -99,7 +102,10 @@ export function allocateOrderTotal(items, orderTotal) {
  * @param {Array} [options.allItems] Món của NHIỀU đơn đã lưu (gộp thanh toán): mỗi món có orderId/orderCode
  *   và finalPrice đã chia đúng theo tổng đơn (xem allocateOrderTotal).
  */
-export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã Chuyển Khoản Xong", onConfirm, allItems = null } = {}) {
+export async function openVietQRPaymentModal(
+  order,
+  { confirmLabel = "Tôi Đã Chuyển Khoản Xong", onConfirm, allItems = null, prepayOnly = true, allowFullToggle = false } = {},
+) {
   let bank;
   try {
     bank = await getBankSettings();
@@ -135,16 +141,20 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
     };
   });
 
-  const calcTotal = () => {
+  const calcFullTotal = () => {
     if (items.length === 0) return Math.round(Number(order?.total) || 0);
     return items.filter((it) => it.checked).reduce((sum, it) => sum + it.finalPrice, 0);
   };
+  let isPrepayOnly = Boolean(prepayOnly);
+  const calcPayable = (full) => (isPrepayOnly ? calcPrepayAmount(full) : full);
   const selectedCodes = () => [...new Set(items.filter((it) => it.checked && it.orderCode).map((it) => it.orderCode))];
   const currentMemo = () => buildTransferMemo(items.length === 0 ? [order?.code] : selectedCodes(), order?.code || "ORDER");
   // Ảnh QR cố định của quán chỉ dùng được khi nó đúng tài khoản đang cài đặt (đổi tài khoản mà vẫn hiện ảnh cũ là khách chuyển nhầm)
   const staticQrMatchesBank = bank.accountNumber === DEFAULT_SETTINGS.accountNumber && bank.bankId === DEFAULT_SETTINGS.bankId;
 
-  let currentTotal = calcTotal();
+  let currentFullTotal = calcFullTotal();
+  let currentTotal = calcPayable(currentFullTotal);
+  let currentRemaining = Math.max(0, currentFullTotal - currentTotal);
   let transferContent = currentMemo();
   let qrUrl = generateVietQRUrl(bank, { amount: currentTotal, memo: transferContent });
 
@@ -187,8 +197,18 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
         <!-- Cột 2: Thông tin chuyển khoản chi tiết -->
         <div class="vietqr-info-panel">
           <div class="vietqr-amount-banner">
-            <span class="vqr-amount-label">Số tiền cần thanh toán</span>
-            <strong class="vqr-amount-value" id="vqr-amount-val">${formatMoney(currentTotal)}</strong>
+            <div style="flex: 1; min-width: 0;">
+              <span class="vqr-amount-label" id="vqr-amount-label">${isPrepayOnly ? "Cần trả trước khi đặt (70%)" : "Số tiền cần thanh toán"}</span>
+              <strong class="vqr-amount-value" id="vqr-amount-val">${formatMoney(currentTotal)}</strong>
+              <div class="text-xs text-muted" id="vqr-amount-sub" style="margin-top: 3px;">
+                Tổng đơn: <strong>${formatMoney(currentFullTotal)}</strong> · Tại quán (30%): <strong>${formatMoney(currentRemaining)}</strong>
+              </div>
+              ${allowFullToggle ? `
+              <label style="display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.75rem; color: var(--amber-soft); cursor: pointer;">
+                <input type="checkbox" id="vqr-prepay-toggle" ${isPrepayOnly ? "checked" : ""} style="accent-color: var(--amber);">
+                <span>Chỉ thu cọc trả trước 70%</span>
+              </label>` : ""}
+            </div>
             <button type="button" class="btn-copy-chip" id="vqr-copy-amount" title="Sao chép số tiền">
               <span>Sao chép</span>
             </button>
@@ -273,7 +293,10 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
 
   const checkboxes = host.querySelectorAll(".vqr-item-cb");
   const toggleAll = host.querySelector("#vqr-toggle-all");
+  const amountLabel = host.querySelector("#vqr-amount-label");
   const amountVal = host.querySelector("#vqr-amount-val");
+  const amountSub = host.querySelector("#vqr-amount-sub");
+  const prepayToggle = host.querySelector("#vqr-prepay-toggle");
   const memoVal = host.querySelector("#vqr-memo-val");
   const selCount = host.querySelector("#vqr-sel-count");
   const confirmBtn = host.querySelector("#vqr-confirm-btn");
@@ -286,8 +309,9 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
   let qrMode = "dynamic"; // dynamic | static | none
   const renderQrNote = () => {
     if (currentTotal <= 0) { qrNote.textContent = "Chưa chọn đơn nào để thanh toán."; return; }
-    if (qrMode === "dynamic") qrNote.textContent = `Quét mã sẽ tự điền ${formatMoney(currentTotal)} và nội dung ${transferContent}.`;
-    else if (qrMode === "static") qrNote.textContent = `Mã QR cố định (không kèm số tiền): hãy nhập đúng ${formatMoney(currentTotal)} và nội dung ${transferContent}.`;
+    const rateNote = isPrepayOnly ? " (trả trước 70%)" : "";
+    if (qrMode === "dynamic") qrNote.textContent = `Quét mã sẽ tự điền ${formatMoney(currentTotal)}${rateNote} và nội dung ${transferContent}.`;
+    else if (qrMode === "static") qrNote.textContent = `Mã QR cố định (không kèm số tiền): hãy nhập đúng ${formatMoney(currentTotal)}${rateNote} và nội dung ${transferContent}.`;
     else qrNote.textContent = "Không tải được mã QR (cần kết nối Internet). Vui lòng chuyển khoản thủ công theo thông tin bên cạnh.";
   };
 
@@ -328,24 +352,39 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
       }
     });
 
-    currentTotal = sum;
-    if (amountVal) amountVal.textContent = formatMoney(sum);
+    currentFullTotal = items.length === 0 ? Math.round(Number(order?.total) || 0) : sum;
+    currentTotal = calcPayable(currentFullTotal);
+    currentRemaining = Math.max(0, currentFullTotal - currentTotal);
+    if (amountLabel) amountLabel.textContent = isPrepayOnly ? "Cần trả trước khi đặt (70%)" : "Số tiền cần thanh toán";
+    if (amountVal) amountVal.textContent = formatMoney(currentTotal);
+    if (amountSub) {
+      amountSub.innerHTML = isPrepayOnly
+        ? `Tổng đơn: <strong>${formatMoney(currentFullTotal)}</strong> · Tại quán (30%): <strong>${formatMoney(currentRemaining)}</strong>`
+        : `Tổng đơn hàng: <strong>${formatMoney(currentFullTotal)}</strong> (100%)`;
+    }
     if (selCount) selCount.textContent = count;
     if (toggleAll) toggleAll.checked = count === items.length && items.length > 0;
 
     if (confirmBtn) {
-      if (sum <= 0) {
+      if (currentTotal <= 0) {
         confirmBtn.disabled = true;
         confirmBtn.style.opacity = "0.5";
         confirmBtn.querySelector("span").textContent = "Vui lòng tích chọn món cần thanh toán";
       } else {
         confirmBtn.disabled = false;
         confirmBtn.style.opacity = "1";
-        confirmBtn.querySelector("span").textContent = `${confirmLabel} (${formatMoney(sum)})`;
+        confirmBtn.querySelector("span").textContent = `${confirmLabel} (${formatMoney(currentTotal)})`;
       }
     }
     refreshQr();
   };
+
+  if (prepayToggle) {
+    prepayToggle.addEventListener("change", () => {
+      isPrepayOnly = prepayToggle.checked;
+      syncCheckState();
+    });
+  }
 
   checkboxes.forEach((cb, idx) => cb.addEventListener("change", () => {
     // Một đơn không trả được một phần: tích / bỏ một món thì cả đơn đó đổi theo
@@ -380,6 +419,9 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
           await onConfirm({
             order,
             selectedItems,
+            fullTotal: currentFullTotal,
+            prepayAmount: currentTotal,
+            remainingAmount: currentRemaining,
             totalPaid: currentTotal,
             hasUnpaidSelected: selectedItems.some((it) => it.isUnpaid),
             hasCartSelected: selectedItems.some((it) => !it.isUnpaid),

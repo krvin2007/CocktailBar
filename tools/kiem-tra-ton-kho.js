@@ -1475,6 +1475,142 @@ check("syncRolePermissions tải đúng quyền khách từ máy chủ (tắt se
   [true, false]);
 await auth.resetRolePermissionsRemote();
 
+section("[48] Chính sách trả trước 70% & Nội quy quán khi đặt hàng");
+{
+  const venueMod = await import(mod("venue.js"));
+  const emailMod = await import(mod("emailService.js"));
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+
+  check("Tỷ lệ trả trước mặc định là 70% (0.7)", venueMod.PREPAY_RATE, 0.7);
+  check("Đơn 100.000đ -> trả trước 70.000đ, còn lại tại quán 30.000đ",
+    [venueMod.calcPrepayAmount(100000), venueMod.calcRemainingAmount(100000)],
+    [70000, 30000]);
+  check("Đơn 0đ hoặc âm -> trả trước 0đ, còn lại 0đ",
+    [venueMod.calcPrepayAmount(0), venueMod.calcRemainingAmount(-5000)],
+    [0, 0]);
+
+  let splitMismatch = 0;
+  for (let i = 0; i < 100; i += 1) {
+    const t = 12345 + i * 7919;
+    if (venueMod.calcPrepayAmount(t) + venueMod.calcRemainingAmount(t) !== t) splitMismatch += 1;
+  }
+  check("100 mức tiền lẻ bất kỳ: Trả trước 70% + Tại quán 30% luôn khớp đúng 100% tổng đơn", splitMismatch, 0);
+
+  const sampleOrder70 = orders.Order.from({
+    id: "o-prepay-1",
+    code: "DH0888",
+    name: "Nguyễn An",
+    phone: "0909888777",
+    serviceType: "booking",
+    bookingTime: new Date(Date.now() + 3 * 3600 * 1000).toISOString(),
+    guestCount: 2,
+    items: [{ drinkId: "d1", name: "Negroni Classico", price: 125000, qty: 2 }],
+  });
+  check("Order.prepayAmount / remainingAmount tính đúng 70% / 30% (250.000 -> 175.000 / 75.000)",
+    [sampleOrder70.total, sampleOrder70.prepayAmount, sampleOrder70.remainingAmount],
+    [250000, 175000, 75000]);
+
+  const mailParams70 = emailMod.buildOrderMailParams(sampleOrder70, "an@example.com");
+  const ticketHtml70 = emailMod.buildCinemaTicketHtml(sampleOrder70, { toEmail: "an@example.com" });
+  check("Email params & Cinema E-Ticket hiển thị rõ trả trước 70% và phần còn lại tại quán",
+    [/175\.000/.test(mailParams70.prepay_amount), /75\.000/.test(mailParams70.remaining_amount), /trả trước.*70%/i.test(ticketHtml70)],
+    [true, true, true]);
+
+  check("BAR_RULES có đủ 4 quy định (trả trước 70%, độ tuổi 18+, giờ/giữ bàn, văn hoá an toàn)",
+    [venueMod.BAR_RULES.length, venueMod.BAR_RULES.some((r) => r.id === "prepay"), venueMod.BAR_RULES.some((r) => r.id === "age")],
+    [4, true, true]);
+
+  const orderHtmlText = fs.readFileSync(path.resolve("order.html"), "utf8");
+  check("Trang order.html có khối hiển thị trả trước 70% & thông báo nội quy quán",
+    [orderHtmlText.includes('id="sum-prepay"'), orderHtmlText.includes('id="sum-remaining"'), orderHtmlText.includes('id="bar-rules-notice"')],
+    [true, true, true]);
+}
+
+section("[49] Quên mật khẩu: tách kênh Email / Số điện thoại (+84)");
+{
+  const fpMod = await import(mod("forgotPasswordModal.js"));
+  check("Bỏ tiền tố +84 / 84 / 0 khỏi số điện thoại để nhập sau +84",
+    [
+      fpMod.stripVietnamPhonePrefix("0909 123 456"),
+      fpMod.stripVietnamPhonePrefix("+84 909.123.456"),
+      fpMod.stripVietnamPhonePrefix("84909123456"),
+      fpMod.stripVietnamPhonePrefix("909123456"),
+    ],
+    ["909123456", "909123456", "909123456", "909123456"]);
+
+  check("Ghép lại chuẩn quốc tế +84 và giữ rỗng khi chưa nhập",
+    [fpMod.buildIntlVietnamPhone("0909123456"), fpMod.buildIntlVietnamPhone("909123456"), fpMod.buildIntlVietnamPhone("")],
+    ["+84909123456", "+84909123456", ""]);
+
+  check("Nhận diện kênh mặc định khi điền sẵn Email hoặc SĐT",
+    [fpMod.detectInitialOtpChannel("an@gmail.com"), fpMod.detectInitialOtpChannel("0912345678"), fpMod.detectInitialOtpChannel("")],
+    ["email", "sms", "email"]);
+
+  resetDb();
+  const sampleSeedPhone = customerAuth.SEED_CUSTOMERS[0].phone;
+  const otpViaPlus84 = await customerAuth.requestPasswordResetOtp(fpMod.buildIntlVietnamPhone(sampleSeedPhone), "sms");
+  check(`Gửi OTP với số dạng +84 sau khi ghép từ ô nhập khớp tài khoản ${sampleSeedPhone}`,
+    [otpViaPlus84.success, otpViaPlus84.channel, Boolean(otpViaPlus84.otp)],
+    [true, "sms", true]);
+}
+
+section("[50] Sơ đồ chỗ ngồi trong quán khi Đặt Bàn Trước");
+{
+  const venueMod = await import(mod("venue.js"));
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+
+  check("Có đủ 4 khu vực ngồi trong quán và danh sách bàn phẳng",
+    [venueMod.BAR_SEATING_ZONES.length, venueMod.ALL_BAR_TABLES.length >= 10],
+    [4, true]);
+
+  resetDb();
+  const slotSeat = inHours(8);
+  const bookedSeatRes = await createAdult({
+    name: "Trần Thanh Tú",
+    phone: "0908777666",
+    serviceType: "booking",
+    bookingTime: slotSeat,
+    guestCount: 4,
+    tableNumber: "Sofa VIP 01",
+    items: [],
+  });
+  check("Đơn Đặt Bàn Trước lưu và hiển thị đúng vị trí bàn đã chọn",
+    [
+      bookedSeatRes.success,
+      bookedSeatRes.order.tableNumber,
+      bookedSeatRes.order.serviceDetails().some(([k, v]) => k === "Vị trí bàn" && v === "Sofa VIP 01"),
+    ],
+    [true, "Sofa VIP 01", true]);
+
+  const occupiedSet = orders.getOccupiedTableSet(await orders.getAllOrders(), { serviceType: "booking", bookingTime: slotSeat });
+  check("getOccupiedTableSet đánh dấu đúng 'Sofa VIP 01' đã có người đặt trong khung giờ",
+    occupiedSet.has("sofa vip 01"),
+    true);
+
+  let doubleSeatBlocked = false;
+  try {
+    await createAdult({
+      name: "Lê Minh Khoa",
+      phone: "0908555444",
+      serviceType: "booking",
+      bookingTime: slotSeat,
+      guestCount: 4,
+      tableNumber: "Sofa VIP 01",
+      items: [],
+    });
+  } catch (err) {
+    doubleSeatBlocked = /đã có khách đặt/.test(err.message);
+  }
+  check("Chặn đặt trùng cùng một bàn trong cùng khung giờ", doubleSeatBlocked, true);
+
+  const orderHtmlText = fs.readFileSync(path.resolve("order.html"), "utf8");
+  check("Trang order.html hiển thị sơ đồ khu vực & bàn ngồi dùng chung cho cả Đặt Bàn Trước",
+    [orderHtmlText.includes('id="seating-map-zones"'), orderHtmlText.includes('id="seating-map-field"')],
+    [true, true]);
+}
+
 /* ================================================================ */
 console.log("\n==============================================================");
 console.log(failCount === 0
