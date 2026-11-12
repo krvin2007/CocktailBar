@@ -1119,6 +1119,29 @@ check("Đặt lại MK thất bại khi sai OTP", resetWrongOtp.success, false);
 const resetSuccess = await customerAuth.resetCustomerPassword({ customerId: testCustId, newPassword: "ResetPass@789", otp: otpReq.otp });
 check("Đặt lại MK thành công khi đúng OTP", resetSuccess.success, true);
 
+// 6f. QR chuyển khoản: số tiền từng món cộng ĐÚNG tổng đơn + nội dung chuyển khoản
+{
+  const vq = await import(mod("vietqrService.js"));
+  const sum = (arr) => arr.reduce((x, y) => x + y, 0);
+  check("Chia tiền: 3 món 33.333 + 33.333 + 33.334, đơn 96.999 -> tổng đúng 96.999", sum(vq.allocateOrderTotal([{ price: 33333, qty: 1 }, { price: 33333, qty: 1 }, { price: 33334, qty: 1 }], 96999)), 96999);
+  check("Chia tiền: đơn không giảm giá giữ nguyên giá từng món", vq.allocateOrderTotal([{ price: 50000, qty: 2 }, { price: 25000, qty: 1 }], 125000).join(), "100000,25000");
+  check("Chia tiền: đơn 0đ -> các món 0đ", vq.allocateOrderTotal([{ price: 50000, qty: 1 }], 0).join(), "0");
+  let drift = 0;
+  for (let n = 0; n < 500; n += 1) {
+    const items = Array.from({ length: 1 + (n % 5) }, (_, i) => ({ price: 10000 + ((n * 7919 + i * 104729) % 90000), qty: 1 + ((n + i) % 3) }));
+    const listed = sum(items.map((i) => i.price * i.qty));
+    const total = Math.max(1, listed - ((n * 3571) % Math.max(1, Math.floor(listed / 2))));
+    if (sum(vq.allocateOrderTotal(items, total)) !== total) drift += 1;
+  }
+  check("Chia tiền: 500 đơn ngẫu nhiên (nhiều món/giá lẻ/giảm giá) - tổng các món luôn = tổng đơn", drift, 0);
+  check("Nội dung CK 1 đơn: BAR DH0016", vq.buildTransferMemo(["DH0016"]), "BAR DH0016");
+  check("Nội dung CK 3 đơn vẫn đủ 25 ký tự: BAR DH0001 DH0002 DH0003", vq.buildTransferMemo(["DH0001", "DH0002", "DH0003"]), "BAR DH0001 DH0002 DH0003");
+  check("Nội dung CK 5 đơn quá 25 ký tự -> rút gọn BAR DH0001+4", vq.buildTransferMemo(["DH0001", "DH0002", "DH0003", "DH0004", "DH0005"]), "BAR DH0001+4");
+  check("Nội dung CK luôn ≤ 25 ký tự", vq.buildTransferMemo(Array.from({ length: 30 }, (_, i) => `DH${1000 + i}`)).length <= 25, true);
+  check("Không có mã đơn -> BAR ORDER", vq.buildTransferMemo([]), "BAR ORDER");
+  check("URL QR chứa đúng số tiền + nội dung + tài khoản", vq.generateVietQRUrl({ bankId: "MB", accountNumber: "123456789", accountName: "Nguyen Van A" }, { amount: 218250, memo: "bar dh0016" }), "https://img.vietqr.io/image/MB-123456789-compact2.png?amount=218250&addInfo=BAR%20DH0016&accountName=NGUYEN%20VAN%20A");
+}
+
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);
