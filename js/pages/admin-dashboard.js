@@ -3,12 +3,14 @@
    ========================================================= */
 
 import { initAdminLayout } from "../modules/adminLayout.js";
-import { getAllDrinks } from "../modules/drinksService.js";
+import { getAllDrinks, getCategoryLabel } from "../modules/drinksService.js";
 import { getAllOrders } from "../modules/ordersService.js";
 import { formatMoney, formatDateTime, escapeHtml } from "../modules/utils.js";
 import { ICONS } from "../modules/icons.js";
 import { errorHtml } from "../modules/ui.js";
 import { businessDayKey, BUSINESS_DAY_CUTOFF_HOUR } from "../modules/venue.js";
+import { buildRevenueSummary, buildPeriodSeries, PERIOD_NAMES } from "../modules/revenueStats.js";
+import { exportToCsv } from "../modules/exportService.js";
 
 /* Dữ liệu tải từ API trong init() */
 let drinks = [];
@@ -93,6 +95,82 @@ function renderRevenueChart() {
     </div>`).join("");
 }
 
+/* ---------------- Doanh thu theo ngày / tháng / quý / năm ---------------- */
+let currentPeriod = "day";
+
+const changeHtml = (change) => {
+  if (change === null) return '<span class="text-muted">—</span>';
+  const cls = change > 0 ? "text-success" : change < 0 ? "text-danger" : "text-muted";
+  const arrow = change > 0 ? "▲" : change < 0 ? "▼" : "•";
+  return `<span class="${cls}">${arrow} ${Math.abs(change).toLocaleString("vi-VN")}%</span>`;
+};
+
+function renderPeriodSummary() {
+  const host = document.getElementById("period-summary");
+  if (!host) return;
+  const names = { day: "Hôm nay", month: "Tháng này", quarter: "Quý này", year: "Năm nay" };
+  host.innerHTML = buildRevenueSummary(orders).map((c) => `
+    <div class="stat-card">
+      <div class="stat-details">
+        <span class="stat-label">${names[c.kind]} · ${escapeHtml(c.label)}</span>
+        <strong class="stat-value">${formatMoney(c.revenue)}</strong>
+        <span class="text-xs text-muted">${c.orders} đơn · ${changeHtml(c.change)} so với ${escapeHtml(c.prevLabel)}</span>
+      </div>
+    </div>`).join("");
+}
+
+function renderPeriodTable() {
+  const body = document.getElementById("period-body");
+  const foot = document.getElementById("period-foot");
+  if (!body || !foot) return;
+
+  const series = buildPeriodSeries(orders, currentPeriod);
+  document.getElementById("period-col-name").textContent = PERIOD_NAMES[currentPeriod];
+  document.querySelectorAll("#period-tabs [data-period]").forEach((btn) => {
+    const active = btn.dataset.period === currentPeriod;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-selected", String(active));
+  });
+
+  body.innerHTML = series.rows.map((r) => `
+    <tr${r.isCurrent ? ' class="period-current"' : ""}>
+      <td><strong>${escapeHtml(r.label)}</strong>${r.isCurrent ? ' <span class="badge badge-warning">hiện tại</span>' : ""}</td>
+      <td>${r.orders}</td>
+      <td><strong>${formatMoney(r.revenue)}</strong></td>
+      <td>
+        <div class="bar-chart-bar-wrap" style="height: 8px; width: 100%; background: rgba(255,255,255,0.06); border-radius: 4px;">
+          <div class="bar-chart-bar" style="height: 100%; width: ${series.maxRevenue ? Math.round((r.revenue / series.maxRevenue) * 100) : 0}%; border-radius: 4px;"></div>
+        </div>
+      </td>
+      <td>${changeHtml(r.change)}</td>
+    </tr>`).join("");
+
+  foot.innerHTML = `
+    <tr>
+      <td><strong>Tổng ${series.rows.length} ${PERIOD_NAMES[currentPeriod].toLowerCase()} gần nhất</strong></td>
+      <td><strong>${series.totalOrders}</strong></td>
+      <td><strong class="text-amber">${formatMoney(series.totalRevenue)}</strong></td>
+      <td colspan="2"></td>
+    </tr>`;
+}
+
+function exportPeriodTable() {
+  const series = buildPeriodSeries(orders, currentPeriod);
+  const headers = [PERIOD_NAMES[currentPeriod], "Số đơn đã thu", "Doanh thu (VNĐ)", "So với kỳ trước (%)"];
+  const rows = series.rows.map((r) => [r.label, r.orders, r.revenue, r.change === null ? "" : r.change]);
+  rows.push([`Tổng ${series.rows.length} ${PERIOD_NAMES[currentPeriod].toLowerCase()}`, series.totalOrders, series.totalRevenue, ""]);
+  // Tên file không dấu (giống các file xuất khác) để mọi trình duyệt đều tải đúng tên
+  const fileKind = { day: "Ngay", month: "Thang", quarter: "Quy", year: "Nam" }[currentPeriod];
+  exportToCsv(`Doanh-Thu-Theo-${fileKind}_${businessDayKey(new Date())}.csv`, rows, headers);
+}
+
+function bindPeriodTabs() {
+  document.querySelectorAll("#period-tabs [data-period]").forEach((btn) => {
+    btn.addEventListener("click", () => { currentPeriod = btn.dataset.period; renderPeriodTable(); });
+  });
+  document.getElementById("btn-export-period")?.addEventListener("click", exportPeriodTable);
+}
+
 /* ---------------- Top món bán chạy ---------------- */
 function renderTopDrinks() {
   const host = document.getElementById("top-drinks");
@@ -109,17 +187,18 @@ function renderTopDrinks() {
 
   // Ưu tiên tên hiện tại trong thực đơn, món đã bị xoá thì dùng tên lúc bán
   const currentNames = new Map(drinks.map((d) => [d.id, d.name]));
+  const currentCategories = new Map(drinks.map((d) => [d.id, d.category]));
   const ranked = [...soldMap.entries()]
-    .map(([id, info]) => [currentNames.get(id) || info.name, info.qty])
+    .map(([id, info]) => [currentNames.get(id) || info.name, info.qty, currentCategories.get(id)])
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  host.innerHTML = ranked.length ? ranked.map(([name, qty], i) => `
+  host.innerHTML = ranked.length ? ranked.map(([name, qty, category], i) => `
     <div class="rank-item">
       <span class="rank-num ${i === 0 ? 'rank-first' : ''}">0${i + 1}</span>
       <div class="rank-info">
         <p class="rank-name">${escapeHtml(name)}</p>
-        <p class="rank-sub">Thức uống Signature</p>
+        <p class="rank-sub">${escapeHtml(category ? getCategoryLabel(category) : "Món đã ngừng bán")}</p>
       </div>
       <span class="rank-count"><strong>${qty}</strong> ly</span>
     </div>`).join("") : '<p class="text-muted p-3">Chưa có dữ liệu bán hàng.</p>';
@@ -157,6 +236,8 @@ async function init() {
 
     renderStatCards();
     renderRevenueChart();
+    renderPeriodSummary();
+    renderPeriodTable();
     renderTopDrinks();
     renderRecentOrders();
   } catch (err) {
@@ -166,5 +247,6 @@ async function init() {
 }
 
 if (initAdminLayout("Bảng Điều Hành")) {
+  bindPeriodTabs();
   init();
 }
