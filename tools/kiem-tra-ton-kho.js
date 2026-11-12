@@ -1242,6 +1242,54 @@ check("OTP quên mật khẩu chỉ dùng 1 lần", resetReuse.success, false);
   check("Khôi phục mặc định: khách lại có đủ quyền", ids.every((id) => auth.canCustomer(id)), true);
 }
 
+// 6f. QR chuyển khoản: số tiền từng món cộng ĐÚNG tổng đơn + nội dung chuyển khoản
+{
+  const vq = await import(mod("vietqrService.js"));
+  const sum = (arr) => arr.reduce((x, y) => x + y, 0);
+  check("Chia tiền: 3 món 33.333 + 33.333 + 33.334, đơn 96.999 -> tổng đúng 96.999", sum(vq.allocateOrderTotal([{ price: 33333, qty: 1 }, { price: 33333, qty: 1 }, { price: 33334, qty: 1 }], 96999)), 96999);
+  check("Chia tiền: đơn không giảm giá giữ nguyên giá từng món", vq.allocateOrderTotal([{ price: 50000, qty: 2 }, { price: 25000, qty: 1 }], 125000).join(), "100000,25000");
+  check("Chia tiền: đơn 0đ -> các món 0đ", vq.allocateOrderTotal([{ price: 50000, qty: 1 }], 0).join(), "0");
+  let drift = 0;
+  for (let n = 0; n < 500; n += 1) {
+    const items = Array.from({ length: 1 + (n % 5) }, (_, i) => ({ price: 10000 + ((n * 7919 + i * 104729) % 90000), qty: 1 + ((n + i) % 3) }));
+    const listed = sum(items.map((i) => i.price * i.qty));
+    const total = Math.max(1, listed - ((n * 3571) % Math.max(1, Math.floor(listed / 2))));
+    if (sum(vq.allocateOrderTotal(items, total)) !== total) drift += 1;
+  }
+  check("Chia tiền: 500 đơn ngẫu nhiên (nhiều món/giá lẻ/giảm giá) - tổng các món luôn = tổng đơn", drift, 0);
+  check("Nội dung CK 1 đơn: BAR DH0016", vq.buildTransferMemo(["DH0016"]), "BAR DH0016");
+  check("Nội dung CK 3 đơn vẫn đủ 25 ký tự: BAR DH0001 DH0002 DH0003", vq.buildTransferMemo(["DH0001", "DH0002", "DH0003"]), "BAR DH0001 DH0002 DH0003");
+  check("Nội dung CK 5 đơn quá 25 ký tự -> rút gọn BAR DH0001+4", vq.buildTransferMemo(["DH0001", "DH0002", "DH0003", "DH0004", "DH0005"]), "BAR DH0001+4");
+  check("Nội dung CK luôn ≤ 25 ký tự", vq.buildTransferMemo(Array.from({ length: 30 }, (_, i) => `DH${1000 + i}`)).length <= 25, true);
+  check("Không có mã đơn -> BAR ORDER", vq.buildTransferMemo([]), "BAR ORDER");
+  check("URL QR chứa đúng số tiền + nội dung + tài khoản", vq.generateVietQRUrl({ bankId: "MB", accountNumber: "123456789", accountName: "Nguyen Van A" }, { amount: 218250, memo: "bar dh0016" }), "https://img.vietqr.io/image/MB-123456789-compact2.png?amount=218250&addInfo=BAR%20DH0016&accountName=NGUYEN%20VAN%20A");
+}
+
+// 6g. Mail vé điện tử: nội dung đúng giai đoạn thanh toán, ngày giờ + món, không gửi tới địa chỉ giả
+{
+  const em = await import(mod("emailService.js"));
+  const bookingOrder = { id: "o-mail-1", code: "DH0777", name: "Lê Thu Hương", phone: "0918765432", email: "huong.le@gmail.com", serviceType: "booking", bookingTime: new Date(2026, 10, 15, 20, 0).toISOString(), guestCount: 4, createdAt: new Date(2026, 10, 12, 9, 0).toISOString(), items: [{ name: "Negroni Classico", price: 125000, qty: 2 }], discounts: [{ amount: 7500 }], total: 242500, paymentStatus: "unpaid" };
+  check("Nhãn thanh toán: unpaid", em.paymentStatusText({ paymentStatus: "unpaid" }), "CHƯA THANH TOÁN");
+  check("Nhãn thanh toán: awaiting (đã quét/báo chuyển khoản) KHÔNG còn ghi 'chưa thanh toán'", em.paymentStatusText({ paymentStatus: "awaiting" }), "ĐÃ BÁO CHUYỂN KHOẢN - ĐANG CHỜ QUÁN XÁC NHẬN");
+  check("Nhãn thanh toán: paid", em.paymentStatusText({ paymentStatus: "paid" }), "ĐÃ THANH TOÁN");
+  check("Tiêu đề mail đổi theo giai đoạn (chờ xác nhận / đã thanh toán)", [em.orderMailSubject({ ...bookingOrder, paymentStatus: "awaiting" }), em.orderMailSubject({ ...bookingOrder, paymentStatus: "paid" })].map((x) => /báo chuyển khoản|Đã thanh toán/.test(x)).join(), "true,true");
+  const params = em.buildOrderMailParams(bookingOrder, "huong.le@gmail.com");
+  check("Mail thật: có ngày giờ đặt bàn 15/11/2026 20:00", /15\/11\/2026/.test(params.booking_time) && /20:00/.test(params.booking_time), true);
+  check("Mail thật: có số khách + hình thức Đặt bàn trước", params.guests === "4 khách" && params.service_type === "Đặt bàn trước", true);
+  check("Mail thật: liệt kê món đã đặt (tên, số lượng, tiền)", /Negroni Classico x2/.test(params.items_text) && /250\.000/.test(params.items_text), true);
+  check("Mail thật: tổng tiền là số khách phải trả (sau giảm giá)", params.total.replace(/\D/g, ""), "242500");
+  check("Mail thật: tình trạng thanh toán + người nhận", `${params.payment_status}|${params.to_email}`, "CHƯA THANH TOÁN|huong.le@gmail.com");
+  const html = em.buildCinemaTicketHtml({ ...bookingOrder, paymentStatus: "awaiting" }, { toEmail: "huong.le@gmail.com" });
+  check("Vé HTML sau khi quét QR ghi 'chờ quán xác nhận', không ghi 'CHƯA THANH TOÁN'", /CHỜ QUÁN XÁC NHẬN/.test(html) && !/CHƯA THANH TOÁN/.test(html), true);
+  const noMail = await em.sendOrderConfirmationEmail({ ...bookingOrder, email: "" }, null);
+  check("Khách không có email: không tạo thư gửi tới địa chỉ giả (delivery = no_email)", `${noMail.delivery}|${noMail.id}|${noMail.to}`, "no_email|null|");
+  const withMail = await em.sendOrderConfirmationEmail(bookingOrder, null);
+  check("Có email nhưng quán chưa cấu hình EmailJS: lưu Hộp thư, báo trung thực (not_configured)", `${withMail.delivery}|${withMail.to}`, "not_configured|huong.le@gmail.com");
+  check("Câu thông báo không nói 'đã gửi email' khi chưa gửi thật", /Hộp thư/.test(em.describeMailDelivery(withMail, bookingOrder).message) && !/Đã gửi email/.test(em.describeMailDelivery(withMail, bookingOrder).message), true);
+  check("Câu thông báo khi gửi thật thành công", /Đã gửi email vé điện tử/.test(em.describeMailDelivery({ ...withMail, delivery: "sent" }, bookingOrder).message), true);
+  check("Chưa cấu hình EmailJS thì isRealEmailConfigured = false", em.isRealEmailConfigured(), false);
+}
+
 // 7. Admin Reset MK
 const adminReset = await customerAuth.adminResetCustomerPassword(testCustId, "Khach@999");
 check("Admin đặt lại mật khẩu thành công", Boolean(adminReset), true);

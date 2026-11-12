@@ -155,3 +155,32 @@ CocktailBar/
 ---
 
 *Đồ án được thực hiện nghiêm túc, chuẩn mực, hoàn thiện đầy đủ hồ sơ kỹ thuật theo yêu cầu giảng viên và môn học.*
+
+---
+
+## Gửi email vé điện tử THẬT (EmailJS) - không bắt buộc
+
+Mặc định website chỉ **lưu vé vào "Hộp thư" ở trang Tài khoản** (xem lại được ngay, không cần cấu hình). Muốn khách nhận **email thật** trong Gmail/Outlook:
+
+1. Đăng ký [emailjs.com](https://www.emailjs.com) (miễn phí ~200 mail/tháng) → **Email Services** → *Add New Service* (VD Gmail) → chép **Service ID**.
+2. **Email Templates** → *Create New Template*. Ô **To Email** điền `{{to_email}}`, **Subject** điền `{{subject}}`, nội dung dùng các biến:
+
+   | Biến | Ý nghĩa |
+   |---|---|
+   | `{{customer_name}}` | Tên khách |
+   | `{{order_code}}` | Mã đơn (VD DH0016) |
+   | `{{service_type}}` | Đặt bàn trước / Gọi món tại bàn / Mang đi |
+   | `{{booking_time}}` | **Ngày giờ nhận bàn** (đặt bàn = giờ hẹn) |
+   | `{{guests}}` | Số khách (đặt bàn) |
+   | `{{seat}}` | Số bàn (gọi tại bàn) |
+   | `{{items_text}}` | **Danh sách món đã đặt** (mỗi món một dòng, có số lượng và tiền) |
+   | `{{discount_text}}` | Ưu đãi đã áp (nếu có) |
+   | `{{total}}` | Tổng tiền khách phải trả |
+   | `{{payment_status}}` | Chưa thanh toán / Đã báo chuyển khoản - chờ quán xác nhận / Đã thanh toán |
+   | `{{address}}`, `{{hotline}}`, `{{message}}` | Địa chỉ, hotline, lưu ý nhận bàn |
+
+   → chép **Template ID**.
+3. **Account → General** → chép **Public Key** (nên bật giới hạn tên miền ở Account → Security).
+4. Điền 3 giá trị vào `js/modules/emailConfig.js`, rồi triển khai lại.
+
+**Khi nào khách nhận mail:** (1) ngay sau khi đặt, (2) sau khi khách bấm "Tôi đã chuyển khoản" (mail ghi rõ *đã báo chuyển khoản, chờ quán xác nhận*), (3) khi thu ngân xác nhận đã nhận tiền (mail ghi *đã thanh toán*). Khách **không nhập email** thì không có thư, giao diện sẽ nhắc khách lưu mã đơn để tra cứu. Gửi lỗi (mất mạng...) không làm hỏng việc đặt/thanh toán; vé vẫn nằm trong Hộp thư.

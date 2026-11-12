@@ -10,7 +10,7 @@
 
 import { formatMoney, escapeHtml } from "./utils.js";
 import { toast } from "./ui.js";
-import { getBankSettings } from "./settingsService.js";
+import { getBankSettings, DEFAULT_SETTINGS } from "./settingsService.js";
 
 /**
  * Sinh URL ảnh mã QR theo chuẩn VietQR Napas 247
@@ -49,13 +49,55 @@ export async function copyToClipboard(text, label = "thông tin") {
 
 const COPY_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
 
+/** Nội dung chuyển khoản tối đa 25 ký tự (giới hạn của VietQR/Napas 247 - dài hơn app ngân hàng sẽ cắt hoặc từ chối) */
+export const MAX_QR_MEMO = 25;
+
+/**
+ * Nội dung chuyển khoản "BAR DH0016". Gộp nhiều đơn mà quá 25 ký tự thì rút gọn "BAR DH0016+2"
+ * (thu ngân đối chiếu theo mã đơn đầu + tổng tiền).
+ */
+export function buildTransferMemo(codes, fallbackCode = "ORDER") {
+  const list = (codes || []).filter(Boolean);
+  if (list.length === 0) return `BAR ${fallbackCode}`.toUpperCase().slice(0, MAX_QR_MEMO);
+  const full = `BAR ${list.join(" ")}`.toUpperCase();
+  if (full.length <= MAX_QR_MEMO) return full;
+  return `BAR ${list[0]}+${list.length - 1}`.toUpperCase().slice(0, MAX_QR_MEMO);
+}
+
+/**
+ * Chia tổng tiền thật của một đơn (đã trừ giảm giá/điểm) xuống từng món sao cho TỔNG CÁC MÓN = ĐÚNG tổng đơn,
+ * không lệch vài đồng do làm tròn (phương pháp phần dư lớn nhất). Dùng để hiển thị và để tính số tiền trên mã QR.
+ * @param {Array<{price:number, qty:number}>} items
+ * @param {number} orderTotal
+ * @returns {number[]} tiền từng món
+ */
+export function allocateOrderTotal(items, orderTotal) {
+  const listed = (items || []).map((it) => (Number(it.price) || 0) * (Number(it.qty) || 1));
+  const listedSum = listed.reduce((a, b) => a + b, 0);
+  const total = Math.round(Number(orderTotal) || 0);
+  if (listed.length === 0) return [];
+  if (!listedSum || total <= 0) return listed.map(() => 0);
+  if (total === listedSum) return listed;
+  const exact = listed.map((v) => (v * total) / listedSum);
+  const floors = exact.map(Math.floor);
+  let remainder = total - floors.reduce((a, b) => a + b, 0);
+  const byFraction = exact.map((v, i) => [v - floors[i], i]).sort((a, b) => b[0] - a[0]);
+  for (let k = 0; remainder > 0 && k < byFraction.length; k += 1, remainder -= 1) floors[byFraction[k][1]] += 1;
+  return floors;
+}
+
 /**
  * Mở hộp thoại thanh toán VietQR.
+ * Số tiền trên mã QR = TỔNG TIỀN THẬT của các ĐƠN đã lưu đang được tích chọn (đã trừ giảm giá/điểm),
+ * nên khách quét là ra đúng số tiền, không phải gõ tay và không chuyển nhầm.
+ * Ảnh QR cố định của quán (img/mb-qr.jpg) chỉ là DỰ PHÒNG khi mất mạng (vì một ảnh cố định không chứa được số tiền).
  * @param {object} order Đơn hàng (code, total, paymentStatus...)
  * @param {object} [options]
  * @param {string} [options.confirmLabel] Chữ trên nút xác nhận
  * @param {function} [options.onConfirm] async (order) => {...} chạy khi bấm nút xác nhận.
  *   Không truyền onConfirm thì KHÔNG vẽ nút (tránh nút bấm không có chức năng).
+ * @param {Array} [options.allItems] Món của NHIỀU đơn đã lưu (gộp thanh toán): mỗi món có orderId/orderCode
+ *   và finalPrice đã chia đúng theo tổng đơn (xem allocateOrderTotal).
  */
 export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã Chuyển Khoản Xong", onConfirm, allItems = null } = {}) {
   let bank;
@@ -66,35 +108,24 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
     return null;
   }
 
-  // Chuẩn bị danh sách món: ưu tiên allItems nếu có, nếu không lấy từ order.items
-  const rawItems = Array.isArray(allItems) && allItems.length > 0
-    ? allItems
-    : (Array.isArray(order?.items) ? order.items : []);
+  const hasMultiOrderItems = Array.isArray(allItems) && allItems.length > 0;
+  const rawItems = hasMultiOrderItems ? allItems : (Array.isArray(order?.items) ? order.items : []);
 
-  // Đơn đã áp giảm hạng / mã giảm giá / điểm thì tổng tiền thật (order.total) THẤP HƠN tổng giá niêm yết của các món.
-  // Phân bổ phần giảm đó đều lên từng món để mã QR đòi đúng số tiền khách phải trả (trước đây QR đòi giá chưa giảm).
-  const listedSum = rawItems.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 1), 0);
-  const orderTotal = Number(order?.total) || 0;
-  const discountScale = !(Array.isArray(allItems) && allItems.length > 0) && listedSum > 0 && orderTotal > 0 && orderTotal < listedSum
-    ? orderTotal / listedSum
-    : 1;
-
-  // Không truyền allItems = đang thanh toán CHÍNH đơn này: món của nó là món của đơn đã lưu (isUnpaid), không phải
-  // món trong giỏ. Nếu không đánh dấu, nút "Tôi đã chuyển khoản" sẽ tạo thêm một đơn TRÙNG (không giảm giá, trừ kho lần nữa).
-  const itemsBelongToOrder = !(Array.isArray(allItems) && allItems.length > 0) && Boolean(order?.id);
-
-  const items = rawItems.map((it) => {
-    const isUnpaidItem = itemsBelongToOrder || Boolean(it.isUnpaid);
+  // Không truyền allItems = thanh toán CHÍNH đơn này: món của nó là món của đơn đã lưu (không phải món trong giỏ),
+  // tiền từng món chia đúng theo order.total (đã trừ giảm giá/điểm) để tổng khớp từng đồng.
+  const singleOrderPrices = hasMultiOrderItems ? null : allocateOrderTotal(rawItems, order?.total);
+  const items = rawItems.map((it, idx) => {
     const qty = Number(it.qty) || 1;
     const price = Number(it.price) || 0;
-    const finalPrice = it.finalPrice !== undefined ? Number(it.finalPrice) : Math.round(price * qty * discountScale);
+    const belongsToOrder = !hasMultiOrderItems && Boolean(order?.id);
+    const isUnpaidItem = belongsToOrder || Boolean(it.isUnpaid);
     return {
       id: it.id || it.drinkId || it.name,
       drinkId: it.drinkId || it.id,
       name: it.name || "Đồ uống",
       qty,
       price,
-      finalPrice,
+      finalPrice: singleOrderPrices ? singleOrderPrices[idx] : (it.finalPrice !== undefined ? Number(it.finalPrice) : price * qty),
       image: it.image || "",
       isUnpaid: isUnpaidItem,
       orderCode: it.orderCode || (isUnpaidItem ? order?.code : "") || "",
@@ -105,15 +136,17 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
   });
 
   const calcTotal = () => {
-    if (items.length === 0) return Number(order?.total) || 0;
+    if (items.length === 0) return Math.round(Number(order?.total) || 0);
     return items.filter((it) => it.checked).reduce((sum, it) => sum + it.finalPrice, 0);
   };
+  const selectedCodes = () => [...new Set(items.filter((it) => it.checked && it.orderCode).map((it) => it.orderCode))];
+  const currentMemo = () => buildTransferMemo(items.length === 0 ? [order?.code] : selectedCodes(), order?.code || "ORDER");
+  // Ảnh QR cố định của quán chỉ dùng được khi nó đúng tài khoản đang cài đặt (đổi tài khoản mà vẫn hiện ảnh cũ là khách chuyển nhầm)
+  const staticQrMatchesBank = bank.accountNumber === DEFAULT_SETTINGS.accountNumber && bank.bankId === DEFAULT_SETTINGS.bankId;
 
   let currentTotal = calcTotal();
-  const unpaidCodes = [...new Set(items.filter((it) => it.isUnpaid && it.orderCode).map((it) => it.orderCode))];
-  const memoCode = unpaidCodes.length > 0 ? unpaidCodes.join(" ") : (order?.code || "ORDER");
-  const transferContent = `BAR ${memoCode}`.toUpperCase();
-  const qrUrl = generateVietQRUrl(bank, { amount: currentTotal, memo: transferContent });
+  let transferContent = currentMemo();
+  let qrUrl = generateVietQRUrl(bank, { amount: currentTotal, memo: transferContent });
 
   const host = document.createElement("div");
   host.className = "modal-overlay show vietqr-modal-overlay";
@@ -122,31 +155,32 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
     <div class="modal-box modal-vietqr" role="dialog" aria-modal="true">
       <div class="vietqr-head">
         <div class="vietqr-head-brand">
-          <span class="vietqr-badge">MBBANK · NGÂN HÀNG QUÂN ĐỘI</span>
-          <h3 class="vietqr-title">Thanh Toán Chuyển Khoản MBBank</h3>
-          <p class="vietqr-sub">Mở App MBBank hoặc bất kỳ ứng dụng ngân hàng / ví điện tử để quét mã MB</p>
+          <span class="vietqr-badge">${escapeHtml(String(bank.bankName || "").toUpperCase())}</span>
+          <h3 class="vietqr-title">Thanh Toán Chuyển Khoản</h3>
+          <p class="vietqr-sub">Mở app ngân hàng hoặc ví điện tử để quét mã - số tiền và nội dung được điền sẵn</p>
         </div>
         <button type="button" class="modal-close-x" id="vqr-close-x" aria-label="Đóng">&times;</button>
       </div>
 
       <div class="vietqr-body-grid">
-        <!-- Cột 1: Thẻ hiển thị mã QR MBBank -->
+        <!-- Cột 1: mã QR ĐỘNG theo đúng số tiền + nội dung của đơn -->
         <div class="vietqr-qr-panel">
           <div class="vietqr-img-frame">
-            <img src="img/mb-qr.jpg" alt="Mã QR MBBank đơn hàng ${escapeHtml(order?.code || '')}" class="vietqr-image" loading="eager" onerror="this.onerror=null;this.src='${qrUrl}';">
+            <img id="vqr-img" src="${escapeHtml(qrUrl)}" alt="Mã QR chuyển khoản đơn ${escapeHtml(order?.code || '')}" class="vietqr-image" loading="eager">
             <div class="vietqr-scan-line"></div>
           </div>
+          <p id="vqr-qr-note" class="text-xs" style="margin: 8px 0 0; text-align: center; color: var(--amber-soft);"></p>
 
           <div class="vietqr-qr-actions">
-            <a href="img/mb-qr.jpg" download="MBBank_QR_${escapeHtml(order?.code || 'ORDER')}.jpg" target="_blank" class="btn btn-outline btn-sm btn-block" title="Lưu mã QR MBBank về điện thoại hoặc máy tính">
+            <a href="${escapeHtml(qrUrl)}" id="vqr-download" download="QR_${escapeHtml(order?.code || 'ORDER')}.png" target="_blank" rel="noopener" class="btn btn-outline btn-sm btn-block" title="Lưu mã QR về điện thoại hoặc máy tính">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              <span>Tải Mã QR MB Về Máy</span>
+              <span>Tải mã QR về máy</span>
             </a>
           </div>
 
           <div class="vietqr-security-note">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Tài khoản MBBank chính thức của quán: Lê Thành Tài</span>
+            <span>Tài khoản chính thức của quán: ${escapeHtml(bank.accountName)}</span>
           </div>
         </div>
 
@@ -179,13 +213,13 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
             <div class="vqr-row">
               <span class="vqr-label">Nội dung CK</span>
               <div class="vqr-val-copy">
-                <strong class="vqr-val-memo">${escapeHtml(transferContent)}</strong>
+                <strong class="vqr-val-memo" id="vqr-memo-val">${escapeHtml(transferContent)}</strong>
                 <button type="button" class="btn-copy-icon" id="vqr-copy-memo" title="Sao chép nội dung">${COPY_ICON}</button>
               </div>
             </div>
           </div>
 
-          <!-- MỤC TÍCH CHỌN NHỮNG MÓN THANH TOÁN (CÓ Ô CHECKBOX CHỌN MÓN ĐỂ THANH TOÁN) -->
+          <!-- Chọn ĐƠN muốn thanh toán (các món cùng một đơn luôn được chọn / bỏ chọn cùng nhau vì không trả một phần đơn) -->
           ${items.length > 0 ? `
           <div class="vqr-checklist-box" style="margin-top: 10px; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -193,7 +227,7 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
                 <input type="checkbox" id="vqr-toggle-all" checked style="accent-color: var(--gold-primary); width: 16px; height: 16px; cursor: pointer;">
                 <span>Tích chọn món thanh toán (<span id="vqr-sel-count">${items.length}</span>/${items.length})</span>
               </label>
-              <span class="text-xs text-muted" style="font-size: 0.72rem;">Bỏ tích món chưa muốn trả</span>
+              <span class="text-xs text-muted" style="font-size: 0.72rem;">Món cùng đơn được chọn chung</span>
             </div>
 
             <div class="vqr-items-scroll-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; padding-right: 4px;">
@@ -209,7 +243,6 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
                         <span class="badge ${it.isUnpaid ? "badge-danger" : "badge-warning"}" style="font-size: 0.62rem; padding: 1px 5px;">
                           ${escapeHtml(it.sourceTag)}
                         </span>
-                        <span>${formatMoney(it.finalPrice / (it.qty || 1))}</span>
                       </div>
                     </div>
                   </div>
@@ -241,9 +274,48 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
   const checkboxes = host.querySelectorAll(".vqr-item-cb");
   const toggleAll = host.querySelector("#vqr-toggle-all");
   const amountVal = host.querySelector("#vqr-amount-val");
+  const memoVal = host.querySelector("#vqr-memo-val");
   const selCount = host.querySelector("#vqr-sel-count");
   const confirmBtn = host.querySelector("#vqr-confirm-btn");
   const copyAmountBtn = host.querySelector("#vqr-copy-amount");
+  const qrImg = host.querySelector("#vqr-img");
+  const qrNote = host.querySelector("#vqr-qr-note");
+  const downloadLink = host.querySelector("#vqr-download");
+
+  /** Ghi chú dưới mã QR theo chế độ đang hiển thị */
+  let qrMode = "dynamic"; // dynamic | static | none
+  const renderQrNote = () => {
+    if (currentTotal <= 0) { qrNote.textContent = "Chưa chọn đơn nào để thanh toán."; return; }
+    if (qrMode === "dynamic") qrNote.textContent = `Quét mã sẽ tự điền ${formatMoney(currentTotal)} và nội dung ${transferContent}.`;
+    else if (qrMode === "static") qrNote.textContent = `Mã QR cố định (không kèm số tiền): hãy nhập đúng ${formatMoney(currentTotal)} và nội dung ${transferContent}.`;
+    else qrNote.textContent = "Không tải được mã QR (cần kết nối Internet). Vui lòng chuyển khoản thủ công theo thông tin bên cạnh.";
+  };
+
+  /** Mã QR động không tải được (mất mạng): dùng ảnh QR của quán CHỈ KHI nó đúng tài khoản đang cài đặt; không thì ẩn đi */
+  qrImg.addEventListener("error", () => {
+    if (qrMode === "dynamic" && staticQrMatchesBank) {
+      qrMode = "static";
+      qrImg.src = "img/mb-qr.jpg";
+      downloadLink.href = "img/mb-qr.jpg";
+    } else if (qrMode !== "none") {
+      qrMode = "none";
+      qrImg.style.visibility = "hidden";
+    }
+    renderQrNote();
+  });
+
+  /** Vẽ lại mã QR + nội dung + số tiền theo các đơn đang được chọn */
+  const refreshQr = () => {
+    transferContent = currentMemo();
+    qrUrl = generateVietQRUrl(bank, { amount: currentTotal, memo: transferContent });
+    if (memoVal) memoVal.textContent = transferContent;
+    const changed = qrMode !== "dynamic" || qrImg.getAttribute("src") !== qrUrl;
+    qrMode = "dynamic";
+    qrImg.style.visibility = "";
+    if (changed) qrImg.src = qrUrl;
+    downloadLink.href = qrUrl;
+    renderQrNote();
+  };
 
   const syncCheckState = () => {
     let sum = 0;
@@ -269,12 +341,18 @@ export async function openVietQRPaymentModal(order, { confirmLabel = "Tôi Đã 
       } else {
         confirmBtn.disabled = false;
         confirmBtn.style.opacity = "1";
-        confirmBtn.querySelector("span").textContent = `${escapeHtml(confirmLabel)} (${formatMoney(sum)})`;
+        confirmBtn.querySelector("span").textContent = `${confirmLabel} (${formatMoney(sum)})`;
       }
     }
+    refreshQr();
   };
 
-  checkboxes.forEach((cb) => cb.addEventListener("change", syncCheckState));
+  checkboxes.forEach((cb, idx) => cb.addEventListener("change", () => {
+    // Một đơn không trả được một phần: tích / bỏ một món thì cả đơn đó đổi theo
+    const groupId = items[idx].orderId;
+    if (groupId) checkboxes.forEach((other, j) => { if (items[j].orderId === groupId) other.checked = cb.checked; });
+    syncCheckState();
+  }));
   if (toggleAll) {
     toggleAll.addEventListener("change", () => {
       checkboxes.forEach((cb) => { cb.checked = toggleAll.checked; });

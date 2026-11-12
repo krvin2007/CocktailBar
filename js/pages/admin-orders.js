@@ -30,7 +30,7 @@ import {
   parseOrdersFromRows,
   printOrderInvoice,
 } from "../modules/exportService.js";
-import { sendOrderConfirmationEmail } from "../modules/emailService.js";
+import { sendOrderConfirmationEmail, describeMailDelivery } from "../modules/emailService.js";
 
 const bodyEl = document.getElementById("orders-body");
 const paginationEl = document.getElementById("pagination");
@@ -313,12 +313,16 @@ async function handleConfirmPayment(order = activeOrder, ask = true) {
 
   try {
     await confirmPayment(order.id);
+    let mailNote = null;
     try {
-      await sendOrderConfirmationEmail({ ...order, paymentStatus: "paid" });
+      // toJSON(): {...order} làm mất total/subtotal (là getter) nên mail ghi tổng tiền trống
+      const plain = typeof order.toJSON === "function" ? order.toJSON() : order;
+      mailNote = describeMailDelivery(await sendOrderConfirmationEmail({ ...plain, paymentStatus: "paid" }), order);
     } catch (mErr) {
       console.warn("Lỗi gửi email xác nhận:", mErr);
     }
-    toast(`Đơn ${order.code}: đã thanh toán & gửi email xác nhận tới khách hàng.`, "success");
+    toast(`Đơn ${order.code}: đã xác nhận thanh toán.`, "success");
+    if (mailNote) toast(mailNote.message, mailNote.type);
     closeModal("order-modal");
     await reloadTable();
   } catch (err) {
@@ -515,8 +519,9 @@ function bindEvents() {
   document.getElementById("btn-resend-order-ticket")?.addEventListener("click", async () => {
     if (!activeOrder) return;
     try {
-      await sendOrderConfirmationEmail(activeOrder);
-      toast(`Đã gửi lại vé điện tử đến email ${activeOrder.email || "của khách hàng"} thành công!`, "success");
+      const plain = typeof activeOrder.toJSON === "function" ? activeOrder.toJSON() : activeOrder;
+      const note = describeMailDelivery(await sendOrderConfirmationEmail(plain), activeOrder);
+      toast(note.message, note.type);
     } catch (err) {
       toast("Lỗi gửi email: " + err.message, "error");
     }

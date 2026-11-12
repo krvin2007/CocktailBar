@@ -17,14 +17,14 @@ import { formatMoney, formatDateTime, escapeHtml, debounce } from "../modules/ut
 import { validateForm, clearFormErrors, setFieldError } from "../modules/validation.js";
 import { toast, confirmDialog, setButtonLoading, loadingHtml, errorHtml } from "../modules/ui.js";
 import { ICONS } from "../modules/icons.js";
-import { openVietQRPaymentModal } from "../modules/vietqrService.js";
+import { allocateOrderTotal, openVietQRPaymentModal } from "../modules/vietqrService.js";
 import { isWithinOpeningHours, openingHoursText, BOOKING_RULES } from "../modules/venue.js";
 import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCurrentCustomer, syncCustomerSession } from "../modules/customerAuth.js";
 import { canCustomer, syncRolePermissions } from "../modules/auth.js";
 import { resolvePricing, POINT_REDEEM_VND, MIN_POINT_REDEEM } from "../modules/promotions.js";
 import { getItem, setItem, removeItem } from "../modules/storage.js";
-import { sendOrderConfirmationEmail, openCinemaTicketModal } from "../modules/emailService.js";
+import { sendOrderConfirmationEmail, describeMailDelivery, openCinemaTicketModal } from "../modules/emailService.js";
 
 const APPLIED_VOUCHER_KEY = "applied_voucher";
 
@@ -81,15 +81,13 @@ function getCombinedItems() {
   const unpaidList = currentUnpaidOrders.length > 0 ? currentUnpaidOrders : (currentUnpaidOrder ? [currentUnpaidOrder] : []);
   unpaidList.forEach((order) => {
     if (!Array.isArray(order.items)) return;
-    const unpaidSub = Number(order.subtotal) || Number(order.total) || 1;
-    const unpaidTot = Number(order.total) || unpaidSub;
-    const ratio = unpaidTot / unpaidSub;
+    const allocated = allocateOrderTotal(order.items, order.total); // tổng các món = đúng tổng đơn
 
     order.items.forEach((it, idx) => {
       const key = `unpaid_${order.id}_${it.drinkId || it.id || idx}`;
       const qty = Number(it.qty) || 1;
       const basePrice = Number(it.price) || 0;
-      const finalPrice = Math.round(basePrice * qty * ratio);
+      const finalPrice = allocated[idx];
       const isChecked = !uncheckedItemKeys.has(key);
 
       list.push({
@@ -142,8 +140,13 @@ function getActiveCheckoutSummary() {
   const checked = allItems.filter((it) => it.checked);
   const count = checked.reduce((sum, it) => sum + (Number(it.qty) || 1), 0);
   const subtotal = checked.reduce((sum, it) => sum + ((Number(it.price) || 0) * (Number(it.qty) || 1)), 0);
-  const total = checked.reduce((sum, it) => sum + it.finalPrice, 0);
-  return { allItems, checked, count, subtotal, total };
+  // Món mới trong giỏ: ưu đãi (hạng / mã / điểm) chỉ tính trên các món này. Đơn cũ chưa trả đã được chốt giá khi đặt
+  // nên giữ nguyên tổng của đơn, KHÔNG giảm giá lần nữa.
+  const cartSubtotal = checked.filter((it) => !it.isUnpaid).reduce((sum, it) => sum + ((Number(it.price) || 0) * (Number(it.qty) || 1)), 0);
+  const unpaidTotal = checked.filter((it) => it.isUnpaid).reduce((sum, it) => sum + it.finalPrice, 0);
+  const cartPayable = pricing && pricing.subtotal === cartSubtotal ? pricing.total : cartSubtotal;
+  const total = unpaidTotal + cartPayable;
+  return { allItems, checked, count, subtotal, cartSubtotal, unpaidTotal, total };
 }
 
 /**
@@ -194,85 +197,41 @@ function updateSubmitState() {
  */
 function openCustomerPayment(order, afterReport, allItems = null) {
   const targetOrder = order || currentUnpaidOrder || currentUnpaidOrders[0] || null;
-  const itemsToPass = allItems || getCombinedItems();
+  // Mã QR chỉ thanh toán các ĐƠN ĐÃ LƯU (số tiền = tổng tiền thật của đơn). Món còn trong giỏ chưa là đơn nên không
+  // đưa vào đây - phải gửi form (kiểm tra tuổi, áp ưu đãi) để thành đơn rồi mới có QR đúng số tiền.
+  const itemsToPass = allItems || getCombinedItems().filter((i) => i.isUnpaid);
 
   openVietQRPaymentModal(targetOrder, {
     confirmLabel: "Tôi Đã Chuyển Khoản Xong",
     allItems: itemsToPass,
     onConfirm: async (payload) => {
       const selectedItems = payload?.selectedItems || itemsToPass.filter((i) => i.checked);
-      const hasUnpaid = selectedItems.some((it) => it.isUnpaid);
-      const hasCart = selectedItems.some((it) => !it.isUnpaid);
       const customer = getCurrentCustomer();
       let confirmedOrderForTicket = null;
+      let lastMail = null;
 
-      // 1. Cập nhật trạng thái chuyển khoản cho các đơn cũ nếu có tích chọn
-      if (hasUnpaid) {
-        const unpaidOrderIds = [...new Set(selectedItems.filter((i) => i.isUnpaid && (i.orderId || targetOrder?.id || currentUnpaidOrder?.id)).map((i) => i.orderId || targetOrder?.id || currentUnpaidOrder?.id))];
-        for (const oId of unpaidOrderIds) {
-          try {
-            await reportTransferSent(oId);
-            const freshOrder = await api.get(`/orders/${encodeURIComponent(oId)}`).catch(() => null);
-            const orderToEmail = freshOrder || targetOrder || currentUnpaidOrder;
-            if (orderToEmail) {
-              const updatedStatusOrder = { ...orderToEmail, paymentStatus: "awaiting" };
-              await sendOrderConfirmationEmail(updatedStatusOrder, customer);
-              if (!confirmedOrderForTicket) confirmedOrderForTicket = updatedStatusOrder;
-            }
-          } catch (err) {
-            console.warn("Không thể cập nhật báo chuyển khoản cho đơn cũ:", err);
-          }
-        }
-      }
-
-      // 2. Nếu có tích chọn món mới từ giỏ hàng: tạo đơn mới và làm sạch giỏ
-      if (hasCart) {
-        const cartItems = selectedItems.filter((it) => !it.isUnpaid);
-        if (cartItems.length > 0) {
-          const targetEmail = customer?.email || formEl.elements.email?.value || "";
-          const birthDate = customer?.birthDate || formEl.elements.birthDate?.value || "2000-01-01";
-          try {
-            const unpaidCodes = [...new Set(selectedItems.filter((i) => i.isUnpaid && i.orderCode).map((i) => i.orderCode))];
-            const newOrderRes = await createOrder({
-              name: customer?.name || formEl.elements.name?.value || "Khách hàng",
-              phone: customer?.phone || formEl.elements.phone?.value || "0900000000",
-              email: targetEmail,
-              birthDate,
-              serviceType: formEl.elements.serviceType?.value || "dine-in",
-              customerId: customer?.id || "",
-              tableNumber: formEl.elements.tableNumber?.value || "",
-              items: cartItems.map((i) => ({ drinkId: i.drinkId, name: i.name, price: i.price, qty: i.qty, image: i.image })),
-              paymentStatus: "awaiting",
-              note: unpaidCodes.length > 0 ? `Thanh toán chung đợt với đơn ${unpaidCodes.join(", ")}` : "",
-            });
-            if (newOrderRes?.order) {
-              await sendOrderConfirmationEmail(newOrderRes.order, customer);
-              if (!confirmedOrderForTicket) confirmedOrderForTicket = newOrderRes.order;
-            }
-          } catch (err) {
-            console.warn("Không thể lưu đơn gộp cho giỏ hàng:", err);
-          }
-          cartItems.forEach((i) => removeFromCart(i.drinkId));
-          refreshCartBadge();
-        }
-      }
-
-      // 3. Nếu thanh toán đơn đơn lẻ trực tiếp
-      if (!hasUnpaid && !hasCart && targetOrder) {
+      // Báo "đã chuyển khoản" cho từng đơn được tích chọn (cả đơn, không trả một phần đơn)
+      const orderIds = [...new Set(selectedItems.map((i) => i.orderId).filter(Boolean))];
+      if (orderIds.length === 0 && targetOrder?.id) orderIds.push(targetOrder.id);
+      for (const oId of orderIds) {
         try {
-          await reportTransferSent(targetOrder.id);
-          const freshOrder = await api.get(`/orders/${encodeURIComponent(targetOrder.id)}`).catch(() => targetOrder);
-          const updatedStatusOrder = { ...(freshOrder || targetOrder), paymentStatus: "awaiting" };
-          await sendOrderConfirmationEmail(updatedStatusOrder, customer);
-          confirmedOrderForTicket = updatedStatusOrder;
+          await reportTransferSent(oId);
+          const freshOrder = await api.get(`/orders/${encodeURIComponent(oId)}`).catch(() => null);
+          const orderToEmail = freshOrder || (targetOrder?.id === oId ? targetOrder : null);
+          if (orderToEmail) {
+            const updatedStatusOrder = { ...orderToEmail, paymentStatus: "awaiting" };
+            lastMail = await sendOrderConfirmationEmail(updatedStatusOrder, customer);
+            if (!confirmedOrderForTicket) confirmedOrderForTicket = updatedStatusOrder;
+          }
         } catch (err) {
-          console.warn("Không thể cập nhật báo chuyển khoản:", err);
+          console.warn("Không thể cập nhật báo chuyển khoản cho đơn:", err);
         }
       }
 
       const finalOrder = confirmedOrderForTicket || targetOrder || currentUnpaidOrder;
       const targetEmail = finalOrder?.email || customer?.email || "";
-      toast(`Đã ghi nhận thanh toán MBBank và gửi Vé Điện Tử đến email: ${targetEmail || "hòm thư tài khoản"}!`, "success");
+      toast("Đã ghi nhận bạn chuyển khoản - quán sẽ đối chiếu và xác nhận sớm.", "success");
+      if (lastMail) { const note = describeMailDelivery(lastMail, finalOrder); toast(note.message, note.type); }
       
       if (finalOrder) {
         openCinemaTicketModal(finalOrder, { toEmail: targetEmail });
@@ -652,12 +611,8 @@ function setPromoMessage(el, text, kind = "") {
 function renderPricing(result, customer) {
   pricing = result;
 
-  const { total, count } = getActiveCheckoutSummary();
-  if (currentUnpaidOrder) {
-    sumFinalEl.textContent = formatMoney(total);
-  } else {
-    sumFinalEl.textContent = formatMoney(result.total);
-  }
+  const { total, count } = getActiveCheckoutSummary(); // pricing vừa được gán = result -> total đã gồm ưu đãi của món mới
+  sumFinalEl.textContent = formatMoney(total);
 
   promoLinesEl.innerHTML = result.discounts.map(discountLineHtml).join("");
 
@@ -695,7 +650,7 @@ function renderPricing(result, customer) {
  */
 async function refreshPricing() {
   const requestId = ++pricingRequestId;
-  const { subtotal } = getActiveCheckoutSummary();
+  const { cartSubtotal: subtotal } = getActiveCheckoutSummary(); // ưu đãi chỉ tính trên món MỚI trong giỏ
   const customer = getCurrentCustomer();
   // Quyền của khách (ma trận phân quyền): bị tắt thì bỏ mã / điểm đang nhập và ẩn ô tương ứng
   const voucherAllowed = canCustomer("self:voucher");
@@ -726,7 +681,7 @@ async function refreshPricing() {
     if (requestId !== pricingRequestId) return null;
     pricing = null;
     promoLinesEl.innerHTML = "";
-    sumFinalEl.textContent = formatMoney(subtotal);
+    sumFinalEl.textContent = formatMoney(getActiveCheckoutSummary().total);
     return null;
   }
 }
@@ -857,6 +812,11 @@ if (slipPayBtn) {
     const { checked } = getActiveCheckoutSummary();
     if (checked.length === 0) {
       toast("Vui lòng tích chọn ít nhất 1 món để thanh toán.", "warning");
+      return;
+    }
+    // Có món MỚI trong giỏ: phải qua form (kiểm tra tuổi 18+, áp ưu đãi) để thành đơn rồi mới có QR đúng số tiền
+    if (checked.some((i) => !i.isUnpaid)) {
+      formEl.requestSubmit();
       return;
     }
     openCustomerPayment(currentUnpaidOrder, () => {
@@ -1066,6 +1026,7 @@ formEl.addEventListener("submit", async (e) => {
 
   const { checked, count } = getActiveCheckoutSummary();
   const hasUnpaid = checked.some((i) => i.isUnpaid);
+  const checkedCart = checked.filter((i) => !i.isUnpaid);
 
   // Gọi món tại bàn bắt buộc có món (cũ hoặc mới); đặt bàn trước thì gọi món là tuỳ chọn
   if (count === 0 && !isBooking()) {
@@ -1073,8 +1034,9 @@ formEl.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Nếu có món từ đơn cũ chưa thanh toán được tích chọn -> thanh toán MBBank (chung hoặc riêng)
-  if (hasUnpaid) {
+  // Chỉ chọn món của đơn cũ chưa thanh toán -> mở QR thanh toán các đơn đó.
+  // Có cả món mới: tạo đơn mới như bình thường (đủ kiểm tra), xong mới có QR gộp đúng tổng tiền.
+  if (hasUnpaid && checkedCart.length === 0) {
     openCustomerPayment(currentUnpaidOrder, () => {
       checkAndRenderUnpaidOrderBanner();
     });
@@ -1104,7 +1066,15 @@ formEl.addEventListener("submit", async (e) => {
   const restoreButton = setButtonLoading(submitBtn, "Đang gửi đơn đến quán...");
   try {
     const customer = getCurrentCustomer();
+    // Khách bỏ tích một số món mới -> chỉ đặt các món đang tích (giá + tồn kho lấy mới nhất từ thực đơn), món còn lại giữ trong giỏ
+    let subsetItems;
+    if (checkedCart.length > 0 && checkedCart.length < getCart().length) {
+      const synced = await syncCartWithCatalog();
+      const keep = new Set(checkedCart.map((i) => i.drinkId));
+      subsetItems = synced.cart.filter((i) => keep.has(i.drinkId));
+    }
     const result = await createOrder({
+      ...(subsetItems ? { items: subsetItems } : {}),
       birthDate: data.birthDate,
       voucherCode: latest?.voucherCode || "",
       pointsToUse: latest?.pointsUsed || 0,
@@ -1127,7 +1097,7 @@ formEl.addEventListener("submit", async (e) => {
       return;
     }
 
-    clearCart();
+    if (!subsetItems) clearCart(); // đặt một phần giỏ thì createOrder đã tự bỏ đúng các món vừa đặt
     renderCart();
     refreshCartBadge();
     formEl.reset();
@@ -1142,11 +1112,9 @@ formEl.addEventListener("submit", async (e) => {
 
     // Tự động gửi Vé Điện Tử (Cinema E-Ticket) về Email tài khoản khách đã đăng ký
     try {
-      await sendOrderConfirmationEmail(result.order, customer);
-      const sentTarget = result.order.email || customer?.email;
-      if (sentTarget) {
-        toast(`🎟️ Đã gửi Vé Điện Tử xác nhận về email: ${sentTarget}`, "success");
-      }
+      const mail = await sendOrderConfirmationEmail(result.order, customer);
+      const note = describeMailDelivery(mail, result.order);
+      toast(note.message, note.type);
     } catch (eMailErr) {
       console.warn("Không thể gửi email vé điện tử:", eMailErr);
     }
@@ -1228,35 +1196,22 @@ function showOrderSuccessModal(order) {
   });
   host.querySelector("#success-open-vietqr-btn")?.addEventListener("click", () => {
     close();
-    if (currentUnpaidOrder && currentUnpaidOrder.id !== order.id && Array.isArray(currentUnpaidOrder.items) && currentUnpaidOrder.items.length > 0) {
-      // Mỗi đơn có thể đã được giảm riêng -> tính tiền từng món theo tỉ lệ (tổng đơn / tổng giá niêm yết)
-      const scaleOf = (o) => {
-        const listed = (o.items || []).reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 1), 0);
-        return listed > 0 && o.total > 0 && o.total < listed ? o.total / listed : 1;
+    // Các đơn chưa trả khác của khách (không tính đơn vừa tạo) được gộp chung vào một mã QR; khách tự bỏ tích đơn chưa muốn trả
+    const others = (currentUnpaidOrders || []).filter((o) => o.id !== order.id && Array.isArray(o.items) && o.items.length > 0);
+    if (others.length > 0) {
+      const itemsOf = (o, tag) => {
+        const allocated = allocateOrderTotal(o.items, o.total); // tổng các món = đúng tổng đơn
+        return o.items.map((it, idx) => ({
+          ...it,
+          isUnpaid: true, // đơn ĐÃ LƯU - nếu đánh dấu là món giỏ hàng, nút "Tôi đã chuyển khoản" sẽ tạo thêm đơn TRÙNG
+          orderCode: o.code,
+          orderId: o.id,
+          sourceTag: `${tag} ${o.code}`,
+          finalPrice: allocated[idx],
+          checked: true,
+        }));
       };
-      const oldScale = scaleOf(currentUnpaidOrder);
-      const newScale = scaleOf(order);
-      const combined = [
-        ...currentUnpaidOrder.items.map((it) => ({
-          ...it,
-          isUnpaid: true,
-          orderCode: currentUnpaidOrder.code,
-          orderId: currentUnpaidOrder.id,
-          sourceTag: `Đơn cũ ${currentUnpaidOrder.code}`,
-          finalPrice: Math.round((Number(it.price) || 0) * (Number(it.qty) || 1) * oldScale),
-          checked: true,
-        })),
-        ...order.items.map((it) => ({
-          ...it,
-          isUnpaid: false,
-          orderCode: order.code,
-          orderId: order.id,
-          sourceTag: `Đơn mới ${order.code}`,
-          finalPrice: Math.round((Number(it.price) || 0) * (Number(it.qty) || 1) * newScale),
-          checked: true,
-        })),
-      ];
-      openCustomerPayment(order, null, combined);
+      openCustomerPayment(order, null, [...others.flatMap((o) => itemsOf(o, "Đơn cũ")), ...itemsOf(order, "Đơn mới")]);
     } else {
       openCustomerPayment(order);
     }
