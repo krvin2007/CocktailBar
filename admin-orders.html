@@ -45,7 +45,8 @@
             <option value="all">Mọi tình trạng thanh toán</option>
             <option value="unpaid">Chưa thanh toán</option>
             <option value="awaiting">Chờ xác nhận chuyển khoản</option>
-            <option value="paid">Đã thanh toán</option>
+            <option value="deposit">Đã nhận cọc 70%</option>
+            <option value="paid">Đã thu đủ</option>
           </select>
           <select id="f-sort">
             <option value="newest">Thời gian: Mới nhất</option>
@@ -126,10 +127,13 @@
         </button>
         <button type="button" class="btn btn-outline btn-sm" id="order-vietqr-btn" title="Hiện mã QR MBBank thanh toán cho khách quét">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          Mã QR MBBank
+          <span class="qr-btn-label">Mã QR MBBank</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-sm" id="order-deposit-btn" hidden title="Thu ngân đã nhận cọc 70% (đối chiếu sao kê)">
+          Xác nhận đã nhận cọc 70%
         </button>
         <button type="button" class="btn btn-outline btn-sm" id="order-paid-btn" hidden title="Thu ngân đã nhận đủ tiền (tiền mặt hoặc chuyển khoản)">
-          Xác nhận đã thu tiền
+          Xác nhận đã thu đủ
         </button>
         <button type="button" class="btn btn-danger btn-sm" id="order-delete-btn">Xoá đơn</button>
         <button type="button" class="btn btn-primary btn-sm" id="order-save-status-btn">Lưu trạng thái</button>

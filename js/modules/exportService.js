@@ -98,7 +98,8 @@ export function exportOrdersToExcel(orders = []) {
     };
 
     const paymentLabels = {
-      paid: "Đã thanh toán",
+      paid: "Đã thu đủ",
+      deposit: "Đã nhận cọc 70%",
       awaiting: "Chờ xác nhận CK",
       unpaid: "Chưa thanh toán",
     };
@@ -383,7 +384,8 @@ function normalizeOrderServiceType(raw) {
 
 function normalizeOrderPaymentStatus(raw) {
   const text = String(raw ?? "").trim().toLowerCase();
-  if (text === "paid" || text.includes("đã thanh toán") || text.includes("da thanh toan")) return "paid";
+  if (text === "deposit" || text.includes("cọc") || text.includes("coc")) return "deposit";
+  if (text === "paid" || text.includes("đã thanh toán") || text.includes("da thanh toan") || text.includes("thu đủ") || text.includes("thu du")) return "paid";
   if (text === "awaiting" || text.includes("chờ")) return "awaiting";
   return "unpaid";
 }

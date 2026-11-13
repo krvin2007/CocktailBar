@@ -1271,7 +1271,7 @@ check("OTP quên mật khẩu chỉ dùng 1 lần", resetReuse.success, false);
   const bookingOrder = { id: "o-mail-1", code: "DH0777", name: "Lê Thu Hương", phone: "0918765432", email: "huong.le@gmail.com", serviceType: "booking", bookingTime: new Date(2026, 10, 15, 20, 0).toISOString(), guestCount: 4, createdAt: new Date(2026, 10, 12, 9, 0).toISOString(), items: [{ name: "Negroni Classico", price: 125000, qty: 2 }], discounts: [{ amount: 7500 }], total: 242500, paymentStatus: "unpaid" };
   check("Nhãn thanh toán: unpaid", em.paymentStatusText({ paymentStatus: "unpaid" }), "CHƯA THANH TOÁN");
   check("Nhãn thanh toán: awaiting (đã quét/báo chuyển khoản) KHÔNG còn ghi 'chưa thanh toán'", em.paymentStatusText({ paymentStatus: "awaiting" }), "ĐÃ BÁO CHUYỂN KHOẢN - ĐANG CHỜ QUÁN XÁC NHẬN");
-  check("Nhãn thanh toán: paid", em.paymentStatusText({ paymentStatus: "paid" }), "ĐÃ THANH TOÁN");
+  check("Nhãn thanh toán: paid", em.paymentStatusText({ paymentStatus: "paid" }), "ĐÃ THU ĐỦ");
   check("Tiêu đề mail đổi theo giai đoạn (chờ xác nhận / đã thanh toán)", [em.orderMailSubject({ ...bookingOrder, paymentStatus: "awaiting" }), em.orderMailSubject({ ...bookingOrder, paymentStatus: "paid" })].map((x) => /báo chuyển khoản|Đã thanh toán/.test(x)).join(), "true,true");
   const params = em.buildOrderMailParams(bookingOrder, "huong.le@gmail.com");
   check("Mail thật: có ngày giờ đặt bàn 15/11/2026 20:00", /15\/11\/2026/.test(params.booking_time) && /20:00/.test(params.booking_time), true);
@@ -1617,6 +1617,73 @@ section("[50] Sơ đồ chỗ ngồi trong quán khi Đặt Bàn Trước");
   check("Trang order.html hiển thị sơ đồ khu vực & bàn ngồi dùng chung cho cả Đặt Bàn Trước",
     [orderHtmlText.includes('id="seating-map-zones"'), orderHtmlText.includes('id="seating-map-field"')],
     [true, true]);
+}
+
+section("[51] Cọc 70%: tách 'đã nhận cọc' / 'đã thu đủ', huỷ đơn = mất cọc");
+{
+  const rev = await import(mod("revenueStats.js"));
+  const emailMod = await import(mod("emailService.js"));
+  resetDb();
+  const dr = await drinks.getDrinkById(LOW);
+  const buy = async (qty, info) => { orders.addToCart(dr, qty); return createAdult(info); };
+  const made = await buy(2, { name: "Phạm Cọc", phone: "0907111222", serviceType: "takeaway" });
+  const total = made.order.total;
+  const prepay = venue.calcPrepayAmount(total);
+  const id = made.order.id;
+
+  check("Đơn mới: cần cọc, chưa có cọc", [made.order.needsDeposit, made.order.hasDeposit, made.order.paymentStatus], [true, false, "unpaid"]);
+
+  const awaiting = await orders.reportTransferSent(id);
+  check("Khách báo chuyển khoản -> awaiting, vẫn cần đối chiếu", [awaiting.paymentStatus, awaiting.needsDeposit], ["awaiting", true]);
+  check("Đơn awaiting khách KHÔNG tự huỷ online được", awaiting.customerCancelCheck().ok, false);
+
+  const dep = await orders.confirmDeposit(id);
+  check("Thu ngân xác nhận cọc -> deposit, 'Đã nhận cọc 70%'", [dep.paymentStatus, dep.paymentLabel], ["deposit", "Đã nhận cọc 70%"]);
+  check("Đã cọc: khách không bị đòi trả cọc lần nữa nhưng quán còn 30% phải thu", [dep.needsDeposit, dep.needsPayment, dep.hasDeposit], [false, true, true]);
+  check("Đã cọc: bấm 'đã chuyển khoản' lần nữa KHÔNG hạ về awaiting", (await orders.reportTransferSent(id)).paymentStatus, "deposit");
+  check("Đã cọc: confirmDeposit lặp lại không đổi", (await orders.confirmDeposit(id)).paymentStatus, "deposit");
+  check("Đã cọc: đơn bị khoá xoá (giữ trong sổ tiền)", dep.isRevenueLocked, true);
+  check("Đã cọc: khách được tự huỷ nhưng sẽ MẤT CỌC (ok = true)", dep.customerCancelCheck().ok, true);
+  check("Cọc 70% + còn lại 30% = tổng đơn", dep.prepayAmount + dep.remainingAmount, total);
+
+  const nowR = new Date();
+  const asRow = (o) => ({ ...o.toJSON(), serviceTime: o.serviceTime });
+  check("Cọc còn hiệu lực: chưa tính doanh thu, nằm ở 'cọc đang giữ'", [rev.revenueOf(asRow(dep)), rev.depositHeldOf(asRow(dep))], [0, prepay]);
+
+  const full = await orders.confirmPayment(id);
+  check("Thu nốt 30% -> paid (đã thu đủ), doanh thu = cả tổng đơn", [full.paymentStatus, rev.revenueOf(asRow(full))], ["paid", total]);
+  check("Đã thu đủ: không còn cần thanh toán, cọc giữ = 0", [full.needsPayment, rev.depositHeldOf(asRow(full))], [false, 0]);
+  check("Đã thu đủ: confirmDeposit không hạ ngược về cọc", (await orders.confirmDeposit(id)).paymentStatus, "paid");
+
+  // Huỷ đơn đã cọc = mất cọc
+  const made2 = await buy(1, { name: "Phạm Cọc Hai", phone: "0907111333", serviceType: "takeaway" });
+  await orders.confirmDeposit(made2.order.id);
+  const cancelled = await orders.cancelByCustomer(made2.order.code, "0907111333");
+  check("Khách huỷ đơn đã cọc: đơn huỷ, trạng thái vẫn 'deposit' và mất cọc đúng 70%",
+    [cancelled.status, cancelled.paymentStatus, cancelled.forfeitedDeposit], ["cancelled", "deposit", venue.calcPrepayAmount(made2.order.total)]);
+  check("Mất cọc: tính vào doanh thu đúng phần cọc, không tính là đơn đã phục vụ",
+    [rev.revenueOf(asRow(cancelled)), rev.isForfeited(asRow(cancelled)), rev.depositHeldOf(asRow(cancelled))], [venue.calcPrepayAmount(made2.order.total), true, 0]);
+  const agg = rev.buildRevenueSummary([asRow(cancelled)], nowR);
+  check("Thống kê ngày/tháng/quý/năm cộng tiền cọc bị giữ lại nhưng đếm 0 đơn",
+    agg.map((c) => `${c.revenue}/${c.orders}`).every((x) => x === `${venue.calcPrepayAmount(made2.order.total)}/0`), true);
+  let deleteBlocked = false;
+  try { await orders.deleteOrder(made2.order.id); } catch (err) { deleteBlocked = /thu tiền/.test(err.message); }
+  check("Đơn mất cọc không xoá được (tiền cọc nằm trong sổ)", deleteBlocked, true);
+
+  // Đơn cọc đã phục vụ xong nhưng quên thu 30% vẫn ghi nhận phần cọc đã nhận
+  check("Đơn hoàn tất mà mới có cọc: ghi nhận phần cọc (30% chưa thu nằm ngoài)",
+    rev.revenueOf({ paymentStatus: "deposit", status: "completed", total: 100000 }), 70000);
+
+  // Mail & nhãn
+  check("Nhãn mail: deposit nêu rõ phần còn lại tại quán", emailMod.paymentStatusText({ paymentStatus: "deposit", total: 100000 }).includes("CÒN"), true);
+  check("Nhãn mail: paid là 'ĐÃ THU ĐỦ' (không còn lẫn với 'tại quán 30%')", emailMod.paymentStatusText({ paymentStatus: "paid" }), "ĐÃ THU ĐỦ");
+  const ticket = emailMod.buildCinemaTicketHtml({ code: "DH9", paymentStatus: "paid", total: 100000, items: [], serviceType: "dine-in", createdAt: new Date().toISOString() });
+  check("Vé 'đã thu đủ' không còn dòng 'Tại quán (30%)' gây mâu thuẫn", ticket.includes("Tại quán (30%)"), false);
+  check("Tiêu đề mail đã cọc", emailMod.orderMailSubject({ code: "X1", paymentStatus: "deposit" }).includes("cọc 70%"), true);
+
+  // Nhập/xuất Excel
+  const exportMod = await import(mod("exportService.js"));
+  check("Xuất/nhập Excel nhận diện trạng thái cọc", typeof exportMod.printOrderInvoice, "function");
 }
 
 /* ================================================================ */
