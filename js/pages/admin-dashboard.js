@@ -9,7 +9,7 @@ import { formatMoney, formatDateTime, escapeHtml } from "../modules/utils.js";
 import { ICONS } from "../modules/icons.js";
 import { errorHtml } from "../modules/ui.js";
 import { businessDayKey, BUSINESS_DAY_CUTOFF_HOUR } from "../modules/venue.js";
-import { buildRevenueSummary, buildPeriodSeries, PERIOD_NAMES } from "../modules/revenueStats.js";
+import { buildRevenueSummary, buildPeriodSeries, PERIOD_NAMES, revenueOf, depositHeldOf } from "../modules/revenueStats.js";
 import { exportToCsv } from "../modules/exportService.js";
 
 /* Dữ liệu tải từ API trong init() */
@@ -18,16 +18,14 @@ let orders = [];
 let activeOrders = [];
 
 /**
- * Doanh thu THỰC THU = đơn đã được thu ngân xác nhận nhận tiền (paid) và
- * không bị huỷ. Khách chỉ bấm "Tôi đã chuyển khoản" (awaiting) thì chưa tính.
+ * Doanh thu THỰC THU: xem revenueStats.revenueOf (thu đủ + cọc bị giữ lại).
+ * Khách chỉ bấm "Tôi đã chuyển khoản" (awaiting) thì chưa tính.
  */
-const isCollected = (o) => o.paymentStatus === "paid" && o.status !== "cancelled";
 
 /* ---------------- Thẻ thống kê tổng quan ---------------- */
 function renderStatCards() {
-  const totalRevenue = orders
-    .filter(isCollected)
-    .reduce((sum, o) => sum + o.total, 0);
+  const totalRevenue = orders.reduce((sum, o) => sum + revenueOf(o), 0);
+  const heldDeposit = orders.reduce((sum, o) => sum + depositHeldOf(o), 0);
 
   const pendingCount = orders.filter((o) => o.status === "pending").length;
   const awaitingCount = orders.filter((o) => o.paymentStatus === "awaiting" && o.status !== "cancelled").length;
@@ -36,6 +34,7 @@ function renderStatCards() {
     { icon: ICONS.cocktail(22), value: drinks.length, label: "Thức uống trong Menu" },
     { icon: ICONS.receipt(22), value: orders.length, label: "Tổng lượt đặt chỗ" },
     { icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`, value: formatMoney(totalRevenue), label: "Doanh thu thực thu" },
+    { icon: ICONS.receipt(22), value: formatMoney(heldDeposit), label: "Cọc 70% đang giữ (chưa phục vụ)" },
     { icon: ICONS.clock(22), value: pendingCount, label: "Đơn cần xử lý ngay" },
     { icon: ICONS.receipt(22), value: awaitingCount, label: "Chuyển khoản chờ đối chiếu" },
   ];
@@ -58,7 +57,7 @@ function renderRevenueChart() {
   const chartEl = document.getElementById("revenue-chart");
   if (!chartEl) return;
 
-  const collectedOrders = orders.filter(isCollected);
+  const collectedOrders = orders.filter((o) => revenueOf(o) > 0);
 
   // 7 NGÀY KINH DOANH gần nhất (chốt 06:00 sáng - xem venue.js): mở trang lúc
   // 01:00 sáng thì "hôm nay" vẫn là đêm hôm trước. Đặt giờ 12:00 trưa cho
@@ -79,7 +78,7 @@ function renderRevenueChart() {
     const key = businessDayKey(d);
     const total = collectedOrders
       .filter((o) => businessDayKey(o.serviceTime) === key)
-      .reduce((sum, o) => sum + o.total, 0);
+      .reduce((sum, o) => sum + revenueOf(o), 0);
     return { date: d, total };
   });
 

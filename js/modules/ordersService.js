@@ -228,18 +228,21 @@ export const ORDER_STATUS_BADGE = {
  * khách ngồi tại quán thường uống xong mới trả, còn đặt bàn có thể trả trước.
  * - unpaid   : chưa thanh toán
  * - awaiting : khách bấm "Tôi đã chuyển khoản" -> chờ thu ngân đối chiếu sao kê
- * - paid     : thu ngân/quản lý xác nhận ĐÃ nhận tiền (tiền mặt hoặc chuyển khoản)
+ * - deposit  : thu ngân đã nhận CỌC 70% (còn 30% thu tại quán). Đơn bị huỷ ở trạng thái này = MẤT CỌC
+ * - paid     : thu ngân/quản lý xác nhận ĐÃ thu đủ 100% (tiền mặt hoặc chuyển khoản)
  * Website KHÔNG tự coi là đã trả chỉ vì khách bấm nút.
  */
 export const PAYMENT_STATUS = {
   unpaid: "Chưa thanh toán",
   awaiting: "Chờ xác nhận CK",
-  paid: "Đã thanh toán",
+  deposit: "Đã nhận cọc 70%",
+  paid: "Đã thu đủ",
 };
 
 export const PAYMENT_STATUS_BADGE = {
   unpaid: "badge-muted",
   awaiting: "badge-warning",
+  deposit: "badge-info",
   paid: "badge-success",
 };
 
@@ -339,12 +342,28 @@ export class Order {
     return this.#status !== "cancelled" && this.paymentStatus !== "paid" && this.total > 0;
   }
 
+  /** Khách còn phải CỌC 70% (chưa có cọc được xác nhận) - dùng cho nút "Trả trước 70%" phía khách */
+  get needsDeposit() {
+    return this.#status !== "cancelled" && (this.paymentStatus === "unpaid" || this.paymentStatus === "awaiting") && this.total > 0;
+  }
+
+  /** Đã nhận cọc, còn 30% thu tại quán */
+  get hasDeposit() {
+    return this.paymentStatus === "deposit";
+  }
+
+  /** Số tiền cọc bị giữ lại: đơn đã nhận cọc mà bị huỷ = khách mất cọc, không hoàn */
+  get forfeitedDeposit() {
+    return this.paymentStatus === "deposit" && this.#status === "cancelled" ? this.prepayAmount : 0;
+  }
+
   /**
-   * Đơn đã thu tiền và chưa huỷ là một dòng trong sổ doanh thu: không được xoá
-   * (xoá là mất dấu tiền đã thu). Muốn bỏ thì phải huỷ đơn (hoàn tiền) trước.
+   * Đơn đã thu tiền (đủ hoặc cọc) là một dòng trong sổ doanh thu: không được xoá
+   * (xoá là mất dấu tiền đã thu). Đơn đã nhận cọc luôn bị khoá, kể cả khi đã huỷ (tiền cọc được giữ lại).
+   * Đơn thu đủ muốn bỏ thì phải huỷ đơn (hoàn tiền) trước.
    */
   get isRevenueLocked() {
-    return this.paymentStatus === "paid" && this.#status !== "cancelled";
+    return this.paymentStatus === "deposit" || (this.paymentStatus === "paid" && this.#status !== "cancelled");
   }
 
   /**
@@ -370,8 +389,9 @@ export class Order {
     if (this.#status !== "pending") {
       return { ok: false, reason: `Đơn đang ở trạng thái "${this.statusLabel}" - vui lòng gọi hotline ${VENUE.hotline} để được hỗ trợ.` };
     }
-    if (this.paymentStatus !== "unpaid") {
-      return { ok: false, reason: `Đơn đã thanh toán hoặc đang chờ đối chiếu chuyển khoản - vui lòng gọi hotline ${VENUE.hotline} để được hoàn tiền.` };
+    // Đã cọc: được tự huỷ nhưng MẤT CỌC (giao diện phải cảnh báo rõ trước khi huỷ)
+    if (this.paymentStatus === "awaiting" || this.paymentStatus === "paid") {
+      return { ok: false, reason: `Đơn đã thanh toán hoặc đang chờ đối chiếu chuyển khoản - vui lòng gọi hotline ${VENUE.hotline} để được hỗ trợ.` };
     }
     return { ok: true, reason: "" };
   }
@@ -932,18 +952,31 @@ export async function deleteOrder(id) {
 export async function reportTransferSent(id) {
   const order = await getOrderById(id);
   if (!order) throw new Error("Không tìm thấy đơn hàng.");
-  if (!order.needsPayment) return order;              // đã trả hoặc đã huỷ -> không đổi
+  if (!order.needsDeposit) return order;              // đã cọc / đã trả / đã huỷ -> không đổi
   if (order.paymentStatus === "awaiting") return order;
   const saved = await api.patch(`/${COLLECTION}/${encodeURIComponent(id)}`, { paymentStatus: "awaiting" });
   return Order.from(saved);
 }
 
-/** Thu ngân/quản lý xác nhận ĐÃ nhận tiền (tiền mặt hoặc chuyển khoản) - PATCH paymentStatus = "paid" */
+/** Thu ngân/quản lý xác nhận ĐÃ thu đủ 100% (tiền mặt hoặc chuyển khoản; hoặc thu nốt 30% sau cọc) - PATCH paymentStatus = "paid" */
 export async function confirmPayment(id) {
   const order = await getOrderById(id);
   if (!order) throw new Error("Không tìm thấy đơn hàng.");
   if (order.status === "cancelled") throw new Error(`Đơn ${order.code} đã huỷ, không thể xác nhận thanh toán.`);
   const saved = await api.patch(`/${COLLECTION}/${encodeURIComponent(id)}`, { paymentStatus: "paid" });
+  return Order.from(saved);
+}
+
+/**
+ * Thu ngân xác nhận ĐÃ nhận cọc 70% - PATCH paymentStatus = "deposit".
+ * Đơn đã thu đủ thì không hạ ngược về "cọc"; đơn đã cọc thì giữ nguyên.
+ */
+export async function confirmDeposit(id) {
+  const order = await getOrderById(id);
+  if (!order) throw new Error("Không tìm thấy đơn hàng.");
+  if (order.status === "cancelled") throw new Error(`Đơn ${order.code} đã huỷ, không thể xác nhận cọc.`);
+  if (order.paymentStatus === "paid" || order.paymentStatus === "deposit") return order;
+  const saved = await api.patch(`/${COLLECTION}/${encodeURIComponent(id)}`, { paymentStatus: "deposit" });
   return Order.from(saved);
 }
 

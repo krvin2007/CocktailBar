@@ -126,7 +126,7 @@ export async function getBotResponse(userMessage) {
       "- 💵 **Thanh toán phần còn lại tại quầy:** Hoàn tất 30% bằng tiền mặt hoặc chuyển khoản sau khi thưởng thức.\n" +
       "- 🛡️ **Nội quy 18+ & Check-in:** Chỉ phục vụ khách từ đủ 18 tuổi trở lên (vui lòng mang CCCD/VNeID chính chủ); giữ bàn đặt trước tối đa 20 phút.\n" +
       "- 🎟️ Sau khi đặt đơn, quý khách nhận **vé điện tử** trong mục *Tài khoản* để check-in.\n" +
-      "- ❌ Đơn chỉ tự huỷ online được khi **chưa thanh toán** (đặt bàn trước cần huỷ trước 2 tiếng); nếu đã chuyển khoản cọc vui lòng gọi hotline " + VENUE.hotline + " để được hỗ trợ.\n\n" +
+      "- ❌ **Huỷ đơn:** đơn chưa cọc huỷ online miễn phí (đặt bàn trước cần huỷ trước 2 tiếng). Đơn **đã được quán xác nhận nhận cọc 70% mà huỷ thì mất khoản cọc** (quán không hoàn lại). Đơn đang chờ đối chiếu chuyển khoản hoặc đã thu đủ vui lòng gọi hotline " + VENUE.hotline + " để được hỗ trợ.\n\n" +
       "Quý khách cần em hướng dẫn thêm bước nào không ạ?"
     );
   }
