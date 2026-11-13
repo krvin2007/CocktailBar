@@ -1404,7 +1404,7 @@ function lookupResultHtml(o) {
         <p><strong>${t("order_rc_created", "Đặt lúc")}:</strong> ${formatDateTime(o.createdAt)}</p>
         ${o.isTableOnly ? "" : `
         <p><strong>${t("order_rc_amount", "Tổng tiền")}:</strong> <strong>${formatMoney(o.total)}</strong> <span class="text-muted text-xs">(Trả trước 70%: <strong class="text-amber">${formatMoney(o.prepayAmount)}</strong> · Tại quán 30%: ${formatMoney(o.remainingAmount)})</span></p>
-        <p><strong>${t("order_rc_payment", "Thanh toán")}:</strong> <span class="badge ${o.paymentBadge}">${paymentText(o)}</span>${o.hasDeposit ? ` <span class="text-muted text-xs">(còn ${formatMoney(o.remainingAmount)} thanh toán tại quán)</span>` : ""}${o.forfeitedDeposit > 0 ? ` <span class="text-muted text-xs">(đã huỷ - cọc ${formatMoney(o.forfeitedDeposit)} không hoàn)</span>` : ""}</p>`}
+        <p><strong>${t("order_rc_payment", "Thanh toán")}:</strong> <span class="badge ${o.paymentBadge}">${paymentText(o)}</span>${o.hasDeposit ? ` <span class="text-muted text-xs">(còn ${formatMoney(o.remainingAmount)} thanh toán tại quán)</span>` : ""}${o.forfeitedDeposit > 0 ? ` <span class="text-muted text-xs">(đã huỷ - cọc ${formatMoney(o.forfeitedDeposit)} không hoàn${o.refundDue > 0 ? `, quán hoàn lại ${formatMoney(o.refundDue)}` : ""})</span>` : ""}</p>`}
         ${o.holdsStock ? `
         <div class="door-host-notice-card" style="margin: 14px 0; text-align: left;">
           <div class="notice-icon">🛡️</div>

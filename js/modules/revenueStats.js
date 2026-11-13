@@ -1,6 +1,6 @@
 /* =========================================================
    REVENUESTATS.JS - Doanh thu theo NGÀY / THÁNG / QUÝ / NĂM
-   - Doanh thu thực thu = đơn thu đủ (paid) chưa huỷ + tiền cọc 70% giữ lại của đơn huỷ (khách mất cọc)
+   - Doanh thu thực thu = đơn thu đủ (paid) chưa huỷ + tiền cọc 70% giữ lại của đơn huỷ (khách mất cọc, kể cả đơn đã thu đủ)
      + phần cọc của đơn đã phục vụ nhưng quán chưa bấm "Thu nốt 30%". Cọc của đơn còn hiệu lực chỉ là "cọc đang giữ", chưa tính doanh thu.
    - Mỗi đơn tính vào NGÀY KINH DOANH của giờ phục vụ (đặt bàn = giờ hẹn; chốt ngày 06:00 sáng - venue.js),
      rồi gom lên tháng / quý / năm theo ngày kinh doanh đó. Hàm thuần (không đụng DOM) để dễ kiểm thử.
@@ -23,8 +23,11 @@ export const isCollected = (o) => o.paymentStatus === "paid" && o.status !== "ca
 /** Tiền cọc 70% của đơn đã nhận cọc (0 nếu đơn không ở trạng thái cọc) */
 export const depositOf = (o) => (o.paymentStatus === "deposit" ? calcPrepayAmount(Number(o.total) || 0) : 0);
 
-/** Cọc bị giữ lại vì khách huỷ đơn (mất cọc) */
-export const isForfeited = (o) => o.paymentStatus === "deposit" && o.status === "cancelled";
+/** Cọc 70% bị giữ lại vì khách huỷ đơn đã cọc / đã thu đủ (mất cọc); 0 nếu không thuộc trường hợp đó */
+export const forfeitOf = (o) => ((o.paymentStatus === "deposit" || o.paymentStatus === "paid") && o.status === "cancelled"
+  ? calcPrepayAmount(Number(o.total) || 0) : 0);
+
+export const isForfeited = (o) => forfeitOf(o) > 0;
 
 /** Cọc đang giữ cho đơn còn hiệu lực (chưa phục vụ xong, chưa huỷ) - chưa phải doanh thu */
 export const depositHeldOf = (o) => (o.paymentStatus === "deposit" && o.status !== "cancelled" && o.status !== "completed" ? depositOf(o) : 0);
@@ -32,13 +35,14 @@ export const depositHeldOf = (o) => (o.paymentStatus === "deposit" && o.status !
 /**
  * Số tiền ghi vào doanh thu của một đơn:
  * - thu đủ & chưa huỷ: cả tổng đơn
- * - đã cọc & huỷ (mất cọc) hoặc đã cọc & hoàn tất (chưa thu nốt 30%): phần cọc 70%
+ * - đã cọc / đã thu đủ mà bị huỷ (mất cọc): phần cọc 70% (đơn thu đủ huỷ được hoàn 30% còn lại)
+ * - đã cọc & hoàn tất (chưa thu nốt 30%): phần cọc 70%
  * - còn lại: 0
  */
 export function revenueOf(o) {
   if (isCollected(o)) return Number(o.total) || 0;
-  if (o.paymentStatus === "deposit" && (o.status === "cancelled" || o.status === "completed")) return depositOf(o);
-  return 0;
+  if (o.paymentStatus === "deposit" && o.status === "completed") return depositOf(o);
+  return forfeitOf(o);
 }
 
 /** Khoá kỳ từ ngày kinh doanh "YYYY-MM-DD": day -> chính nó, month -> "YYYY-MM", quarter -> "YYYY-Qn", year -> "YYYY" */

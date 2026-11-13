@@ -162,7 +162,7 @@ function openDetail(order) {
       <div class="order-detail-row"><span>${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("")}
     ${order.note ? `<div class="order-detail-row"><span>Ghi chú pha chế</span><span class="note-box">${escapeHtml(order.note)}</span></div>` : ""}
     <div class="order-detail-row"><span>Thanh toán</span><span class="${classNames("badge", order.paymentBadge)}">${order.paymentLabel}</span></div>
-    ${order.forfeitedDeposit > 0 ? `<p class="id-check-note">Khách đã <strong>mất cọc ${formatMoney(order.forfeitedDeposit)}</strong> do huỷ đơn - số tiền này quán giữ lại, tính vào doanh thu, không hoàn.</p>` : ""}
+    ${order.forfeitedDeposit > 0 ? `<p class="id-check-note">Khách đã <strong>mất cọc ${formatMoney(order.forfeitedDeposit)}</strong> do huỷ đơn - số tiền này quán giữ lại, tính vào doanh thu, không hoàn.${order.refundDue > 0 ? ` Đơn đã thu đủ nên cần <strong>hoàn ${formatMoney(order.refundDue)}</strong> phần còn lại cho khách.` : ""}</p>` : ""}
     ${order.hasDeposit && order.status === "completed" ? `<p class="id-check-note">Đơn đã phục vụ nhưng <strong>chưa thu nốt ${formatMoney(order.remainingAmount)}</strong> - bấm "Thu nốt 30% tại quán".</p>` : ""}
     ${order.isRevenueLocked ? `<p class="text-muted text-xs mt-1">Đơn đã thu tiền được giữ trong sổ doanh thu nên không xoá được.</p>` : ""}
 
@@ -297,7 +297,7 @@ async function handleSaveStatus() {
   // Huỷ đơn là thao tác quan trọng -> hỏi lại trước; đơn đã thu tiền thì nhắc hoàn tiền
   if (newStatus === "cancelled") {
     const refundNote = activeOrder.paymentStatus === "paid"
-      ? ` Đơn này ĐÃ THU ĐỦ ${formatMoney(activeOrder.total)} - nhớ hoàn tiền cho khách.`
+      ? ` Đơn này ĐÃ THU ĐỦ ${formatMoney(activeOrder.total)}: khách MẤT CỌC ${formatMoney(activeOrder.prepayAmount)} (quán giữ lại), nhớ HOÀN ${formatMoney(activeOrder.remainingAmount)} phần còn lại cho khách.`
       : activeOrder.paymentStatus === "deposit"
         ? ` Đơn này đã nhận cọc ${formatMoney(activeOrder.prepayAmount)}: khách MẤT CỌC, quán giữ lại số tiền này (không hoàn).`
         : "";
