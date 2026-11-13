@@ -89,7 +89,9 @@ function orderRowHtml(o) {
 
   let paymentBadgeHtml;
   let payBtnHtml = "";
-  if (o.paymentStatus === "paid") {
+  if (o.paymentStatus === "paid" && o.status === "cancelled") {
+    paymentBadgeHtml = `<span class="badge badge-muted" title="Đơn đã huỷ - mất cọc 70%, hoàn lại phần còn lại">Mất cọc ${formatMoney(calcPrepayAmount(o.total))}</span><div class="text-xs text-muted">Hoàn ${formatMoney(calcRemainingAmount(o.total))}</div>`;
+  } else if (o.paymentStatus === "paid") {
     paymentBadgeHtml = `<span class="badge badge-success">Đã thu đủ</span>`;
   } else if (o.paymentStatus === "deposit") {
     paymentBadgeHtml = o.status === "cancelled"

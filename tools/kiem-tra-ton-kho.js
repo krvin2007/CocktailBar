@@ -575,7 +575,13 @@ const paidThenCancelled = await createAdult({ ...customer(4), serviceType: "take
 await orders.confirmPayment(paidThenCancelled.order.id);
 check("Đơn đã thu tiền mà còn đang chờ -> cũng bị khoá", (await orders.getOrderById(paidThenCancelled.order.id)).isRevenueLocked, true);
 await orders.updateOrderStatus(paidThenCancelled.order.id, "cancelled");
-check("Huỷ đơn (hoàn tiền) xong thì mở khoá, xoá được", await orders.deleteOrder(paidThenCancelled.order.id), true);
+const cancelledPaid = await orders.updateOrderStatus(paidThenCancelled.order.id, "cancelled").catch(() => null);
+check("Đơn đã thu đủ rồi huỷ: khách mất cọc 70%, hoàn 30% còn lại",
+  [cancelledPaid?.forfeitedDeposit, cancelledPaid?.refundDue, (cancelledPaid?.forfeitedDeposit || 0) + (cancelledPaid?.refundDue || 0)],
+  [paidThenCancelled.order.prepayAmount, paidThenCancelled.order.remainingAmount, paidThenCancelled.order.total]);
+let cancelledPaidDelete = false;
+try { await orders.deleteOrder(paidThenCancelled.order.id); } catch (err) { cancelledPaidDelete = /thu tiền/.test(err.message); }
+check("Đơn thu đủ đã huỷ vẫn bị khoá xoá (quán giữ lại cọc 70% trong sổ)", cancelledPaidDelete, true);
 
 section("[34] Mật khẩu được băm, không lưu chữ thường");
 const pw = await import(mod("passwords.js"));
@@ -1192,7 +1198,7 @@ check("OTP quên mật khẩu chỉ dùng 1 lần", resetReuse.success, false);
     o(new Date(2026, 3, 30, 21, 0), 300000),                       // tháng trước, cùng quý
     o(new Date(2026, 2, 31, 21, 0), 400000),                       // quý trước (Q1)
     o(new Date(2025, 11, 31, 21, 0), 500000),                      // năm trước
-    o(new Date(2026, 4, 15, 22, 0), 999999, { status: "cancelled" }), // đơn huỷ: không tính
+    o(new Date(2026, 4, 15, 22, 0), 999999, { status: "cancelled", paymentStatus: "unpaid" }), // đơn huỷ chưa trả tiền: không tính (huỷ đơn ĐÃ thu tiền = mất cọc 70%, có test riêng ở mục [51])
     o(new Date(2026, 4, 15, 22, 0), 888888, { paymentStatus: "awaiting" }), // chờ đối chiếu: chưa tính
     o(new Date(2026, 4, 15, 22, 0), 777777, { paymentStatus: "unpaid" }),   // chưa trả: chưa tính
   ];
@@ -1669,6 +1675,11 @@ section("[51] Cọc 70%: tách 'đã nhận cọc' / 'đã thu đủ', huỷ đ�
   let deleteBlocked = false;
   try { await orders.deleteOrder(made2.order.id); } catch (err) { deleteBlocked = /thu tiền/.test(err.message); }
   check("Đơn mất cọc không xoá được (tiền cọc nằm trong sổ)", deleteBlocked, true);
+
+  // Đơn đã thu đủ mà bị huỷ: quán giữ cọc 70%, hoàn 30%
+  const paidCancel = { paymentStatus: "paid", status: "cancelled", total: 100000 };
+  check("Đơn thu đủ bị huỷ: doanh thu = cọc 70% (30% hoàn khách), tính là cọc bị giữ", [rev.revenueOf(paidCancel), rev.isForfeited(paidCancel), rev.forfeitOf(paidCancel)], [70000, true, 70000]);
+  check("Đơn huỷ chưa trả / chờ đối chiếu: không có doanh thu", [{ paymentStatus: "unpaid" }, { paymentStatus: "awaiting" }].map((x) => rev.revenueOf({ ...x, status: "cancelled", total: 100000 })), [0, 0]);
 
   // Đơn cọc đã phục vụ xong nhưng quên thu 30% vẫn ghi nhận phần cọc đã nhận
   check("Đơn hoàn tất mà mới có cọc: ghi nhận phần cọc (30% chưa thu nằm ngoài)",

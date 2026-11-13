@@ -352,18 +352,26 @@ export class Order {
     return this.paymentStatus === "deposit";
   }
 
-  /** Số tiền cọc bị giữ lại: đơn đã nhận cọc mà bị huỷ = khách mất cọc, không hoàn */
+  /**
+   * Số tiền cọc bị giữ lại: đơn đã nhận cọc HOẶC đã thu đủ mà bị huỷ = khách mất cọc 70%, không hoàn.
+   * (Đơn thu đủ huỷ thì chỉ hoàn phần 30% còn lại - xem refundDue.)
+   */
   get forfeitedDeposit() {
-    return this.paymentStatus === "deposit" && this.#status === "cancelled" ? this.prepayAmount : 0;
+    const paidSomething = this.paymentStatus === "deposit" || this.paymentStatus === "paid";
+    return paidSomething && this.#status === "cancelled" ? this.prepayAmount : 0;
+  }
+
+  /** Số tiền quán phải HOÀN cho khách khi huỷ: chỉ có ở đơn đã thu đủ (hoàn phần 30% ngoài cọc) */
+  get refundDue() {
+    return this.paymentStatus === "paid" && this.#status === "cancelled" ? this.remainingAmount : 0;
   }
 
   /**
    * Đơn đã thu tiền (đủ hoặc cọc) là một dòng trong sổ doanh thu: không được xoá
-   * (xoá là mất dấu tiền đã thu). Đơn đã nhận cọc luôn bị khoá, kể cả khi đã huỷ (tiền cọc được giữ lại).
-   * Đơn thu đủ muốn bỏ thì phải huỷ đơn (hoàn tiền) trước.
+   * (xoá là mất dấu tiền đã thu). Kể cả khi đã huỷ vẫn khoá vì tiền cọc 70% được quán giữ lại.
    */
   get isRevenueLocked() {
-    return this.paymentStatus === "deposit" || (this.paymentStatus === "paid" && this.#status !== "cancelled");
+    return this.paymentStatus === "deposit" || this.paymentStatus === "paid";
   }
 
   /**
@@ -934,7 +942,7 @@ async function assertCanRestore(order) {
 export async function deleteOrder(id) {
   const order = await getOrderById(id);
   if (order?.isRevenueLocked) {
-    throw new Error(`Đơn ${order.code} đã thu tiền nên được giữ lại trong sổ doanh thu, không xoá được. Cần bỏ đơn này thì hãy huỷ đơn (hoàn tiền cho khách) trước.`);
+    throw new Error(`Đơn ${order.code} đã thu tiền nên được giữ lại trong sổ doanh thu, không xoá được. Muốn bỏ đơn này hãy huỷ đơn (khách mất cọc 70%, hoàn phần còn lại nếu đã thu đủ) thay vì xoá.`);
   }
   if (order && order.holdsStock) {
     await Promise.all(order.items.map((item) => adjustStock(item.drinkId, item.qty)));
