@@ -1,11 +1,12 @@
 /* =========================================================
    REVENUESTATS.JS - Doanh thu theo NGÀY / THÁNG / QUÝ / NĂM
-   - Doanh thu thực thu = đơn đã được thu ngân xác nhận nhận tiền (paid) và không bị huỷ.
+   - Doanh thu thực thu = đơn thu đủ (paid) chưa huỷ + tiền cọc 70% giữ lại của đơn huỷ (khách mất cọc)
+     + phần cọc của đơn đã phục vụ nhưng quán chưa bấm "Thu nốt 30%". Cọc của đơn còn hiệu lực chỉ là "cọc đang giữ", chưa tính doanh thu.
    - Mỗi đơn tính vào NGÀY KINH DOANH của giờ phục vụ (đặt bàn = giờ hẹn; chốt ngày 06:00 sáng - venue.js),
      rồi gom lên tháng / quý / năm theo ngày kinh doanh đó. Hàm thuần (không đụng DOM) để dễ kiểm thử.
    ========================================================= */
 
-import { businessDayKey } from "./venue.js";
+import { businessDayKey, calcPrepayAmount } from "./venue.js";
 
 export const PERIOD_KINDS = ["day", "month", "quarter", "year"];
 
@@ -16,7 +17,29 @@ export const PERIOD_NAMES = { day: "Ngày", month: "Tháng", quarter: "Quý", ye
 
 const pad = (n) => String(n).padStart(2, "0");
 
+/** Đơn thu đủ 100% và chưa huỷ */
 export const isCollected = (o) => o.paymentStatus === "paid" && o.status !== "cancelled";
+
+/** Tiền cọc 70% của đơn đã nhận cọc (0 nếu đơn không ở trạng thái cọc) */
+export const depositOf = (o) => (o.paymentStatus === "deposit" ? calcPrepayAmount(Number(o.total) || 0) : 0);
+
+/** Cọc bị giữ lại vì khách huỷ đơn (mất cọc) */
+export const isForfeited = (o) => o.paymentStatus === "deposit" && o.status === "cancelled";
+
+/** Cọc đang giữ cho đơn còn hiệu lực (chưa phục vụ xong, chưa huỷ) - chưa phải doanh thu */
+export const depositHeldOf = (o) => (o.paymentStatus === "deposit" && o.status !== "cancelled" && o.status !== "completed" ? depositOf(o) : 0);
+
+/**
+ * Số tiền ghi vào doanh thu của một đơn:
+ * - thu đủ & chưa huỷ: cả tổng đơn
+ * - đã cọc & huỷ (mất cọc) hoặc đã cọc & hoàn tất (chưa thu nốt 30%): phần cọc 70%
+ * - còn lại: 0
+ */
+export function revenueOf(o) {
+  if (isCollected(o)) return Number(o.total) || 0;
+  if (o.paymentStatus === "deposit" && (o.status === "cancelled" || o.status === "completed")) return depositOf(o);
+  return 0;
+}
 
 /** Khoá kỳ từ ngày kinh doanh "YYYY-MM-DD": day -> chính nó, month -> "YYYY-MM", quarter -> "YYYY-Qn", year -> "YYYY" */
 export function periodKeyOf(kind, dayKey) {
@@ -69,13 +92,14 @@ export function percentChange(current, previous) {
 export function aggregateRevenue(orders) {
   const maps = Object.fromEntries(PERIOD_KINDS.map((k) => [k, new Map()]));
   for (const o of orders) {
-    if (!isCollected(o)) continue;
+    const amount = revenueOf(o);
+    if (amount <= 0) continue;
     const dayKey = businessDayKey(o.serviceTime || o.createdAt);
     for (const kind of PERIOD_KINDS) {
       const key = periodKeyOf(kind, dayKey);
       const cur = maps[kind].get(key) || { revenue: 0, orders: 0 };
-      cur.revenue += Number(o.total) || 0;
-      cur.orders += 1;
+      cur.revenue += amount;
+      if (!isForfeited(o)) cur.orders += 1; // cọc bị giữ lại có doanh thu nhưng không phải đơn đã phục vụ
       maps[kind].set(key, cur);
     }
   }

@@ -1326,7 +1326,7 @@ function showOrderSuccessModal(order) {
       </div>
 
       <div class="modal-actions-stacked" style="display: flex; flex-direction: column; gap: 10px;">
-        ${order.needsPayment ? `
+        ${order.needsDeposit ? `
         <button type="button" class="btn btn-primary btn-block btn-vqr-pay" id="success-open-vietqr-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           <span>${t("order_qr_now", "Quét Mã QR MBBank Trả Trước 70%")} (${formatMoney(order.prepayAmount)})</span>
@@ -1376,7 +1376,7 @@ let lastLookupPhone = ""; // huỷ đơn phải gửi lại đúng SĐT đã dù
 
 function lookupResultHtml(o) {
   const items = o.items.map((i) => `${escapeHtml(i.name)} × ${i.qty}`).join(", ");
-  const showQrBtn = o.needsPayment; // chưa huỷ, chưa được xác nhận đã trả, có tiền phải trả
+  const showQrBtn = o.needsDeposit; // chưa huỷ, chưa có cọc/đã trả được xác nhận, có tiền phải trả
 
   // Khách tự huỷ được không - quy tắc nằm trong chính đối tượng đơn (đa hình theo loại đơn)
   const cancel = o.customerCancelCheck();
@@ -1404,7 +1404,7 @@ function lookupResultHtml(o) {
         <p><strong>${t("order_rc_created", "Đặt lúc")}:</strong> ${formatDateTime(o.createdAt)}</p>
         ${o.isTableOnly ? "" : `
         <p><strong>${t("order_rc_amount", "Tổng tiền")}:</strong> <strong>${formatMoney(o.total)}</strong> <span class="text-muted text-xs">(Trả trước 70%: <strong class="text-amber">${formatMoney(o.prepayAmount)}</strong> · Tại quán 30%: ${formatMoney(o.remainingAmount)})</span></p>
-        <p><strong>${t("order_rc_payment", "Thanh toán")}:</strong> <span class="badge ${o.paymentBadge}">${paymentText(o)}</span></p>`}
+        <p><strong>${t("order_rc_payment", "Thanh toán")}:</strong> <span class="badge ${o.paymentBadge}">${paymentText(o)}</span>${o.hasDeposit ? ` <span class="text-muted text-xs">(còn ${formatMoney(o.remainingAmount)} thanh toán tại quán)</span>` : ""}${o.forfeitedDeposit > 0 ? ` <span class="text-muted text-xs">(đã huỷ - cọc ${formatMoney(o.forfeitedDeposit)} không hoàn)</span>` : ""}</p>`}
         ${o.holdsStock ? `
         <div class="door-host-notice-card" style="margin: 14px 0; text-align: left;">
           <div class="notice-icon">🛡️</div>
@@ -1432,8 +1432,9 @@ function lookupResultHtml(o) {
 async function handleCustomerCancel(button) {
   const order = lastLookedUpOrder;
   const what = order.serviceType === "booking" ? "đặt bàn" : "đơn";
+  const forfeitNote = order.hasDeposit ? ` Bạn sẽ MẤT TIỀN CỌC ${formatMoney(order.prepayAmount)} (quán không hoàn lại).` : "";
   const ok = await confirmDialog(
-    `Huỷ ${what} ${order.code}? ${order.isTableOnly ? "" : "Các món đã gọi sẽ được huỷ theo. "}Thao tác này không thể hoàn tác.`,
+    `Huỷ ${what} ${order.code}? ${order.isTableOnly ? "" : "Các món đã gọi sẽ được huỷ theo. "}${forfeitNote} Thao tác này không thể hoàn tác.`,
     { title: `Xác nhận huỷ ${what}`, okText: `Huỷ ${what}` },
   );
   if (!ok) return;

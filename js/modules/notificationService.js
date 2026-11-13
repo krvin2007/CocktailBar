@@ -101,7 +101,10 @@ export async function checkOrderUpdates() {
 
           // Báo trạng thái thanh toán
           if (order.paymentStatus !== prevPayment && order.paymentStatus === "paid") {
-            toast(`💳 Đơn hàng ${order.code} đã được quán xác nhận thanh toán thành công!`, "success");
+            toast(`💳 Đơn hàng ${order.code} đã được quán xác nhận thu đủ tiền!`, "success");
+            playNotificationSound();
+          } else if (order.paymentStatus !== prevPayment && order.paymentStatus === "deposit") {
+            toast(`💳 Đơn hàng ${order.code}: quán đã nhận cọc 70%, phần còn lại thanh toán tại quán.`, "success");
             playNotificationSound();
           }
         }
