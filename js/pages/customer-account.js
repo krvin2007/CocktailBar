@@ -90,7 +90,11 @@ function orderRowHtml(o) {
   let paymentBadgeHtml;
   let payBtnHtml = "";
   if (o.paymentStatus === "paid") {
-    paymentBadgeHtml = `<span class="badge badge-success">Đã thanh toán</span>`;
+    paymentBadgeHtml = `<span class="badge badge-success">Đã thu đủ</span>`;
+  } else if (o.paymentStatus === "deposit") {
+    paymentBadgeHtml = o.status === "cancelled"
+      ? `<span class="badge badge-muted" title="Đơn đã huỷ - cọc 70% không được hoàn">Mất cọc ${formatMoney(calcPrepayAmount(o.total))}</span>`
+      : `<span class="badge badge-info" title="Còn ${formatMoney(calcRemainingAmount(o.total))} thanh toán tại quán">Đã nhận cọc 70%</span><div class="text-xs text-muted">Còn ${formatMoney(calcRemainingAmount(o.total))} tại quán</div>`;
   } else if (o.paymentStatus === "awaiting") {
     paymentBadgeHtml = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">Chờ xác nhận CK</span>`;
   } else {
@@ -570,7 +574,11 @@ bodyEl.addEventListener("click", async (e) => {
   if (cancelOrderBtn) {
     const code = cancelOrderBtn.dataset.code;
     const phone = cancelOrderBtn.dataset.phone || activeCustomer?.phone;
-    const ok = await confirmDialog(`Bạn có chắc chắn muốn huỷ đơn ${code}? Quán sẽ tự động hoàn lại tồn kho ly và cập nhật trạng thái đơn.`, {
+    const target = currentCustomerOrders.find((x) => x.code === code);
+    const forfeitNote = target?.paymentStatus === "deposit"
+      ? ` Bạn sẽ MẤT TIỀN CỌC ${formatMoney(calcPrepayAmount(target.total))} (quán không hoàn lại).`
+      : "";
+    const ok = await confirmDialog(`Bạn có chắc chắn muốn huỷ đơn ${code}?${forfeitNote} Quán sẽ tự động hoàn lại tồn kho ly và cập nhật trạng thái đơn.`, {
       title: "Xác nhận huỷ đơn",
       okText: "Huỷ đơn",
       danger: true,
@@ -578,7 +586,7 @@ bodyEl.addEventListener("click", async (e) => {
     if (!ok) return;
     try {
       await cancelByCustomer(code, phone);
-      toast(`Đã huỷ đơn ${code} thành công và hoàn trả kho.`, "info");
+      toast(`Đã huỷ đơn ${code} thành công và hoàn trả kho.${forfeitNote ? " Tiền cọc không được hoàn." : ""}`, "info");
       init();
     } catch (err) {
       toast(err.message || "Không thể huỷ đơn lúc này.", "danger");

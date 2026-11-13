@@ -10,7 +10,7 @@
 import { initAdminLayout } from "../modules/adminLayout.js";
 import { can, currentAdmin } from "../modules/auth.js";
 import {
-  getAllOrders, filterOrders, updateOrderStatus, deleteOrder, confirmPayment,
+  getAllOrders, filterOrders, updateOrderStatus, deleteOrder, confirmPayment, confirmDeposit,
   verifyOrderDoorCheck, createOrder, ORDER_STATUS, ORDER_TRANSITIONS,
 } from "../modules/ordersService.js";
 import { getAllDrinks } from "../modules/drinksService.js";
@@ -46,6 +46,7 @@ const saveStatusBtn = document.getElementById("order-save-status-btn");
 const deleteBtn = document.getElementById("order-delete-btn");
 const qrBtn = document.getElementById("order-vietqr-btn");
 const paidBtn = document.getElementById("order-paid-btn");
+const depositBtn = document.getElementById("order-deposit-btn");
 
 const bankBtn = document.getElementById("bank-settings-btn");
 const bankForm = document.getElementById("bank-form");
@@ -135,7 +136,14 @@ function openDetail(order) {
 
   // Mã QR chỉ cần khi đơn còn phải trả tiền; xác nhận thu tiền cần quyền "order:payment"
   qrBtn.hidden = !order.needsPayment;
+  qrBtn.querySelector(".qr-btn-label").textContent = order.hasDeposit ? `QR thu nốt 30% (${formatMoney(order.remainingAmount)})` : "Mã QR MBBank";
+  // Chưa có cọc: thu ngân chọn "nhận cọc 70%" hoặc "thu đủ"; đã cọc: chỉ còn "thu nốt 30%"
+  depositBtn.hidden = !order.needsDeposit || !can("order:payment");
+  depositBtn.textContent = `Xác nhận đã nhận cọc 70% (${formatMoney(order.prepayAmount)})`;
   paidBtn.hidden = !order.needsPayment || !can("order:payment");
+  paidBtn.textContent = order.hasDeposit
+    ? `Thu nốt 30% tại quán (${formatMoney(order.remainingAmount)})`
+    : `Xác nhận đã thu đủ (${formatMoney(order.total)})`;
 
   const itemsHtml = order.items.map((item) => `
     <div class="order-detail-row item-row">
@@ -154,6 +162,8 @@ function openDetail(order) {
       <div class="order-detail-row"><span>${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("")}
     ${order.note ? `<div class="order-detail-row"><span>Ghi chú pha chế</span><span class="note-box">${escapeHtml(order.note)}</span></div>` : ""}
     <div class="order-detail-row"><span>Thanh toán</span><span class="${classNames("badge", order.paymentBadge)}">${order.paymentLabel}</span></div>
+    ${order.forfeitedDeposit > 0 ? `<p class="id-check-note">Khách đã <strong>mất cọc ${formatMoney(order.forfeitedDeposit)}</strong> do huỷ đơn - số tiền này quán giữ lại, tính vào doanh thu, không hoàn.</p>` : ""}
+    ${order.hasDeposit && order.status === "completed" ? `<p class="id-check-note">Đơn đã phục vụ nhưng <strong>chưa thu nốt ${formatMoney(order.remainingAmount)}</strong> - bấm "Thu nốt 30% tại quán".</p>` : ""}
     ${order.isRevenueLocked ? `<p class="text-muted text-xs mt-1">Đơn đã thu tiền được giữ trong sổ doanh thu nên không xoá được.</p>` : ""}
 
     <div class="order-detail-items mt-3">
@@ -287,8 +297,10 @@ async function handleSaveStatus() {
   // Huỷ đơn là thao tác quan trọng -> hỏi lại trước; đơn đã thu tiền thì nhắc hoàn tiền
   if (newStatus === "cancelled") {
     const refundNote = activeOrder.paymentStatus === "paid"
-      ? ` Đơn này ĐÃ THANH TOÁN ${formatMoney(activeOrder.total)} - nhớ hoàn tiền cho khách.`
-      : "";
+      ? ` Đơn này ĐÃ THU ĐỦ ${formatMoney(activeOrder.total)} - nhớ hoàn tiền cho khách.`
+      : activeOrder.paymentStatus === "deposit"
+        ? ` Đơn này đã nhận cọc ${formatMoney(activeOrder.prepayAmount)}: khách MẤT CỌC, quán giữ lại số tiền này (không hoàn).`
+        : "";
     const ok = await confirmDialog(`Bạn có chắc chắn muốn huỷ đơn ${activeOrder.code}?${refundNote}`, {
       title: "Xác nhận huỷ đơn",
       okText: "Huỷ đơn",
@@ -300,6 +312,9 @@ async function handleSaveStatus() {
   try {
     await updateOrderStatus(activeOrder.id, newStatus);
     toast(`Đơn ${activeOrder.code}: "${ORDER_STATUS[newStatus]}".`, "success");
+    if (newStatus === "completed" && activeOrder.hasDeposit) {
+      toast(`Đơn ${activeOrder.code} còn ${formatMoney(activeOrder.remainingAmount)} (30%) chưa thu - mở đơn và bấm "Thu nốt 30% tại quán".`, "warning");
+    }
     closeModal("order-modal");
     await reloadTable();
   } catch (err) {
@@ -310,30 +325,41 @@ async function handleSaveStatus() {
 }
 
 /**
- * Thu ngân đã nhận đủ tiền (đối chiếu sao kê hoặc thu tiền mặt).
+ * Thu ngân xác nhận tiền đã về. kind:
+ *  - "deposit": nhận CỌC 70% (đơn -> "Đã nhận cọc 70%", còn 30% thu tại quán)
+ *  - "paid"   : thu ĐỦ 100% (khách trả đủ một lần) hoặc thu nốt 30% sau cọc
  * ask = false khi bấm ngay trong hộp mã QR (nút đó đã là bước xác nhận).
  */
-async function handleConfirmPayment(order = activeOrder, ask = true) {
+async function handleConfirmPayment(order = activeOrder, ask = true, kind = "paid") {
   if (!order || !can("order:payment")) return;
+  const isDeposit = kind === "deposit";
   if (ask) {
-    const ok = await confirmDialog(
-      `Xác nhận đã nhận đủ ${formatMoney(order.total)} (cọc 70%: ${formatMoney(order.prepayAmount)} + tại quán 30%: ${formatMoney(order.remainingAmount)}) cho đơn ${order.code}? Nếu khách chuyển khoản, hãy kiểm tra sao kê có nội dung "BAR ${order.code}".`,
-      { title: "Xác nhận đã thu tiền", okText: "Đã nhận tiền" },
-    );
+    const text = isDeposit
+      ? `Xác nhận đã nhận CỌC 70% = ${formatMoney(order.prepayAmount)} cho đơn ${order.code}? Còn ${formatMoney(order.remainingAmount)} thu tại quán. Nếu khách huỷ đơn sau này, khách mất khoản cọc này. Hãy kiểm tra sao kê có nội dung "BAR ${order.code}".`
+      : order.hasDeposit
+        ? `Xác nhận đã thu nốt ${formatMoney(order.remainingAmount)} (30% còn lại) cho đơn ${order.code}? Đơn sẽ chuyển sang "Đã thu đủ" (${formatMoney(order.total)}).`
+        : `Xác nhận đã nhận ĐỦ ${formatMoney(order.total)} cho đơn ${order.code}? Nếu khách chuyển khoản, hãy kiểm tra sao kê có nội dung "BAR ${order.code}".`;
+    const ok = await confirmDialog(text, {
+      title: isDeposit ? "Xác nhận đã nhận cọc" : "Xác nhận đã thu tiền",
+      okText: isDeposit ? "Đã nhận cọc" : "Đã nhận tiền",
+    });
     if (!ok) return;
   }
 
   try {
-    await confirmPayment(order.id);
+    if (isDeposit) await confirmDeposit(order.id); else await confirmPayment(order.id);
     let mailNote = null;
     try {
       // toJSON(): {...order} làm mất total/subtotal (là getter) nên mail ghi tổng tiền trống
       const plain = typeof order.toJSON === "function" ? order.toJSON() : order;
-      mailNote = describeMailDelivery(await sendOrderConfirmationEmail({ ...plain, paymentStatus: "paid" }), order);
+      mailNote = describeMailDelivery(
+        await sendOrderConfirmationEmail({ ...plain, paymentStatus: isDeposit ? "deposit" : "paid" }),
+        order,
+      );
     } catch (mErr) {
       console.warn("Lỗi gửi email xác nhận:", mErr);
     }
-    toast(`Đơn ${order.code}: đã xác nhận thanh toán.`, "success");
+    toast(isDeposit ? `Đơn ${order.code}: đã nhận cọc 70%, còn ${formatMoney(order.remainingAmount)} thu tại quán.` : `Đơn ${order.code}: đã thu đủ.`, "success");
     if (mailNote) toast(mailNote.message, mailNote.type);
     closeModal("order-modal");
     await reloadTable();
@@ -549,13 +575,19 @@ function bindEvents() {
     if (!activeOrder) return;
     const order = activeOrder;
     openVietQRPaymentModal(order, {
-      allowFullToggle: true,
+      allowFullToggle: !order.hasDeposit,
+      collectRemaining: order.hasDeposit, // đã cọc: QR chỉ thu nốt 30%
       ...(can("order:payment")
-        ? { confirmLabel: "Xác Nhận Đã Nhận Tiền", onConfirm: () => handleConfirmPayment(order, false) }
+        ? {
+          confirmLabel: order.hasDeposit ? "Xác Nhận Đã Thu Nốt 30%" : "Xác Nhận Đã Nhận Tiền",
+          // Bật "Chỉ thu cọc 70%" -> ghi nhận cọc; tắt -> thu đủ (hoặc thu nốt 30%)
+          onConfirm: ({ isDepositOnly }) => handleConfirmPayment(order, false, isDepositOnly ? "deposit" : "paid"),
+        }
         : {}),
     });
   });
   paidBtn.addEventListener("click", () => handleConfirmPayment());
+  depositBtn.addEventListener("click", () => handleConfirmPayment(activeOrder, true, "deposit"));
   saveStatusBtn.addEventListener("click", handleSaveStatus);
   deleteBtn.addEventListener("click", handleDelete);
 

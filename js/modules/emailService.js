@@ -43,7 +43,11 @@ function loadEmailJs() {
 
 /** Nhãn tình trạng thanh toán đúng với thực tế (không ghi "chưa thanh toán" khi khách đã báo chuyển khoản) */
 export function paymentStatusText(order) {
-  if (order?.paymentStatus === "paid") return "ĐÃ THANH TOÁN";
+  if (order?.paymentStatus === "paid") return "ĐÃ THU ĐỦ";
+  if (order?.paymentStatus === "deposit") {
+    const left = calcRemainingAmount(Number(order.total) || 0);
+    return left > 0 ? `ĐÃ NHẬN CỌC 70% - CÒN ${formatMoney(left)} THANH TOÁN TẠI QUÁN` : "ĐÃ NHẬN CỌC 70%";
+  }
   if (order?.paymentStatus === "awaiting") return "ĐÃ BÁO CHUYỂN KHOẢN - ĐANG CHỜ QUÁN XÁC NHẬN";
   return "CHƯA THANH TOÁN";
 }
@@ -51,7 +55,8 @@ export function paymentStatusText(order) {
 /** Tiêu đề mail theo từng giai đoạn của đơn */
 export function orderMailSubject(order) {
   const code = order?.code || "";
-  if (order?.paymentStatus === "paid") return `✅ [Quán Bar Đêm] Đã thanh toán - Vé điện tử đơn #${code}`;
+  if (order?.paymentStatus === "paid") return `✅ [Quán Bar Đêm] Đã thanh toán đủ - Vé điện tử đơn #${code}`;
+  if (order?.paymentStatus === "deposit") return `✅ [Quán Bar Đêm] Đã nhận cọc 70% - Vé điện tử đơn #${code}`;
   if (order?.paymentStatus === "awaiting") return `⏳ [Quán Bar Đêm] Đã nhận báo chuyển khoản - đơn #${code}`;
   return `🎟️ [Quán Bar Đêm] Vé Điện Tử & Xác Nhận Đơn Hàng #${code}`;
 }
@@ -168,6 +173,7 @@ export function buildCinemaTicketHtml(order, { toEmail = "" } = {}) {
   const code = order.code || "DH0001";
   const email = toEmail || order.email || "—";
   const isPaid = order.paymentStatus === "paid";
+  const hasDeposit = order.paymentStatus === "deposit";
   const items = Array.isArray(order.items) ? order.items : [];
 
   let serviceTypeLabel = "Đặt bàn trước";
@@ -278,13 +284,13 @@ export function buildCinemaTicketHtml(order, { toEmail = "" } = {}) {
             </div>
             ${Number(order.total) > 0 ? `
             <div style="margin-top: 4px; display: flex; justify-content: space-between; font-size: 0.78rem; color: #e8c682;">
-              <span>Cần trả trước khi đặt (70%):</span>
-              <strong>${formatMoney(calcPrepayAmount(order.total || 0))} · Tại quán (30%): ${formatMoney(calcRemainingAmount(order.total || 0))}</strong>
+              <span>${isPaid ? "Đã thu đủ:" : hasDeposit ? "Đã nhận cọc (70%):" : "Cần trả trước khi đặt (70%):"}</span>
+              <strong>${isPaid ? formatMoney(order.total || 0) : `${formatMoney(calcPrepayAmount(order.total || 0))} · Tại quán (30%): ${formatMoney(calcRemainingAmount(order.total || 0))}`}</strong>
             </div>` : ""}
             <div style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
               <span style="font-size: 0.78rem; color: #baa998;">Trạng thái thanh toán:</span>
-              <span class="badge ${isPaid ? "badge-success" : order.paymentStatus === "awaiting" ? "badge-warning" : "badge-danger"}" style="font-size: 0.78rem; padding: 2px 8px;">
-                ${isPaid ? "✓ " : ""}${paymentStatusText(order)}
+              <span class="badge ${isPaid || hasDeposit ? "badge-success" : order.paymentStatus === "awaiting" ? "badge-warning" : "badge-danger"}" style="font-size: 0.78rem; padding: 2px 8px;">
+                ${isPaid || hasDeposit ? "✓ " : ""}${paymentStatusText(order)}
               </span>
             </div>
           </div>

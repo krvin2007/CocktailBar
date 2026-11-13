@@ -136,7 +136,7 @@ export const BAR_RULES = [
     id: "booking",
     icon: "🕒",
     title: "Giờ mở cửa, giữ bàn & Huỷ đơn",
-    text: `Mở cửa 18:00 – 02:00 hàng ngày. Bàn đặt được giữ tối đa 20 phút kể từ giờ hẹn. Đơn chưa thanh toán có thể tự huỷ online (đặt bàn trước cần huỷ trước giờ hẹn ít nhất ${BOOKING_RULES.cancelDeadlineHours} tiếng); đơn đã cọc vui lòng gọi Hotline ${VENUE.hotline}.`,
+    text: `Mở cửa 18:00 – 02:00 hàng ngày. Bàn đặt được giữ tối đa 20 phút kể từ giờ hẹn. Đơn chưa thanh toán có thể tự huỷ online (đặt bàn trước cần huỷ trước giờ hẹn ít nhất ${BOOKING_RULES.cancelDeadlineHours} tiếng); đơn đã được xác nhận cọc 70% mà huỷ thì MẤT CỌC (không hoàn); đơn đang chờ đối chiếu chuyển khoản hoặc đã thu đủ vui lòng gọi Hotline ${VENUE.hotline}.`,
   },
   {
     id: "conduct",

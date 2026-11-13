@@ -492,7 +492,8 @@ export const TRANSLATIONS = {
     order_service_takeaway: "Mang đi",
     order_payment_unpaid: "Chưa thanh toán",
     order_payment_awaiting: "Chờ xác nhận CK",
-    order_payment_paid: "Đã thanh toán"
+    order_payment_deposit: "Đã nhận cọc 70%",
+    order_payment_paid: "Đã thu đủ"
   },
   en: {
     // Navbar
@@ -976,7 +977,8 @@ export const TRANSLATIONS = {
     order_service_takeaway: "Takeaway",
     order_payment_unpaid: "Unpaid",
     order_payment_awaiting: "Transfer being verified",
-    order_payment_paid: "Paid"
+    order_payment_deposit: "70% deposit received",
+    order_payment_paid: "Paid in full"
   }
 };
 
