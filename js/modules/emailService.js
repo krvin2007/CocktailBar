@@ -87,8 +87,32 @@ export function buildOrderMailParams(order, toEmail) {
   const itemsText = items.length
     ? items.map((it) => `• ${it.name} x${it.qty || 1} - ${formatMoney((Number(it.price) || 0) * (Number(it.qty) || 1))}`).join("\n")
     : "(Chỉ giữ bàn - quý khách gọi đồ uống tại quầy khi đến)";
+  const fullSummary = [
+    `Kính gửi ${order.name || "Quý khách"},`,
+    `Quán Bar Đêm xin gửi Vé Điện Tử xác nhận đơn hàng #${order.code || ""}:`,
+    `• Hình thức: ${serviceLabel}`,
+    isBooking && order.bookingTime ? `• Giờ hẹn nhận bàn: ${formatDateTime(order.bookingTime)}` : "",
+    isBooking && order.guestCount ? `• Số lượng: ${order.guestCount} khách` : "",
+    order.tableNumber ? `• Bàn / Vị trí: ${order.tableNumber}` : "",
+    `• Đồ uống đã chọn:\n${itemsText}`,
+    discounts > 0 ? `• Ưu đãi: -${formatMoney(discounts)}` : "",
+    `• Tổng tiền: ${formatMoney(order.total || 0)}`,
+    order.total > 0 ? `• Cần cọc trước (70%): ${formatMoney(calcPrepayAmount(order.total || 0))}` : "",
+    order.total > 0 ? `• Còn lại thanh toán tại quán (30%): ${formatMoney(calcRemainingAmount(order.total || 0))}` : "",
+    `• Tình trạng thanh toán: ${paymentStatusText(order)}`,
+    "",
+    `Địa chỉ: 74-76 Nam Kỳ Khởi Nghĩa, P. Bến Nghé, Quận 1, TP.HCM`,
+    `Hotline: 0397 062 429`,
+    isBooking
+      ? "Lưu ý: Bàn đặt được giữ trong 20 phút kể từ giờ hẹn. Vui lòng xuất trình mã đơn hoặc CCCD/VNeID khi đến quán."
+      : "Vui lòng xuất trình mã đơn khi cần đối chiếu. Cảm ơn quý khách!",
+  ].filter(Boolean).join("\n");
+
   return {
     to_email: toEmail,
+    to_name: order.name || "Quý khách",
+    from_name: "Quán Bar Đêm",
+    reply_to: toEmail,
     subject: orderMailSubject(order),
     customer_name: order.name || "Quý khách",
     order_code: order.code || "",
@@ -104,9 +128,7 @@ export function buildOrderMailParams(order, toEmail) {
     payment_status: paymentStatusText(order),
     address: "74-76 Nam Kỳ Khởi Nghĩa, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh",
     hotline: "0397 062 429",
-    message: isBooking
-      ? "Bàn đặt được giữ trong 20 phút kể từ giờ hẹn. Vui lòng xuất trình mã đơn hoặc CCCD/VNeID khi đến quán."
-      : "Vui lòng xuất trình mã đơn khi cần đối chiếu. Cảm ơn quý khách!",
+    message: fullSummary,
   };
 }
 
