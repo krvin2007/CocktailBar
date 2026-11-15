@@ -38,6 +38,7 @@ export function getEmailConfig() {
 
 /** Đã điền đủ cấu hình EmailJS (gửi email THẬT) chưa */
 export function isRealEmailConfigured() {
+  if (globalThis.__MOCK_EMAILJS_UNCONFIGURED__) return false;
   const cfg = getEmailConfig();
   return Boolean(cfg.publicKey && cfg.serviceId && cfg.templateId);
 }
@@ -46,6 +47,9 @@ let emailJsLoading = null;
 /** Nạp thư viện EmailJS từ CDN (chỉ khi thật sự cần gửi) */
 function loadEmailJs() {
   if (globalThis.emailjs) return Promise.resolve(globalThis.emailjs);
+  if (typeof document === "undefined") {
+    return Promise.reject(new Error("EmailJS SDK chỉ chạy trong môi trường trình duyệt."));
+  }
   if (!emailJsLoading) {
     emailJsLoading = new Promise((resolve, reject) => {
       const script = document.createElement("script");

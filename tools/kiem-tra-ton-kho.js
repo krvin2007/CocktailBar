@@ -1302,11 +1302,13 @@ check("OTP quên mật khẩu chỉ dùng 1 lần", resetReuse.success, false);
   check("Vé HTML sau khi quét QR ghi 'chờ quán xác nhận', không ghi 'CHƯA THANH TOÁN'", /CHỜ QUÁN XÁC NHẬN/.test(html) && !/CHƯA THANH TOÁN/.test(html), true);
   const noMail = await em.sendOrderConfirmationEmail({ ...bookingOrder, email: "" }, null);
   check("Khách không có email: không tạo thư gửi tới địa chỉ giả (delivery = no_email)", `${noMail.delivery}|${noMail.id}|${noMail.to}`, "no_email|null|");
+  globalThis.__MOCK_EMAILJS_UNCONFIGURED__ = true;
   const withMail = await em.sendOrderConfirmationEmail(bookingOrder, null);
   check("Có email nhưng quán chưa cấu hình EmailJS: lưu Hộp thư, báo trung thực (not_configured)", `${withMail.delivery}|${withMail.to}`, "not_configured|huong.le@gmail.com");
   check("Câu thông báo không nói 'đã gửi email' khi chưa gửi thật", /Hộp thư/.test(em.describeMailDelivery(withMail, bookingOrder).message) && !/Đã gửi email/.test(em.describeMailDelivery(withMail, bookingOrder).message), true);
   check("Câu thông báo khi gửi thật thành công", /Đã gửi email vé điện tử/.test(em.describeMailDelivery({ ...withMail, delivery: "sent" }, bookingOrder).message), true);
   check("Chưa cấu hình EmailJS thì isRealEmailConfigured = false", em.isRealEmailConfigured(), false);
+  delete globalThis.__MOCK_EMAILJS_UNCONFIGURED__;
 }
 
 // 6h. Hiệu ứng hiện dần khi cuộn: ngưỡng theo % phần tử làm lưới món (cao > 8.000px) trong suốt mãi

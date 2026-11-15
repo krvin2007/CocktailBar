@@ -20,7 +20,7 @@
    ========================================================= */
 
 export const EMAILJS_CONFIG = {
-  publicKey: "",
-  serviceId: "",
-  templateId: "",
+  publicKey: "AeMyASgQm3GV22uoA",
+  serviceId: "{{to_email}}",
+  templateId: "template_1u5acos",
 };
