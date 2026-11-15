@@ -195,9 +195,9 @@ function newOrderBlocked() {
 }
 
 function updateSubmitState() {
-  const { checked, count, prepayAmount } = getActiveCheckoutSummary();
-  const hasItems = count > 0;
-  submitBtn.disabled = (!hasItems && !isBooking()) || newOrderBlocked();
+  const { checked, count, prepayAmount, total } = getActiveCheckoutSummary();
+  const hasItems = count > 0 && total > 0;
+  submitBtn.disabled = !hasItems || newOrderBlocked();
 
   const submitLabel = document.getElementById("submit-order-label");
   if (!submitLabel) return;
@@ -210,14 +210,14 @@ function updateSubmitState() {
   } else if (hasUnpaid) {
     const codes = [...new Set(checked.filter((i) => i.isUnpaid).map((i) => i.orderCode))].join(", ");
     submitLabel.textContent = `Trả Trước 70% Đơn Chờ ${codes} (${formatMoney(prepayAmount)})`;
-  } else if (hasCart) {
+  } else if (hasCart && hasItems) {
     submitLabel.textContent = isBooking()
       ? `${t("order_btn_book_order", "Xác Nhận Đặt Bàn & Gọi Món")} (Trả trước 70%: ${formatMoney(prepayAmount)})`
       : `Xác Nhận Gọi Món (Trả trước 70%: ${formatMoney(prepayAmount)})`;
   } else {
     submitLabel.textContent = isBooking()
-      ? t("order_btn_book", "Xác Nhận Giữ Bàn")
-      : t("order_btn_order", "Xác Nhận Gọi Món");
+      ? t("order_btn_book_need_items", "Vui lòng chọn món để đặt bàn (Cọc 70%)")
+      : t("order_btn_order_need_items", "Vui lòng chọn món từ thực đơn");
   }
 }
 
@@ -523,7 +523,7 @@ function renderCart() {
 
   if (combined.length === 0) {
     const emptyText = isBooking()
-      ? t("order_empty_booking", "Chưa chọn món nào - không sao, quý khách vẫn có thể chỉ giữ bàn. Muốn quầy bar chuẩn bị sẵn khi đến? Hãy chọn món từ thực đơn.")
+      ? t("order_empty_booking", "Để xác nhận giữ bàn và tính cọc 70% theo quy định, quý khách vui lòng chọn ít nhất 1 đồ uống từ thực đơn trước khi đặt bàn.")
       : t("order_empty_dinein", "Hãy chọn ly cocktail yêu thích từ thực đơn để gọi món tại bàn.");
 
     cartListEl.innerHTML = `
@@ -1182,6 +1182,15 @@ formEl.addEventListener("submit", async (e) => {
     openCustomerPayment(currentUnpaidOrder, () => {
       checkAndRenderUnpaidOrderBanner();
     });
+    return;
+  }
+
+  // Bắt buộc phải có món và tổng tiền > 0 để đặt cọc 70% (chặn đơn 0 đồng lách cọc)
+  const { count: checkoutCount, total: checkoutTotal } = getActiveCheckoutSummary();
+  if (checkoutCount === 0 || checkoutTotal <= 0) {
+    toast(isBooking()
+      ? "Quý khách vui lòng chọn ít nhất 1 món từ thực đơn (tổng tiền > 0đ) để đặt bàn và thanh toán cọc 70%."
+      : "Quý khách vui lòng chọn ít nhất 1 món từ thực đơn để gọi món.", "error");
     return;
   }
 

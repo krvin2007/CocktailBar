@@ -124,7 +124,7 @@ export const BAR_RULES = [
     id: "prepay",
     icon: "💳",
     title: "Thanh toán trả trước 70%",
-    text: "Khi đặt đơn có đồ uống, quý khách chỉ cần chuyển khoản trước 70% tổng giá trị đơn qua VietQR (MBBank) để xác nhận giữ đơn và pha chế; 30% còn lại thanh toán trực tiếp tại quán.",
+    text: "Khi đặt bàn trước hoặc gọi món, quý khách vui lòng chọn đồ uống từ thực đơn và chuyển khoản trước 70% tổng giá trị đơn qua VietQR (MBBank) để xác nhận giữ bàn và pha chế (quán không nhận đặt bàn 0 đồng); 30% còn lại thanh toán trực tiếp tại quán.",
   },
   {
     id: "age",

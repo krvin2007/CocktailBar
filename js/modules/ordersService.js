@@ -708,8 +708,7 @@ export async function createOrder(customerInfo) {
   if (ageError) throw new Error(ageError);
 
   const isBooking = customerInfo.serviceType === "booking";
-  const itemsProvided = Array.isArray(customerInfo.items) && customerInfo.items.length > 0 ? customerInfo.items : null;
-  const hadItems = (itemsProvided || getCart()).length > 0;
+  const itemsProvided = Array.isArray(customerInfo.items) ? customerInfo.items : null;
 
   // Giờ đặt bàn lưu dạng ISO (UTC): chuỗi "YYYY-MM-DDTHH:mm" của ô chọn giờ không có
   // múi giờ nên sẽ bị hiểu lệch khi máy khách và máy quán khác múi giờ.
@@ -723,7 +722,8 @@ export async function createOrder(customerInfo) {
   const { cart, changes } = itemsProvided
     ? { cart: itemsProvided, changes: [] }
     : await syncCartWithCatalog();
-  if (cart.length === 0 && (!isBooking || hadItems)) return { success: false, changes };
+  // Mọi đơn (kể cả đặt bàn trước) bắt buộc phải có đồ uống để tính cọc 70% và xác nhận chỗ
+  if (cart.length === 0) return { success: false, changes };
 
   const orders = await getAllOrders();
 
@@ -756,6 +756,10 @@ export async function createOrder(customerInfo) {
     orders,
     strict: true,
   });
+
+  if (pricing.total <= 0) {
+    throw new Error("Tổng giá trị đơn hàng phải lớn hơn 0đ để thực hiện đặt cọc 70%.");
+  }
 
   const order = Order.from({
     id: uid("order"),

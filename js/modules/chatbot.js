@@ -122,7 +122,7 @@ export async function getBotResponse(userMessage) {
   if (/(thanh toán|chuyển khoản|\bqr\b|mbbank|vietqr|tiền mặt|hoá đơn|hóa đơn|vé điện tử|huỷ đơn|hủy đơn|trả trước|đặt cọc|nội quy|luật)/i.test(lower)) {
     return (
       "Dạ chính sách thanh toán và quy định đặt đơn tại Quán Bar Đêm rất rõ ràng ạ:\n\n" +
-      "- 📱 **Trả trước 70% qua VietQR (MBBank):** Khi đặt đơn có đồ uống, quý khách chỉ cần chuyển khoản trước **70%** tổng đơn đúng số tiền và nội dung hiển thị, sau đó bấm *Tôi Đã Chuyển Khoản Xong*. **30% còn lại** thanh toán trực tiếp tại quán.\n" +
+      "- 📱 **Trả trước 70% qua VietQR (MBBank):** Khi đặt bàn trước hoặc gọi món, quý khách vui lòng chọn đồ uống từ thực đơn và chuyển khoản trước **70%** tổng đơn để xác nhận giữ bàn và pha chế (quán không nhận đặt bàn 0 đồng). Sau khi chuyển khoản xong bấm *Tôi Đã Chuyển Khoản Xong*. **30% còn lại** thanh toán trực tiếp tại quán.\n" +
       "- 💵 **Thanh toán phần còn lại tại quầy:** Hoàn tất 30% bằng tiền mặt hoặc chuyển khoản sau khi thưởng thức.\n" +
       "- 🛡️ **Nội quy 18+ & Check-in:** Chỉ phục vụ khách từ đủ 18 tuổi trở lên (vui lòng mang CCCD/VNeID chính chủ); giữ bàn đặt trước tối đa 20 phút.\n" +
       "- 🎟️ Sau khi đặt đơn, quý khách nhận **vé điện tử** trong mục *Tài khoản* để check-in.\n" +
@@ -182,7 +182,7 @@ export async function getBotResponse(userMessage) {
       `📅 **Quy định đặt bàn tại Quán Bar Đêm:**\n\n` +
       `- **Sức chứa:** Tối đa ${BOOKING_RULES.capacity} khách trong một khung giờ (mỗi lượt giữ chỗ trong ${BOOKING_RULES.slotMinutes / 60} tiếng).\n` +
       `- **Thời gian:** Quý khách có thể đặt trước từ ${BOOKING_RULES.minLeadMinutes} phút đến tối đa ${BOOKING_RULES.maxDaysAhead} ngày.\n` +
-      `- **Gọi món trước:** Là **tuỳ chọn** (quý khách có thể chỉ đặt giữ bàn và gọi món khi đến quán, hoặc chọn sẵn món trong thực đơn).\n` +
+      `- **Chọn món & Đặt cọc 70%:** Khi đặt bàn trước, quý khách vui lòng chọn đồ uống từ thực đơn và chuyển khoản trước **70%** giá trị đơn để xác nhận giữ bàn và pha chế; 30% còn lại thanh toán tại quán (quán không nhận đặt bàn 0 đồng).\n` +
       `- **Độ tuổi:** Chỉ phục vụ khách từ **đủ 18 tuổi trở lên** (quý khách vui lòng mang theo CCCD khi đến quán).\n\n` +
       `👉 Quý khách có thể bấm vào mục **[Đặt bàn & Gọi món](order.html)** trên thanh menu để đặt chỗ ngay trong 1 phút!`
     );

@@ -355,18 +355,31 @@ let badBankError = null;
 try { await settings.saveBankSettings({ bankId: "XYZ", accountNumber: "123456", accountName: "A" }); } catch (err) { badBankError = err; }
 check("Ngân hàng không có trong danh sách -> từ chối", badBankError instanceof Error, true);
 
-section("[20] Đặt bàn trước: gọi món là TUỲ CHỌN");
+section("[20] Đặt bàn trước: BẮT BUỘC chọn đồ uống để cọc 70% (chặn đơn 0đ)");
 resetDb();
 const venue = await import(mod("venue.js"));
 const inHours = (daysAhead, hour = 20) => { const d = new Date(); d.setDate(d.getDate() + daysAhead); d.setHours(hour, 0, 0, 0); return d.toISOString(); };
-const booker = (n, extra = {}) => ({ name: `Khách ${n}`, phone: `091000000${n}`, serviceType: "booking", bookingTime: inHours(3), guestCount: 4, ...extra });
-const tableOnly = await createAdult(booker(1));
-check("Giỏ trống + đặt bàn trước -> vẫn giữ bàn được", tableOnly.success, true);
-check("...đơn chỉ giữ bàn: 0 món, tổng 0đ", [tableOnly.order.items.length, tableOnly.order.total, tableOnly.order.isTableOnly], [0, 0, true]);
-check("...không cần quét QR thanh toán (tổng 0đ)", tableOnly.order.needsPayment, false);
+const booker = (n, extra = {}) => {
+  const hasCart = orders.getCart().length > 0;
+  const defaultItems = hasCart ? undefined : [{ drinkId: "d1", name: "Cocktail D1", price: 120000, qty: 1 }];
+  return {
+    name: `Khách ${n}`,
+    phone: `091000000${n}`,
+    serviceType: "booking",
+    bookingTime: inHours(3),
+    guestCount: 4,
+    ...(defaultItems ? { items: defaultItems } : {}),
+    ...extra,
+  };
+};
+const tableOnly = await createAdult(booker(1, { items: [] }));
+check("Giỏ trống + đặt bàn trước -> BỊ TỪ CHỐI (không cho đặt đơn 0đ)", tableOnly.success, false);
+check("...không tạo đơn 0đ trong hệ thống", Boolean(tableOnly.order), false);
+
 orders.addToCart(await drinks.getDrinkById("d1"), 2);
 const withDrinks = await createAdult(booker(2));
-check("Đặt bàn kèm gọi món trước vẫn được", [withDrinks.success, withDrinks.order.itemCount], [true, 2]);
+check("Đặt bàn có chọn đồ uống -> thành công", [withDrinks.success, withDrinks.order.itemCount], [true, 2]);
+check("...đơn có tiền và bắt buộc cọc 70% qua VietQR", [withDrinks.order.total > 0, withDrinks.order.needsDeposit, withDrinks.order.prepayAmount > 0], [true, true, true]);
 check("Gọi món tại bàn mà giỏ trống -> từ chối", (await createAdult({ ...customer(5), serviceType: "dine-in" })).success, false);
 orders.addToCart({ id: LOW, name: "Macallan", price: 195000, image: "" }, 1);
 await drinks.updateDrink(LOW, { stock: 0, status: "soldout" });
@@ -1581,6 +1594,7 @@ section("[50] Sơ đồ chỗ ngồi trong quán khi Đặt Bàn Trước");
 
   resetDb();
   const slotSeat = inHours(8);
+  const seatDrink = { drinkId: "d1", name: "Sofa VIP Drink", price: 150000, qty: 1 };
   const bookedSeatRes = await createAdult({
     name: "Trần Thanh Tú",
     phone: "0908777666",
@@ -1588,7 +1602,7 @@ section("[50] Sơ đồ chỗ ngồi trong quán khi Đặt Bàn Trước");
     bookingTime: slotSeat,
     guestCount: 4,
     tableNumber: "Sofa VIP 01",
-    items: [],
+    items: [seatDrink],
   });
   check("Đơn Đặt Bàn Trước lưu và hiển thị đúng vị trí bàn đã chọn",
     [
@@ -1612,7 +1626,7 @@ section("[50] Sơ đồ chỗ ngồi trong quán khi Đặt Bàn Trước");
       bookingTime: slotSeat,
       guestCount: 4,
       tableNumber: "Sofa VIP 01",
-      items: [],
+      items: [seatDrink],
     });
   } catch (err) {
     doubleSeatBlocked = /đã có khách đặt/.test(err.message);
