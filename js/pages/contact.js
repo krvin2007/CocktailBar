@@ -7,6 +7,7 @@
 import "../modules/navbar.js";
 import { addMessage } from "../modules/messagesService.js";
 import { getCurrentCustomer } from "../modules/customerAuth.js";
+import { lockFieldsFromAccount, releaseAccountFields, accountValue } from "../modules/accountFields.js";
 import { validateForm, clearFormErrors } from "../modules/validation.js";
 import { toast, setButtonLoading } from "../modules/ui.js";
 import { getCurrentLang } from "../modules/i18n.js";
@@ -41,9 +42,7 @@ function applyCustomerDefaults() {
   const customer = getCurrentCustomer();
   if (!customer) return;
 
-  if (formEl.elements.name && !formEl.elements.name.value) formEl.elements.name.value = customer.name || "";
-  if (formEl.elements.phone && !formEl.elements.phone.value) formEl.elements.phone.value = customer.phone || "";
-  if (formEl.elements.email && !formEl.elements.email.value) formEl.elements.email.value = customer.email || "";
+  lockFieldsFromAccount(formEl, customer, ["name", "phone", "email"]); // đúng thông tin tài khoản đã đăng ký
 
   if (!formEl.querySelector(".customer-contact-notice")) {
     const noticeBox = document.createElement("div");
@@ -62,6 +61,16 @@ function applyCustomerDefaults() {
 
 applyCustomerDefaults();
 
+// Đăng nhập / đăng xuất ngay trên trang này: cập nhật lại các ô
+window.addEventListener("customer-auth-change", () => {
+  if (getCurrentCustomer()) {
+    applyCustomerDefaults();
+  } else {
+    releaseAccountFields(formEl);
+    formEl.querySelector(".customer-contact-notice")?.remove();
+  }
+});
+
 formEl.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -74,10 +83,11 @@ formEl.addEventListener("submit", async (e) => {
   const restoreButton = setButtonLoading(submitBtn, "Đang gửi...");
 
   try {
+    const account = getCurrentCustomer();
     await addMessage({
-      name: data.name,
-      phone: data.phone,
-      email: data.email || "",
+      name: accountValue(account, "name", data.name),
+      phone: accountValue(account, "phone", data.phone),
+      email: accountValue(account, "email", data.email || ""),
       subject: data.subject,
       message: data.message,
     });
