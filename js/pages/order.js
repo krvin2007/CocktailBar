@@ -24,6 +24,7 @@ import {
 } from "../modules/venue.js";
 import { getCurrentLang, t } from "../modules/i18n.js";
 import { getCurrentCustomer, syncCustomerSession } from "../modules/customerAuth.js";
+import { lockFieldsFromAccount, releaseAccountFields, accountValue } from "../modules/accountFields.js";
 import { canCustomer, syncRolePermissions } from "../modules/auth.js";
 import { resolvePricing, POINT_REDEEM_VND, MIN_POINT_REDEEM } from "../modules/promotions.js";
 import { getItem, setItem, removeItem } from "../modules/storage.js";
@@ -1226,12 +1227,12 @@ formEl.addEventListener("submit", async (e) => {
     }
     const result = await createOrder({
       ...(subsetItems ? { items: subsetItems } : {}),
-      birthDate: data.birthDate,
+      birthDate: accountValue(customer, "birthDate", data.birthDate),
       voucherCode: latest?.voucherCode || "",
       pointsToUse: latest?.pointsUsed || 0,
-      name: data.name,
-      phone: data.phone,
-      email: String(data.email || customer?.email || "").trim(),
+      name: accountValue(customer, "name", data.name),   // khách đã đăng nhập: luôn đúng thông tin tài khoản
+      phone: accountValue(customer, "phone", data.phone),
+      email: String(accountValue(customer, "email", data.email) || "").trim(),
       serviceType: data.serviceType,
       customerId: customer?.id || "", // khách đã đăng nhập -> được tích điểm khi đơn hoàn tất
       tableNumber: String(data.tableNumber || "").trim(),
@@ -1550,6 +1551,7 @@ function fillCustomerInfo() {
   let banner = document.getElementById("customer-order-banner");
   if (!customer) {
     if (banner) banner.remove();
+    releaseAccountFields(formEl);
     return;
   }
 
@@ -1563,25 +1565,17 @@ function fillCustomerInfo() {
     banner.innerHTML = `
       <div style="background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
         <div style="font-size: 0.82rem; color: var(--gold-light); line-height: 1.4;">
-          ✨ Chào mừng quý khách <strong>${escapeHtml(customer.name)}</strong> (${escapeHtml(customer.tier || "Thành viên Thân thiết")})! Thông tin đặt bàn đã được điền tự động.
+          ✨ Chào mừng quý khách <strong>${escapeHtml(customer.name)}</strong> (${escapeHtml(customer.tier || "Thành viên Thân thiết")})! Thông tin liên hệ đã lấy từ tài khoản đăng ký của bạn (muốn đổi hãy vào <a href="customer-account.html" style="color: var(--gold-primary); text-decoration: underline;">Tài khoản</a>).
         </div>
         <span style="font-size: 0.74rem; background: var(--gold-primary); color: #0b0907; padding: 3px 8px; border-radius: 999px; font-weight: 700; white-space: nowrap;">
           ${customer.points || 0} điểm thưởng
         </span>
       </div>`;
 
-    if (formEl.elements.name && !formEl.elements.name.value) {
-      formEl.elements.name.value = customer.name;
-    }
-    if (formEl.elements.phone && !formEl.elements.phone.value) {
-      formEl.elements.phone.value = customer.phone;
-    }
-    if (formEl.elements.email && !formEl.elements.email.value && customer.email) {
-      formEl.elements.email.value = customer.email;
-    }
-    if (formEl.elements.birthDate && !formEl.elements.birthDate.value && customer.birthDate) {
-      formEl.elements.birthDate.value = customer.birthDate; // thành viên đã khai lúc đăng ký -> khỏi nhập lại
-    }
+    // Ghi đúng thông tin tài khoản đã đăng ký và khoá các ô đó (ô tài khoản chưa có thì khách tự nhập)
+    lockFieldsFromAccount(formEl, customer);
+    const lookupPhoneInput = document.getElementById("lookup-phone");
+    if (lookupPhoneInput && !lookupPhoneInput.value && customer.phone) lookupPhoneInput.value = customer.phone;
   }
 }
 

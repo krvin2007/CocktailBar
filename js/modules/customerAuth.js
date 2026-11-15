@@ -238,6 +238,9 @@ export async function syncCustomerSession() {
   const fresh = {
     ...session,
     name: record.name,
+    phone: record.phone || session.phone || "",
+    email: record.email || "",
+    birthDate: record.birthDate || session.birthDate || "",
     avatar: record.avatar || "",
     tier: record.tier || session.tier,
     points: record.points || 0,
@@ -245,7 +248,8 @@ export async function syncCustomerSession() {
     customDiscount: Number(record.customDiscount) || 0,
     discountNote: record.discountNote || "",
   };
-  const changed = fresh.name !== session.name || fresh.avatar !== session.avatar || fresh.tier !== session.tier || fresh.points !== session.points
+  const changed = fresh.name !== session.name || fresh.phone !== session.phone || fresh.email !== (session.email || "")
+    || fresh.birthDate !== (session.birthDate || "") || fresh.avatar !== session.avatar || fresh.tier !== session.tier || fresh.points !== session.points
     || fresh.lifetimePoints !== session.lifetimePoints || fresh.customDiscount !== session.customDiscount
     || fresh.discountNote !== session.discountNote;
   if (changed) {
