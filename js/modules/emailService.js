@@ -20,9 +20,26 @@ const EMAILS_KEY = "quanbar_sent_emails";
 const EMAILJS_CDN = "https://cdn.jsdelivr.net/npm/@emailjs/browser@5.0.3/dist/email.min.js";
 const EMAILJS_TIMEOUT_MS = 10000;
 
+/** Lấy cấu hình EmailJS từ localStorage hoặc file emailConfig.js */
+export function getEmailConfig() {
+  let stored = null;
+  try {
+    const raw = localStorage.getItem("emailjs_config");
+    if (raw) stored = JSON.parse(raw);
+  } catch {
+    stored = null;
+  }
+  return {
+    publicKey: (stored?.publicKey || EMAILJS_CONFIG.publicKey || "").trim(),
+    serviceId: (stored?.serviceId || EMAILJS_CONFIG.serviceId || "").trim(),
+    templateId: (stored?.templateId || EMAILJS_CONFIG.templateId || "").trim(),
+  };
+}
+
 /** Đã điền đủ cấu hình EmailJS (gửi email THẬT) chưa */
 export function isRealEmailConfigured() {
-  return Boolean(EMAILJS_CONFIG.publicKey && EMAILJS_CONFIG.serviceId && EMAILJS_CONFIG.templateId);
+  const cfg = getEmailConfig();
+  return Boolean(cfg.publicKey && cfg.serviceId && cfg.templateId);
 }
 
 let emailJsLoading = null;
@@ -95,10 +112,11 @@ export function buildOrderMailParams(order, toEmail) {
 
 /** Gửi mail thật bằng EmailJS (có giới hạn thời gian chờ) */
 async function sendRealEmail(params) {
+  const cfg = getEmailConfig();
   const emailjs = await loadEmailJs();
   const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Gửi email quá thời gian chờ.")), EMAILJS_TIMEOUT_MS));
   await Promise.race([
-    emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, params, { publicKey: EMAILJS_CONFIG.publicKey }),
+    emailjs.send(cfg.serviceId, cfg.templateId, params, { publicKey: cfg.publicKey }),
     timeout,
   ]);
 }

@@ -164,9 +164,29 @@
         <small class="text-xs text-muted" style="display:block; margin-top: 4px;">Tự chuyển thành chữ IN HOA không dấu như trên app ngân hàng.</small>
       </div>
       <p class="text-xs text-muted">Mã QR của mọi đơn hàng (cả trang khách) sẽ dùng tài khoản này.</p>
+
+      <div style="margin: 16px 0 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;">
+        <h4 style="font-size: 0.95rem; color: var(--accent-gold, #d4af37); margin-bottom: 4px;">📧 Cấu hình gửi Email Vé Điện Tử (EmailJS)</h4>
+        <small class="text-xs text-muted" style="display:block; margin-bottom: 10px;">
+          Để gửi vé điện tử trực tiếp đến hộp thư Gmail/Outlook của khách. Bỏ trống nếu chỉ lưu vé trong hòm thư nội bộ website.
+        </small>
+        <div class="form-group mb-2">
+          <label>Service ID (EmailJS)</label>
+          <input type="text" name="emailjsServiceId" placeholder="VD: service_xxxxxxx">
+        </div>
+        <div class="form-group mb-2">
+          <label>Template ID (EmailJS)</label>
+          <input type="text" name="emailjsTemplateId" placeholder="VD: template_xxxxxxx">
+        </div>
+        <div class="form-group mb-2">
+          <label>Public Key (EmailJS)</label>
+          <input type="text" name="emailjsPublicKey" placeholder="VD: user_xxxxxxx hoặc public key">
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="bank-form-cancel">Huỷ</button>
-        <button type="submit" class="btn btn-primary" id="bank-form-submit">Lưu tài khoản</button>
+        <button type="submit" class="btn btn-primary" id="bank-form-submit">Lưu cài đặt</button>
       </div>
     </form>
   </div>

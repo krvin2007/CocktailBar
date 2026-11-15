@@ -137,8 +137,9 @@
                 <input type="tel" name="phone" data-rule="required|phone" placeholder="VD: 0912 345 678" data-i18n-placeholder="order_ph_phone">
               </div>
               <div class="form-group">
-                <label data-i18n="order_label_email">Email xác nhận</label>
-                <input type="email" name="email" data-rule="email" placeholder="email@domain.com">
+                <label><span data-i18n="order_label_email">Email nhận vé điện tử &amp; xác nhận</span> <span class="req">*</span></label>
+                <input type="email" name="email" data-rule="required|email" placeholder="VD: krvin2007@gmail.com" autocomplete="email">
+                <span class="hint-text">Mã đặt chỗ &amp; vé điện tử sẽ được gửi về email này.</span>
               </div>
               <!-- Ngày sinh: chặn khách khai dưới 18 tuổi (age.js). Nhân viên còn đối chiếu CCCD khi khách đến quán -->
               <div class="form-group full">
@@ -150,8 +151,7 @@
               <!-- Chỉ hiện khi chọn "Đặt bàn trước" -->
               <div class="form-group full conditional-fields" data-for="booking">
                 <p class="booking-optional-note" data-i18n-html="order_optional_note">
-                  Gọi món trước là <strong>tuỳ chọn</strong>: quý khách có thể chỉ giữ bàn và gọi món khi đến quán,
-                  hoặc chọn sẵn món từ thực đơn để quầy bar chuẩn bị trước.
+                  Quý khách vui lòng <strong>chọn đồ uống từ thực đơn</strong> để quầy bar chuẩn bị sẵn và xác nhận cọc 70% giữ bàn theo quy định quán.
                 </p>
               </div>
               <div class="form-group full conditional-fields" data-for="booking">

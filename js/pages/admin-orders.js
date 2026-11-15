@@ -30,7 +30,7 @@ import {
   parseOrdersFromRows,
   printOrderInvoice,
 } from "../modules/exportService.js";
-import { sendOrderConfirmationEmail, describeMailDelivery } from "../modules/emailService.js";
+import { sendOrderConfirmationEmail, describeMailDelivery, getEmailConfig } from "../modules/emailService.js";
 
 const bodyEl = document.getElementById("orders-body");
 const paginationEl = document.getElementById("pagination");
@@ -402,6 +402,12 @@ async function openBankSettings() {
     bankForm.elements.bankId.value = bank.bankId;
     bankForm.elements.accountNumber.value = bank.accountNumber;
     bankForm.elements.accountName.value = bank.accountName;
+
+    const emailCfg = getEmailConfig();
+    if (bankForm.elements.emailjsServiceId) bankForm.elements.emailjsServiceId.value = emailCfg.serviceId || "";
+    if (bankForm.elements.emailjsTemplateId) bankForm.elements.emailjsTemplateId.value = emailCfg.templateId || "";
+    if (bankForm.elements.emailjsPublicKey) bankForm.elements.emailjsPublicKey.value = emailCfg.publicKey || "";
+
     openModal("bank-modal");
   } catch (err) {
     toast(err.message, "error");
@@ -413,10 +419,24 @@ bankForm.addEventListener("submit", async (e) => {
   const { isValid, data } = validateForm(bankForm);
   if (!isValid) return;
 
+  const emailCfg = {
+    serviceId: String(bankForm.elements.emailjsServiceId?.value || "").trim(),
+    templateId: String(bankForm.elements.emailjsTemplateId?.value || "").trim(),
+    publicKey: String(bankForm.elements.emailjsPublicKey?.value || "").trim(),
+  };
+  try {
+    localStorage.setItem("emailjs_config", JSON.stringify(emailCfg));
+  } catch (err) {
+    console.warn("Không thể lưu cấu hình EmailJS vào localStorage:", err);
+  }
+
   const restoreButton = setButtonLoading(bankSubmitBtn, "Đang lưu...");
   try {
     const saved = await saveBankSettings(data);
-    toast(`Đã đổi tài khoản nhận tiền: ${saved.bankId} - ${saved.accountNumber} (${saved.accountName}).`, "success");
+    const emailNotice = (emailCfg.serviceId && emailCfg.templateId && emailCfg.publicKey)
+      ? " Đã kết nối EmailJS để gửi vé thật qua Gmail!"
+      : "";
+    toast(`Đã cập nhật cài đặt: ${saved.bankId} - ${saved.accountNumber} (${saved.accountName}).${emailNotice}`, "success");
     closeModal("bank-modal");
   } catch (err) {
     toast(err.message, "error");

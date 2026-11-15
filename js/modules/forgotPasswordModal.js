@@ -66,17 +66,17 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
       <!-- BƯỚC 1: CHỌN KÊNH & NHẬP EMAIL HOẶC SỐ ĐIỆN THOẠI (+84) -->
       <div id="fp-step-1">
         <p class="text-xs text-muted" style="margin-bottom: 14px; line-height: 1.5;">
-          Chọn hình thức xác thực bằng Email hoặc Số điện thoại đã đăng ký tài khoản tại Quán Bar Đêm để nhận mã OTP đặt lại mật khẩu.
+          Vui lòng nhập Số điện thoại hoặc Email đã đăng ký tài khoản tại Quán Bar Đêm. Hệ thống sẽ tạo mã OTP xác thực để bảo vệ tài khoản của bạn.
         </p>
 
         <form id="fp-form-step1" novalidate>
           <div class="form-group mb-3">
-            <label style="display: block; font-size: 0.84rem; font-weight: 600; color: var(--cream); margin-bottom: 6px;">Chọn cách nhập &amp; nhận mã OTP</label>
+            <label style="display: block; font-size: 0.84rem; font-weight: 600; color: var(--cream); margin-bottom: 6px;">Chọn cách nhận mã OTP</label>
             ${otpChannelPickerHtml("fp-channel", {
               selected: initialChannel,
               labels: {
-                email: "<strong>Email</strong> (nhận mã qua Email)",
-                sms: "<strong>Số điện thoại</strong> (nhận SMS)",
+                email: "Nhận mã qua <strong>Email</strong>",
+                sms: "Nhận mã qua <strong>SMS</strong>",
               },
             })}
           </div>
@@ -90,7 +90,7 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
               <input type="email" id="fp-ident-input" class="form-control fp-ident-input" placeholder="VD: email@domain.com" value="" required autocomplete="email">
             </div>
             <small class="text-xs text-muted" id="fp-ident-hint" style="display: block; margin-top: 5px; line-height: 1.4;">
-              Nhập đúng địa chỉ Email bạn đã dùng khi đăng ký tài khoản.
+              Mã OTP xác thực sẽ được gửi trực tiếp đến địa chỉ email này.
             </small>
           </div>
 
@@ -194,12 +194,34 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
   let currentIdent = "";
   let stopCountdown = () => {};
 
+  function updateRadioVisuals() {
+    host.querySelectorAll(".otp-channel").forEach((label) => {
+      const radio = label.querySelector('input[type="radio"]');
+      const isChecked = radio ? radio.checked : false;
+      if (isChecked) {
+        label.classList.add("active");
+        label.style.borderColor = "var(--amber, #c59843)";
+        label.style.background = "rgba(197, 152, 67, 0.14)";
+        label.style.color = "#fff";
+      } else {
+        label.classList.remove("active");
+        label.style.borderColor = "rgba(255, 255, 255, 0.15)";
+        label.style.background = "rgba(0, 0, 0, 0.25)";
+        label.style.color = "var(--cream)";
+      }
+    });
+  }
+
   function syncChannelField({ focusInput = false } = {}) {
     const isSms = activeChannel === "sms";
+    updateRadioVisuals();
     if (identLabelEl) {
       identLabelEl.innerHTML = `${isSms ? "Số điện thoại đã đăng ký" : "Email đã đăng ký"} <span class="req" style="color: #ef4444;">*</span>`;
     }
-    if (phonePrefixEl) phonePrefixEl.hidden = !isSms;
+    if (phonePrefixEl) {
+      phonePrefixEl.hidden = !isSms;
+      phonePrefixEl.style.display = isSms ? "inline-flex" : "none";
+    }
     if (identInput) {
       identInput.type = isSms ? "tel" : "email";
       identInput.inputMode = isSms ? "tel" : "email";
@@ -210,7 +232,7 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
     if (identHintEl) {
       identHintEl.textContent = isSms
         ? "Đầu số +84 được đặt sẵn — nhập phần số điện thoại (VD: 909123456)."
-        : "Nhập đúng địa chỉ Email bạn đã dùng khi đăng ký tài khoản.";
+        : "Mã OTP xác thực sẽ được gửi trực tiếp đến địa chỉ email này.";
     }
     if (focusInput && identInput) setTimeout(() => identInput.focus(), 30);
   }
@@ -223,6 +245,15 @@ export function openForgotPasswordModal(prefilledIdent = "", onSuccess = null) {
       activeChannel = selectedOtpChannel(host, "fp-channel");
       syncChannelField({ focusInput: true });
     });
+  });
+
+  identInput.addEventListener("input", () => {
+    if (activeChannel === "sms") {
+      const raw = identInput.value;
+      if (raw.startsWith("0") || raw.startsWith("+84") || raw.startsWith("84")) {
+        identInput.value = stripVietnamPhonePrefix(raw);
+      }
+    }
   });
 
   identInput.addEventListener("blur", () => {

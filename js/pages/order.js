@@ -1263,15 +1263,16 @@ formEl.addEventListener("submit", async (e) => {
     checkAndRenderUnpaidOrderBanner();
 
     // Tự động gửi Vé Điện Tử (Cinema E-Ticket) về Email tài khoản khách đã đăng ký
+    let mailResult = null;
     try {
-      const mail = await sendOrderConfirmationEmail(result.order, customer);
-      const note = describeMailDelivery(mail, result.order);
+      mailResult = await sendOrderConfirmationEmail(result.order, customer);
+      const note = describeMailDelivery(mailResult, result.order);
       toast(note.message, note.type);
     } catch (eMailErr) {
       console.warn("Không thể gửi email vé điện tử:", eMailErr);
     }
 
-    showOrderSuccessModal(result.order);
+    showOrderSuccessModal(result.order, mailResult);
   } catch (err) {
     toast(err.message, "error");
     updateCapacityHint(); // VD vừa có người đặt kín chỗ -> cập nhật số chỗ còn lại
@@ -1282,11 +1283,46 @@ formEl.addEventListener("submit", async (e) => {
   }
 });
 
-function showOrderSuccessModal(order) {
+function showOrderSuccessModal(order, mailResult = null) {
   const host = document.createElement("div");
   host.className = "modal-overlay show";
   const customer = getCurrentCustomer();
-  const ticketEmail = order.email || customer?.email || "Email tài khoản";
+  const ticketEmail = order.email || customer?.email || "";
+  const isSent = mailResult?.delivery === "sent";
+
+  const emailBannerHtml = isSent
+    ? `
+      <!-- THÔNG BÁO VÉ ĐIỆN TỬ ĐÃ GỬI THÀNH CÔNG VỀ MAIL THẬT -->
+      <div class="ticket-email-alert" style="margin: 14px 0; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.35); border-radius: 8px; padding: 12px 14px; text-align: left;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">🎟️</span>
+            <div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: #4ade80;">Vé Điện Tử (Cinema E-Ticket) đã gửi thành công tới email:</div>
+              <div style="font-size: 0.82rem; color: #fff; font-family: monospace;">${escapeHtml(ticketEmail)}</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-success-view-ticket" style="white-space: nowrap; font-size: 0.78rem; padding: 6px 12px;">
+            🎟️ Mở Vé Điện Tử
+          </button>
+        </div>
+      </div>`
+    : `
+      <!-- THÔNG BÁO VÉ ĐÃ CẤP & LƯU AN TOÀN TRÊN HỆ THỐNG / HÒM THƯ TÀI KHOẢN -->
+      <div class="ticket-email-alert" style="margin: 14px 0; background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 8px; padding: 12px 14px; text-align: left;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">🎟️</span>
+            <div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: #f7d794;">Mã vé điện tử #${escapeHtml(order.code)} đã được cấp &amp; lưu an toàn:</div>
+              <div style="font-size: 0.82rem; color: #e2e8f0;">Được lưu trong Hộp thư tài khoản (${escapeHtml(ticketEmail || "quý khách")}). Bấm "Mở Vé Điện Tử" để xem mã QR &amp; thông tin giữ bàn.</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-success-view-ticket" style="white-space: nowrap; font-size: 0.78rem; padding: 6px 12px;">
+            🎟️ Mở Vé Điện Tử
+          </button>
+        </div>
+      </div>`;
 
   host.innerHTML = `
     <div class="modal-box modal-success-order" role="dialog" aria-modal="true">
@@ -1294,21 +1330,7 @@ function showOrderSuccessModal(order) {
       <h3 class="modal-success-title">${order.isTableOnly ? t("order_success_table", "Giữ bàn thành công!") : t("order_success", "Đặt chỗ thành công!")}</h3>
       <p class="modal-success-sub">${t("order_success_sub", "Hãy lưu lại mã đơn - cần mã này cùng số điện thoại để tra cứu hoặc huỷ đặt chỗ.")}</p>
 
-      <!-- THÔNG BÁO VÉ ĐIỆN TỬ GỬI VỀ MAIL NHƯ VÉ XEM PHIM -->
-      <div class="ticket-email-alert" style="margin: 14px 0; background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 8px; padding: 12px 14px; text-align: left;">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.5rem;">🎟️</span>
-            <div>
-              <div style="font-size: 0.88rem; font-weight: 700; color: #f7d794;">Vé Điện Tử (Cinema E-Ticket) đã gửi về mail:</div>
-              <div style="font-size: 0.82rem; color: #4ade80; font-family: monospace;">${escapeHtml(ticketEmail)}</div>
-            </div>
-          </div>
-          <button type="button" class="btn btn-primary btn-sm" id="btn-success-view-ticket" style="white-space: nowrap; font-size: 0.78rem; padding: 6px 12px;">
-            🎟️ Mở Vé Điện Tử
-          </button>
-        </div>
-      </div>
+      ${emailBannerHtml}
 
       <div class="order-receipt-card">
         <div class="receipt-row"><span>${t("order_rc_code", "Mã đặt chỗ")}:</span><strong class="receipt-code">${escapeHtml(order.code)}</strong></div>
