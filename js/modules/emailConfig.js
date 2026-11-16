@@ -21,6 +21,6 @@
 
 export const EMAILJS_CONFIG = {
   publicKey: "AeMyASgQm3GV22uoA",
-  serviceId: "{{to_email}}",
+  serviceId: "service_f2mcs37",
   templateId: "template_1u5acos",
 };

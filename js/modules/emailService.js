@@ -143,6 +143,17 @@ export function buildOrderMailParams(order, toEmail) {
 async function sendRealEmail(params) {
   const cfg = getEmailConfig();
   const emailjs = await loadEmailJs();
+  if (typeof emailjs.init === "function") {
+    try {
+      emailjs.init({ publicKey: cfg.publicKey });
+    } catch {
+      try {
+        emailjs.init(cfg.publicKey);
+      } catch (err) {
+        console.warn("[email] Không thể khởi tạo emailjs:", err);
+      }
+    }
+  }
   const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Gửi email quá thời gian chờ.")), EMAILJS_TIMEOUT_MS));
   await Promise.race([
     emailjs.send(cfg.serviceId, cfg.templateId, params, { publicKey: cfg.publicKey }),
