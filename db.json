@@ -4,7 +4,7 @@
       "id": "d1",
       "name": "Negroni Classico",
       "category": "classic",
-      "price": 125000,
+      "price": 1000,
       "image": "img/drinks/negroni.jpg",
       "description": "Tỷ lệ vàng 1:1:1 chuẩn quốc tế giữa London Dry Gin, rượu đắng Campari và Sweet Vermouth Carpano, điểm xuyết tinh dầu vỏ cam tươi.",
       "ingredients": [
@@ -33,7 +33,7 @@
       "id": "d2",
       "name": "Smoked Old Fashioned",
       "category": "classic",
-      "price": 135000,
+      "price": 1000,
       "image": "img/drinks/old-fashioned.jpg",
       "description": "Bourbon thượng hạng ủ thùng gỗ sồi hun khói gỗ hồ đào, chút đắng thơm từ Angostura Bitters, cam cháy và khối đá điêu khắc.",
       "ingredients": [
@@ -62,7 +62,7 @@
       "id": "d3",
       "name": "Dry Martini 007",
       "category": "classic",
-      "price": 130000,
+      "price": 1000,
       "image": "img/drinks/dry-martini.jpg",
       "description": "Huyền thoại thanh lịch của thế giới cocktail: Dry Gin thượng hạng khuấy lạnh cùng Dry Vermouth Pháp, hoàn thiện với quả ô liu xanh muối biển.",
       "ingredients": [
@@ -90,7 +90,7 @@
       "id": "d4",
       "name": "Bourbon Whiskey Sour",
       "category": "sour-fizz",
-      "price": 120000,
+      "price": 1000,
       "image": "img/drinks/whiskey-sour.jpg",
       "description": "Sự cân bằng tinh tế giữa độ nồng ấm của Bourbon, vị chua giòn từ chanh vàng và lớp bọt lòng trắng trứng đánh mịn như nhung mượt.",
       "ingredients": [
@@ -119,7 +119,7 @@
       "id": "d5",
       "name": "Classic Margarita",
       "category": "sour-fizz",
-      "price": 115000,
+      "price": 1000,
       "image": "img/drinks/margarita.jpg",
       "description": "Tequila 100% Blue Agave kết hợp rượu mùi cam cao cấp Cointreau và nước cốt chanh tươi, viền muối hồng Himalaya thủ công.",
       "ingredients": [
@@ -147,7 +147,7 @@
       "id": "d6",
       "name": "Mojito Havana Rum",
       "category": "sour-fizz",
-      "price": 105000,
+      "price": 1000,
       "image": "img/drinks/mojito.jpg",
       "description": "Rum trắng Cuba truyền thống hòa quyện cùng lá bạc hà tươi giã dập nhẹ, nước cốt chanh tươi, đường mía tự nhiên và soda suối khoáng.",
       "ingredients": [
@@ -177,7 +177,7 @@
       "id": "d7",
       "name": "Velvet Espresso Martini",
       "category": "signature",
-      "price": 130000,
+      "price": 1000,
       "image": "img/drinks/espresso-martini.jpg",
       "description": "Espresso mới chiết xuất từ hạt Arabica đậm đà, Vodka mịn màng cùng rượu mùi cà phê Kahlúa với lớp bọt crema vàng óng và 3 hạt cà phê may mắn.",
       "ingredients": [
@@ -206,7 +206,7 @@
       "id": "d8",
       "name": "Aperol Spritz Veneziano",
       "category": "aperitivo",
-      "price": 120000,
+      "price": 1000,
       "image": "img/drinks/aperol-spritz.jpg",
       "description": "Thức uống khai vị biểu tượng nước Ý: Rượu thảo mộc Aperol rực rỡ, vang sủi Prosecco DOC sủi bọt lăn tăn và lát cam vàng ngập tràn nắng hè.",
       "ingredients": [
@@ -235,7 +235,7 @@
       "id": "d9",
       "name": "Manhattan Reserve",
       "category": "classic",
-      "price": 140000,
+      "price": 1000,
       "image": "img/drinks/manhattan.jpg",
       "description": "Nữ hoàng của các loại cocktail: Bulleit Rye Whiskey cay nồng ủ thùng gỗ sồi, Sweet Vermouth Ý cổ truyền và quả anh đào Maraschino đỏ thẫm.",
       "ingredients": [
@@ -263,7 +263,7 @@
       "id": "d10",
       "name": "The Macallan 12 Double Cask",
       "category": "spirits",
-      "price": 250000,
+      "price": 1000,
       "image": "img/drinks/macallan-12.jpg",
       "description": "Dòng Single Malt Scotch trứ danh từ Speyside Scotland, ủ kết hợp thùng gỗ sồi Sherry Châu Âu và Châu Mỹ, phục vụ Neat hoặc On The Rocks.",
       "ingredients": [
@@ -289,7 +289,7 @@
       "id": "d11",
       "name": "Sazerac New Orleans",
       "category": "classic",
-      "price": 135000,
+      "price": 1000,
       "image": "img/drinks/sazerac.jpg",
       "description": "Cocktail cổ xưa nhất nước Mỹ: Rye Whiskey ủ sồi kết hợp rượu đắng Peychaud's Bitters đỏ thắm, ly tráng một lớp mỏng hương hồi Absinthe huyền bí và vỏ chanh xoắn.",
       "ingredients": [
@@ -318,7 +318,7 @@
       "id": "d12",
       "name": "Daiquiri Hemingway",
       "category": "classic",
-      "price": 120000,
+      "price": 1000,
       "image": "img/drinks/daiquiri.jpg",
       "description": "Phiên bản danh tiếng gắn liền với đại văn hào Hemingway: Rum trắng Cuba lắc lạnh cùng nước bưởi chùm hồng tươi, Maraschino Liqueur và chanh mọng nước.",
       "ingredients": [
@@ -347,7 +347,7 @@
       "id": "d13",
       "name": "Boulevardier Parisien",
       "category": "classic",
-      "price": 135000,
+      "price": 1000,
       "image": "img/drinks/boulevardier.jpg",
       "description": "Biến tấu quý tộc của Negroni ra đời tại Paris thập niên 1920: Bourbon Whiskey nồng ấm thay thế Gin, hòa cùng Campari đắng đậm và Sweet Vermouth Carpano.",
       "ingredients": [
@@ -376,7 +376,7 @@
       "id": "d14",
       "name": "French 75 Champagne",
       "category": "classic",
-      "price": 145000,
+      "price": 1000,
       "image": "img/drinks/french-75.jpg",
       "description": "Biểu tượng thanh tao của quầy bar Paris: London Dry Gin lắc cùng nước cốt chanh tươi, rót đầy bởi rượu Champagne Brut sủi tăm óng ánh và dải vỏ chanh xoắn.",
       "ingredients": [
@@ -405,7 +405,7 @@
       "id": "d15",
       "name": "Hanky Panky Savoy 1903",
       "category": "classic",
-      "price": 130000,
+      "price": 1000,
       "image": "img/drinks/hanky-panky.jpg",
       "description": "Kiệt tác được nữ huyền thoại Ada Coleman sáng chế tại khách sạn Savoy London: London Dry Gin, Sweet Vermouth và vài giọt rượu thảo mộc đắng bí truyền Fernet-Branca.",
       "ingredients": [
@@ -433,7 +433,7 @@
       "id": "d16",
       "name": "White Lady Coupe",
       "category": "classic",
-      "price": 125000,
+      "price": 1000,
       "image": "img/drinks/white-lady.jpg",
       "description": "Công thức bất hủ trong cuốn Savoy Cocktail Book của Harry Craddock: Dry Gin hòa cùng Cointreau mượt mà, chanh tươi và bọt lòng trắng trứng trắng muốt.",
       "ingredients": [
@@ -462,7 +462,7 @@
       "id": "d17",
       "name": "Flaming Cosmopolitan",
       "category": "signature",
-      "price": 130000,
+      "price": 1000,
       "image": "img/drinks/cosmopolitan.jpg",
       "description": "Biến tấu đẳng cấp của Dale DeGroff tại Rainbow Room New York: Vodka ngâm vỏ chanh, Cointreau, nước ép nam việt quất và ngọn lửa tinh dầu cam bùng cháy ngoạn mục.",
       "ingredients": [
@@ -491,7 +491,7 @@
       "id": "d18",
       "name": "Breakfast Martini",
       "category": "signature",
-      "price": 140000,
+      "price": 1000,
       "image": "img/drinks/breakfast-martini.jpg",
       "description": "Sáng tạo lừng danh thế giới của bậc thầy Salvatore Calabrese: Gin thượng hạng lắc cùng mứt cam đắng Seville cao cấp của Anh, Cointreau và chanh tươi thanh nhã.",
       "ingredients": [
@@ -520,7 +520,7 @@
       "id": "d19",
       "name": "Green Park Basil Velvet",
       "category": "signature",
-      "price": 135000,
+      "price": 1000,
       "image": "img/drinks/green-park.jpg",
       "description": "Tác phẩm đoạt giải Bartender of the Year của Erik Lorincz: Gin thảo mộc, lá húng tây basil tươi giã mịn, giọt Celery Bitters và lớp bọt mượt mà sắc xanh ngọc.",
       "ingredients": [
@@ -549,7 +549,7 @@
       "id": "d20",
       "name": "Serendipity Champagne Ritz",
       "category": "signature",
-      "price": 155000,
+      "price": 1000,
       "image": "img/drinks/serendipity.jpg",
       "description": "Món cocktail biểu tượng tại Bar Hemingway thuộc khách sạn Ritz Paris của Colin Field: Rượu táo Calvados Pays d'Auge danh tiếng, Champagne, nước táo tươi và lá bạc hà.",
       "ingredients": [
@@ -578,7 +578,7 @@
       "id": "d21",
       "name": "Blue Blazer 1862 Flaming",
       "category": "signature",
-      "price": 160000,
+      "price": 1000,
       "image": "img/drinks/blue-blazer.jpg",
       "description": "Màn trình diễn ngoạn mục của ông tổ Jerry Thomas từ năm 1862: Cask Strength Whisky và nước sôi hòa quyện trong luồng lửa xanh biếc được rót qua lại giữa hai ca bạc sáng loáng.",
       "ingredients": [
@@ -606,7 +606,7 @@
       "id": "d22",
       "name": "Diamond Ice Single Malt",
       "category": "signature",
-      "price": 175000,
+      "price": 1000,
       "image": "img/drinks/diamond-ice.jpg",
       "description": "Nghệ thuật điêu khắc đá đỉnh cao phong cách Tokyo của Hidetsugu Ueno: Khối đá kim cương trong suốt thủ công tan cực chậm trong ly Single Malt ủ thùng sherry hảo hạng.",
       "ingredients": [
@@ -632,7 +632,7 @@
       "id": "d23",
       "name": "The Macallan 18 Sherry Oak",
       "category": "spirits",
-      "price": 1150000,
+      "price": 1000,
       "image": "img/drinks/macallan-18.jpg",
       "description": "Đỉnh cao Single Malt Scotch từ vùng Speyside: 18 năm ủ trọn vẹn trong thùng gỗ sồi Oloroso Sherry từ Jerez Tây Ban Nha, màu hổ phách đậm đà đầy mê hoặc.",
       "ingredients": [
@@ -658,7 +658,7 @@
       "id": "d24",
       "name": "Lagavulin 16 Islay Peat",
       "category": "spirits",
-      "price": 320000,
+      "price": 1000,
       "image": "img/drinks/lagavulin-16.jpg",
       "description": "Vua khói của đảo Islay Scotland: Mùi hương khói than bùn biển nồng nàn, rong biển mặn mòi kết hợp vị ngọt ngào sâu thẳm của trái cây chín và gỗ sồi già.",
       "ingredients": [
@@ -684,7 +684,7 @@
       "id": "d25",
       "name": "Hennessy X.O Cognac",
       "category": "spirits",
-      "price": 650000,
+      "price": 1000,
       "image": "img/drinks/hennessy-xo.jpg",
       "description": "Biểu tượng Cognac Extra Old trứ danh vùng Cognac nước Pháp: Pha trộn từ hơn 100 loại eaux-de-vie lâu năm với hương thơm vani, tiêu đen cay nhẹ và socola đen quyến rũ.",
       "ingredients": [
@@ -710,7 +710,7 @@
       "id": "d26",
       "name": "Don Julio 1942 Añejo Tequila",
       "category": "spirits",
-      "price": 600000,
+      "price": 1000,
       "image": "img/drinks/don-julio-1942.jpg",
       "description": "Kiệt tác Tequila Añejo thủ công sản xuất số lượng giới hạn: 100% Blue Weber Agave thu hoạch tại cao nguyên Jalisco, ủ ít nhất hai năm rưỡi trong thùng sồi trắng Mỹ.",
       "ingredients": [
@@ -736,7 +736,7 @@
       "id": "d27",
       "name": "Monkey 47 Schwarzwald Dry Gin",
       "category": "spirits",
-      "price": 290000,
+      "price": 1000,
       "image": "img/drinks/monkey-47.jpg",
       "description": "Dòng Gin thủ công nổi tiếng từ Rừng Đen nước Đức: Chưng cất cùng 47 loại thảo mộc quý hiếm, quả nam việt quất và nguồn nước suối rừng sâu nguyên sơ.",
       "ingredients": [
@@ -763,7 +763,7 @@
       "id": "d28",
       "name": "Bulleit Bourbon Frontier 10Y",
       "category": "spirits",
-      "price": 220000,
+      "price": 1000,
       "image": "img/drinks/bulleit-bourbon.jpg",
       "description": "Dòng Bourbon Kentucky mang đậm tinh thần miền viễn Tây nước Mỹ: Tỷ lệ lúa mạch đen Rye cao độc đáo, ủ 10 năm trong thùng gỗ sồi Mỹ đốt than bề mặt số 4.",
       "ingredients": [
@@ -789,7 +789,7 @@
       "id": "d29",
       "name": "Diplomático Reserva Exclusiva Rum",
       "category": "spirits",
-      "price": 190000,
+      "price": 1000,
       "image": "img/drinks/diplomatico-rum.jpg",
       "description": "Dòng Dark Rum thượng hạng từ Venezuela: Chưng cất trong nồi đồng cổ truyền và ủ tới 12 năm trong thùng gỗ sồi, hương vị ngọt ngào như bản giao hưởng caramel và chuối chín.",
       "ingredients": [
@@ -816,7 +816,7 @@
       "id": "d30",
       "name": "Campari Cask Bitter Milano",
       "category": "aperitivo",
-      "price": 125000,
+      "price": 1000,
       "image": "img/drinks/campari-bitter.jpg",
       "description": "Rượu khai vị huyền thoại nước Ý phục vụ On The Rocks: Sắc đỏ ruby lộng lẫy từ công thức bí truyền năm 1860 của Gaspare Campari, đắng thanh thảo mộc và lát cam tươi sảng khoái.",
       "ingredients": [
@@ -844,7 +844,7 @@
       "id": "d31",
       "name": "Virgin Mojito Garden",
       "category": "zero-proof",
-      "price": 75000,
+      "price": 1000,
       "image": "",
       "description": "Phiên bản không cồn của Mojito: bạc hà tươi giã nhẹ, chanh xanh, đường mía và soda lạnh - sảng khoái mà vẫn tỉnh táo cầm lái.",
       "ingredients": [
@@ -873,7 +873,7 @@
       "id": "d32",
       "name": "Seedlip Garden Tonic",
       "category": "zero-proof",
-      "price": 95000,
+      "price": 1000,
       "image": "",
       "description": "Rượu thảo mộc chưng cất KHÔNG cồn Seedlip Garden 108 với tonic, dưa leo và hương thảo - trải nghiệm như một ly Gin & Tonic thực thụ.",
       "ingredients": [
@@ -901,7 +901,7 @@
       "id": "d33",
       "name": "Saigon Passion Cooler",
       "category": "zero-proof",
-      "price": 80000,
+      "price": 1000,
       "image": "",
       "description": "Chanh dây chín, siro sả nhà làm, lá chanh và soda - hương vị nhiệt đới Sài Gòn trong một ly không cồn.",
       "ingredients": [

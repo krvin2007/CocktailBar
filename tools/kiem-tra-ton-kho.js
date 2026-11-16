@@ -11,6 +11,7 @@
    ========================================================= */
 
 import assert from "node:assert";
+import fs from "node:fs";
 
 /* ---------------- Giả lập localStorage ---------------- */
 function memoryStorage() {
@@ -94,8 +95,13 @@ const exportService = await import(mod("exportService.js"));
 const notificationService = await import(mod("notificationService.js"));
 const xlsxHelper = await import(mod("xlsxHelper.js"));
 
+// Giá bán thật có thể đổi (vd đồng giá khi thử thanh toán) - các bài kiểm tra điểm thưởng / giảm hạng / cọc
+// tính theo bảng giá cố định này để kết quả không phụ thuộc giá đang bán.
+const TEST_PRICES = JSON.parse(fs.readFileSync(new URL("./gia-kiem-thu.json", import.meta.url), "utf8"));
+
 function resetDb() {
-  fakeDb.drinks = structuredClone(JSON.parse(JSON.stringify(drinks.SEED_DRINKS)));
+  fakeDb.drinks = structuredClone(JSON.parse(JSON.stringify(drinks.SEED_DRINKS)))
+    .map((d) => ({ ...d, price: TEST_PRICES[d.id] ?? d.price }));
   fakeDb.orders = structuredClone(orders.SEED_ORDERS);
   fakeDb.staff = structuredClone(staff.SEED_STAFF);
   fakeDb.messages = [];
