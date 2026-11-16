@@ -1,12 +1,12 @@
 /* =========================================================
-   VIETQR-SERVICE.JS - Hộp thanh toán Chuyển khoản VietQR (Napas 247)
-   Chuẩn mã QR ngân hàng quốc gia có thể quét và chuyển khoản thực tế
-   bằng bất kỳ ứng dụng Ngân hàng (MB, VCB, Techcombank, TPBank, BIDV,
-   ACB, VPBank...) và ví điện tử (MoMo, ZaloPay...) tại Việt Nam.
+  VIETQR-SERVICE.JS - Hộp thanh toán Chuyển khoản VietQR (Napas 247)
+  Chuẩn mã QR ngân hàng quốc gia có thể quét và chuyển khoản thực tế
+  bằng bất kỳ ứng dụng Ngân hàng (MB, VCB, Techcombank, TPBank, BIDV,
+  ACB, VPBank...) và ví điện tử (MoMo, ZaloPay...) tại Việt Nam.
 
-   Tài khoản nhận tiền đọc từ máy chủ (/settings - xem settingsService.js),
-   KHÁCH KHÔNG đổi được. Chỉ quản lý đổi trong trang Quản lý đơn hàng.
-   ========================================================= */
+  Tài khoản nhận tiền đọc từ máy chủ (/settings - xem settingsService.js),
+  KHÁCH KHÔNG đổi được. Chỉ quản lý đổi trong trang Quản lý đơn hàng.
+  ========================================================= */
 
 import { formatMoney, escapeHtml } from "./utils.js";
 import { toast } from "./ui.js";
@@ -363,8 +363,8 @@ export async function openVietQRPaymentModal(
       amountSub.innerHTML = collectRemaining
         ? `Tổng đơn: <strong>${formatMoney(currentFullTotal)}</strong> · Đã nhận cọc (70%): <strong>${formatMoney(currentFullTotal - currentTotal)}</strong>`
         : isPrepayOnly
-        ? `Tổng đơn: <strong>${formatMoney(currentFullTotal)}</strong> · Tại quán (30%): <strong>${formatMoney(currentRemaining)}</strong>`
-        : `Tổng đơn hàng: <strong>${formatMoney(currentFullTotal)}</strong> (100%)`;
+          ? `Tổng đơn: <strong>${formatMoney(currentFullTotal)}</strong> · Tại quán (30%): <strong>${formatMoney(currentRemaining)}</strong>`
+          : `Tổng đơn hàng: <strong>${formatMoney(currentFullTotal)}</strong> (100%)`;
     }
     if (selCount) selCount.textContent = count;
     if (toggleAll) toggleAll.checked = count === items.length && items.length > 0;

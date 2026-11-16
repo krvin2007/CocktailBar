@@ -114,7 +114,9 @@ export function buildOrderMailParams(order, toEmail) {
 
   return {
     to_email: toEmail,
+    email: toEmail,
     to_name: order.name || "Quý khách",
+    name: order.name || "Quý khách",
     from_name: "Quán Bar Đêm",
     reply_to: toEmail,
     subject: orderMailSubject(order),
@@ -122,6 +124,7 @@ export function buildOrderMailParams(order, toEmail) {
     order_code: order.code || "",
     service_type: serviceLabel,
     booking_time: formatDateTime(isBooking && order.bookingTime ? order.bookingTime : order.createdAt),
+    time: formatDateTime(isBooking && order.bookingTime ? order.bookingTime : order.createdAt),
     guests: isBooking && order.guestCount ? `${order.guestCount} khách` : "",
     seat: order.tableNumber ? `Bàn ${order.tableNumber}` : "",
     items_text: itemsText,
@@ -145,6 +148,50 @@ async function sendRealEmail(params) {
     emailjs.send(cfg.serviceId, cfg.templateId, params, { publicKey: cfg.publicKey }),
     timeout,
   ]);
+}
+
+/** Gửi mã OTP xác thực đổi/quên mật khẩu qua EmailJS */
+export async function sendOtpEmail({ email, customerName, otp, purpose = "reset" }) {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return { success: false, reason: "non_browser_environment" };
+  }
+  if (!isRealEmailConfigured()) return { success: false, reason: "not_configured" };
+  const targetEmail = String(email || "").trim();
+  if (!targetEmail) return { success: false, reason: "no_email" };
+
+  const actionText = purpose === "change" ? "Đổi mật khẩu" : "Đặt lại mật khẩu";
+  const nowStr = formatDateTime(new Date().toISOString());
+  const params = {
+    to_email: targetEmail,
+    email: targetEmail,
+    to_name: customerName || "Quý khách",
+    name: customerName || "Quý khách",
+    from_name: "Quán Bar Đêm",
+    reply_to: targetEmail,
+    subject: `[Quán Bar Đêm] Mã xác thực OTP ${actionText}: ${otp}`,
+    customer_name: customerName || "Quý khách",
+    time: nowStr,
+    message: [
+      `Kính gửi ${customerName || "Quý khách"},`,
+      "",
+      `Hệ thống Quán Bar Đêm nhận được yêu cầu ${actionText.toLowerCase()} cho tài khoản của quý khách.`,
+      `Mã OTP xác thực của bạn là:`,
+      "",
+      `        👉 ${otp} 👈`,
+      "",
+      `• Thời gian yêu cầu: ${nowStr}`,
+      `• Mã có hiệu lực trong vòng 5 phút.`,
+      `• Tuyệt đối KHÔNG chia sẻ mã này cho bất kỳ ai để bảo vệ an toàn cho tài khoản.`,
+      "",
+      `Nếu quý khách không thực hiện yêu cầu này, vui lòng liên hệ hotline quán ngay để được hỗ trợ.`,
+      "",
+      `Hotline: 0397 062 429`,
+      `Địa chỉ: 74-76 Nam Kỳ Khởi Nghĩa, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh`,
+    ].join("\n"),
+  };
+
+  await sendRealEmail(params);
+  return { success: true };
 }
 
 /**

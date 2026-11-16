@@ -31,12 +31,14 @@ export function selectedOtpChannel(root, name) {
 export function otpMessageCardHtml(result) {
   const ch = OTP_CHANNELS[result.channel] || OTP_CHANNELS.email;
   const p = result.preview || {};
+  const isReal = Boolean(result.realEmailSent);
   return `
     <div class="otp-sent-card" style="background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 6px; padding: 10px 14px; font-size: 0.82rem; color: var(--gold-light);">
       <div>${ch.icon} Mã đã gửi qua <strong>${escapeHtml(ch.label)}</strong> tới <strong style="color:#fff;">${escapeHtml(result.target)}</strong> · hiệu lực ${Math.round(result.expiresInSeconds / 60)} phút</div>
+      ${isReal ? `<div style="margin-top:6px; font-size:0.75rem; color:#4ade80;">✅ Đã chuyển phát thành công tới hộp thư thật qua EmailJS. Quý khách vui lòng mở hòm thư (hoặc mục Thư rác/Spam).</div>` : ""}
       ${result.otp ? `
       <div style="margin-top:8px; padding:8px 10px; background:rgba(0,0,0,0.4); border-radius:6px; border:1px dashed rgba(212,175,55,0.5);">
-        <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px;">Chế độ demo - tin nhắn ${escapeHtml(ch.label)} được mô phỏng tại đây (chưa nối máy chủ gửi thật)</div>
+        <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px;">${isReal ? "Hỗ trợ thử nghiệm nhanh ngay trên màn hình:" : `Chế độ demo - tin nhắn ${escapeHtml(ch.label)} được mô phỏng tại đây (chưa nối máy chủ gửi thật)`}</div>
         ${p.subject ? `<div style="font-size:0.78rem; color:#fff; font-weight:600;">${escapeHtml(p.subject)}</div>` : ""}
         <div style="font-size:0.78rem; color:var(--cream);">${escapeHtml(p.text || "")}</div>
         <button type="button" class="otp-fill-btn" data-otp="${escapeHtml(result.otp)}" style="margin-top:6px; background:none; border:none; padding:0; color:var(--amber-soft); font-size:0.74rem; text-decoration:underline; cursor:pointer;">Bấm để tự điền mã ${escapeHtml(result.otp)}</button>

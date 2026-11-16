@@ -14,7 +14,7 @@ import { uid, normalizePhone } from "./utils.js";
 import { hashPassword, verifyPassword, passwordProblem } from "./passwords.js";
 import { issueOtp, verifyOtp, availableChannels } from "./otpService.js";
 import { ageProblem } from "./age.js";
-import { sendWelcomeVoucherEmail } from "./emailService.js";
+import { sendWelcomeVoucherEmail, sendOtpEmail } from "./emailService.js";
 
 const CUSTOMER_COLLECTION = "customers";
 const SESSION_KEY = "customer_session";
@@ -619,7 +619,21 @@ export async function changeCustomerPassword(customerId, oldPassword, newPasswor
 export async function requestChangePasswordOtp(customerId, channel) {
   const customer = await fetchCustomerRecord(customerId);
   if (!customer) return { success: false, message: "Không tìm thấy tài khoản khách hàng." };
-  return issueOtp({ customer, channel, purpose: "change" });
+  const issued = issueOtp({ customer, channel, purpose: "change" });
+  if (issued.success && issued.channel === "email" && customer.email) {
+    try {
+      await sendOtpEmail({
+        email: customer.email,
+        customerName: customer.name,
+        otp: issued.otp,
+        purpose: "change",
+      });
+      issued.realEmailSent = true;
+    } catch (err) {
+      console.warn("Không gửi được OTP qua EmailJS:", err);
+    }
+  }
+  return issued;
 }
 
 /**
@@ -649,6 +663,19 @@ export async function requestPasswordResetOtp(identifier, channel) {
 
   const issued = issueOtp({ customer, channel, purpose: "reset" });
   if (!issued.success) return issued;
+  if (issued.channel === "email" && customer.email) {
+    try {
+      await sendOtpEmail({
+        email: customer.email,
+        customerName: customer.name,
+        otp: issued.otp,
+        purpose: "reset",
+      });
+      issued.realEmailSent = true;
+    } catch (err) {
+      console.warn("Không gửi được OTP qua EmailJS:", err);
+    }
+  }
   return { ...issued, customerId: customer.id, customerName: customer.name, channels: availableChannels(customer) };
 }
 
