@@ -29,9 +29,11 @@ export function getEmailConfig() {
   } catch {
     stored = null;
   }
+  const rawService = (stored?.serviceId || EMAILJS_CONFIG.serviceId || "").trim();
+  const safeService = rawService === "{{to_email}}" ? EMAILJS_CONFIG.serviceId : rawService;
   return {
     publicKey: (stored?.publicKey || EMAILJS_CONFIG.publicKey || "").trim(),
-    serviceId: (stored?.serviceId || EMAILJS_CONFIG.serviceId || "").trim(),
+    serviceId: safeService,
     templateId: (stored?.templateId || EMAILJS_CONFIG.templateId || "").trim(),
   };
 }
