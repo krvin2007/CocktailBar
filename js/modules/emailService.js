@@ -692,6 +692,48 @@ export async function sendWelcomeVoucherEmail({ name, email, phone, voucherCode,
     // Không chặn luồng
   }
 
+  // 3. Gửi email THẬT qua EmailJS nếu ở môi trường trình duyệt và đã cấu hình
+  if (typeof window !== "undefined" && typeof document !== "undefined" && isRealEmailConfigured()) {
+    try {
+      const nowStr = formatDateTime(new Date().toISOString());
+      const realParams = {
+        to_email: targetEmail,
+        email: targetEmail,
+        to_name: name || "Quý khách",
+        name: name || "Quý khách",
+        from_name: "Quán Bar Đêm",
+        reply_to: targetEmail,
+        subject: `🎁 [Quán Bar Đêm] Chào mừng thành viên mới — Tặng mã giảm ${discountPercent}%: ${safeCode}`,
+        customer_name: name || "Quý khách",
+        time: nowStr,
+        message: [
+          `Kính gửi ${name || "Quý khách"},`,
+          "",
+          `Chào mừng bạn đã trở thành thành viên của Quán Bar Đêm!`,
+          `Quán xin gửi tặng bạn món quà đặc biệt dành riêng cho thành viên mới:`,
+          "",
+          `        🎁 MÃ GIẢM GIÁ 50%: ${safeCode} 🎁`,
+          "",
+          `• Ưu đãi: Giảm ngay 50% tổng bill cho đơn hàng hoặc đặt bàn đầu tiên`,
+          `• Số điện thoại áp dụng: ${phone || "Tài khoản của bạn"}`,
+          `• Thời hạn sử dụng: 60 ngày kể từ ngày đăng ký`,
+          `• Hướng dẫn dùng: Nhập mã "${safeCode}" tại ô Mã ưu đãi khi đặt bàn hoặc đặt món`,
+          "",
+          `Quán Bar Đêm rất hân hạnh được phục vụ bạn!`,
+          "",
+          `Hotline: 0397 062 429`,
+          `Địa chỉ: 74-76 Nam Kỳ Khởi Nghĩa, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh`,
+        ].join("\n"),
+      };
+      await sendRealEmail(realParams);
+      emailRecord.delivery = "sent";
+    } catch (err) {
+      console.warn("Không thể gửi email chào mừng qua EmailJS:", err);
+      emailRecord.delivery = "failed";
+      emailRecord.deliveryError = err.message;
+    }
+  }
+
   return emailRecord;
 }
 

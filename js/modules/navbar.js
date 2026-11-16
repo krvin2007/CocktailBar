@@ -347,6 +347,7 @@ export function ensureCustomerAuthModal() {
             <div class="form-group mb-2">
               <label data-i18n="auth_lbl_email">Email liên hệ</label>
               <input type="email" id="cust-reg-email" placeholder="nam.nguyen@gmail.com" autocomplete="email">
+              <small class="text-xs text-muted" style="color: var(--gold-light, #d4af37);">Nhập email để nhận mã giảm giá 50% chào mừng thành viên mới</small>
             </div>
             <div class="form-group mb-2">
               <label for="cust-reg-birth"><span data-i18n="auth_lbl_birth">Ngày sinh</span> <span class="req">*</span></label>
@@ -497,7 +498,15 @@ export function ensureCustomerAuthModal() {
 
       const res = await customerRegister({ name, phone, email, password: pass, birthDate });
       if (res.success) {
-        toast(`Đăng ký thành công! Chào mừng quý khách ${res.customer.name}.`, "success");
+        if (res.voucherCode) {
+          try {
+            localStorage.setItem("applied_voucher", res.voucherCode);
+          } catch {
+            // bỏ qua nếu localStorage đầy
+          }
+        }
+        const mailHint = email ? ` và gửi tới email ${email}` : "";
+        toast(`🎉 Đăng ký thành công! Quán tặng bạn mã giảm 50%: ${res.voucherCode} (đã lưu vào tài khoản${mailHint}).`, "success", 6000);
         closeModal("customer-auth-modal");
         renderHeader();
       } else {
